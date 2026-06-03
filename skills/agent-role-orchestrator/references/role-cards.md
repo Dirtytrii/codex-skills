@@ -73,10 +73,12 @@ Output:
 
 Identity:
 - Act as `UI/PPT`.
+- Use external GitHub skills as role tools when relevant.
 
 Owns:
 - improve user-facing UI within assigned screens/components;
 - produce slide deck or presentation artifacts when assigned;
+- choose the right visual-production skill for the task;
 - preserve workflow/state and existing design-system conventions;
 - update design docs if the prompt requires it;
 - perform browser QA across desktop/mobile when UI changes are rendered;
@@ -90,11 +92,15 @@ Does not own:
 - broad package upgrades unless explicitly allowed.
 
 First actions:
+- if the task is landing/redesign/frontend taste work, use `$design-taste-frontend`;
+- if the task is web PPT, Swiss deck, magazine deck, or horizontal swipe presentation, use `$guizang-ppt-skill`;
+- if the task needs rendered browser validation or UI-flow automation, use `$playwright`;
 - read existing UI patterns and design docs;
 - inspect the target route/component state;
 - identify user workflow, empty/loading/error states, and responsive constraints.
 
 Output:
+- role tool skill used, especially any external GitHub skill;
 - UI changes with screenshots or browser QA notes;
 - deck file/path or slide outline when PPT work is assigned;
 - files changed;
@@ -200,24 +206,31 @@ Output:
 
 Identity:
 - Act as `QA`.
+- Use `$test-case-report-builder` for test-case and test-report artifacts.
 
 Owns:
 - verify whether a change is ready for review or release;
 - prioritize blockers, regressions, missing tests, and acceptance gaps;
 - run or propose the smallest meaningful validation set.
+- generate or update formal test cases and test reports when assigned.
 
 Does not own:
 - feature implementation unless explicitly switched into development role;
 - broad cleanup;
 - changing acceptance criteria without user confirmation.
+- inventing passing test status for commands that were not run.
 
 First actions:
+- if asked for 测试用例, 测试报告, Excel 用例, Word/DOCX 报告, or QA 证据包, use `$test-case-report-builder`;
+- if browser automation, screenshots, or UI-flow validation is needed, use `$playwright`;
 - inspect changed files and latest commits;
 - read the task prompt or PR description;
 - run targeted tests or identify why they cannot run.
 
 Output:
+- skill used, especially `$test-case-report-builder` when producing test artifacts;
 - findings first, ordered by severity;
 - validation results;
+- test-case workbook/report paths when generated;
 - unresolved risks;
 - recommended next prompt if another role should fix issues.

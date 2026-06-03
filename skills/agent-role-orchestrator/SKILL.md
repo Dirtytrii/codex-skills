@@ -1,6 +1,6 @@
 ---
 name: agent-role-orchestrator
-description: Create concise role-specific Codex window prompts and current-window handoffs with an architecture-first gateway and role-window registry. Use when the user asks for an architecture/development/UI-PPT/video/ops/security/QA window, says to inherit/reset/continue the current role, asks for the next-window prompt, wants a requirement routed through architecture before deciding whether to open other role windows, wants existing roles reused instead of recreated, or wants security-audit prompts that delegate to the appropriate security skill.
+description: Create concise role-specific Codex window prompts and current-window handoffs with an architecture-first gateway and role-window registry. Use when the user asks for an architecture/development/UI-PPT/video/ops/security/QA window, says to inherit/reset/continue the current role, asks for the next-window prompt, wants a requirement routed through architecture before deciding whether to open other role windows, wants existing roles reused instead of recreated, wants QA test-case/report prompts, or wants security-audit prompts that delegate to the appropriate security skill.
 ---
 
 # Agent Role Orchestrator
@@ -16,6 +16,7 @@ Use this skill to:
 - remember whether each role has already been established and reuse it by default;
 - rewrite a project-specific role prompt into a reusable role template.
 - route `安全` work to the right existing security skill by default.
+- route `QA` test-case/report work to the test artifact skill by default.
 
 ## Architecture-First Rule
 
@@ -84,6 +85,12 @@ For `安全`, always include the relevant downstream security skill in the gener
 - PR, branch, commit, or working-tree security review: `$codex-security:security-diff-scan`;
 - deep repository scan: `$codex-security:deep-security-scan`;
 - fix a validated or plausible security finding: `$codex-security:fix-finding`.
+
+For role tools sourced from external GitHub skills, name them as dependencies instead of treating them as local role logic:
+- `UI/PPT` landing/redesign/frontend taste work: `$design-taste-frontend`;
+- `UI/PPT` web PPT / Swiss deck / magazine deck work: `$guizang-ppt-skill`;
+- browser UI QA, rendered frontend checks, and E2E-like flows: `$playwright`;
+- `QA` test cases, Excel workbook, Word/DOCX test report, or formal QA artifact package: `$test-case-report-builder`.
 
 ## Workflow
 
@@ -262,6 +269,8 @@ Before finalizing, check:
 - numbered parallel roles appear only when explicitly requested or selected by `架构`;
 - downstream role prompts include file scope, forbidden scope, validation, and commit/report expectations by default.
 - `安全` prompts explicitly invoke the appropriate security skill instead of duplicating that workflow.
+- `QA` prompts for test cases or test reports explicitly invoke `$test-case-report-builder`.
+- role prompts distinguish external GitHub skills from local-owned skills when that affects maintenance or self-editing.
 
 ## Common Defaults
 
@@ -269,5 +278,6 @@ Use these defaults unless the user says otherwise:
 - `架构` clarifies requirements, maintains the role-window registry, and decides whether downstream windows are needed; it does not code or commit.
 - `开发` implements within a narrow file scope, runs tests, and commits when asked or when workspace instructions require it.
 - `UI/PPT` and `视频` produce visible artifacts and perform visual QA.
+- `QA` uses `$test-case-report-builder` for test case and test report artifacts.
 - `运维` investigates read-only first and avoids restarts, migrations, deletes, or production writes without explicit authorization.
 - `安全` delegates to the matching security skill first, uses low-impact checks by default, and distinguishes evidence from suspicion.

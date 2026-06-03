@@ -14,6 +14,8 @@ SKILLS = ROOT / "skills"
 REGISTRY = ROOT / "registry" / "skills.json"
 
 NAME_RE = re.compile(r"^[a-z0-9-]+$")
+ORIGIN_TYPES = {"local", "external-github", "hermes", "upstream-adapted"}
+MAINTENANCE_TYPES = {"local-owned", "vendored-upstream", "vendored-adapted", "hermes-owned"}
 SENSITIVE_RE = re.compile(
     r"("
     r"gh[oprsu]_[A-Za-z0-9_]{20,}|"
@@ -108,6 +110,24 @@ def main() -> int:
         registry = []
 
     registry_names = {item.get("name") for item in registry if isinstance(item, dict)}
+
+    for idx, item in enumerate(registry):
+        if not isinstance(item, dict):
+            errors.append(f"registry item {idx}: must be an object")
+            continue
+        name = item.get("name", f"<item {idx}>")
+        if item.get("origin_type") not in ORIGIN_TYPES:
+            errors.append(f"{name}: invalid or missing origin_type")
+        if item.get("maintenance") not in MAINTENANCE_TYPES:
+            errors.append(f"{name}: invalid or missing maintenance")
+        roles = item.get("consumed_by_roles")
+        if not isinstance(roles, list) or not roles:
+            errors.append(f"{name}: consumed_by_roles must be a non-empty list")
+        if item.get("origin_type") == "external-github" and "upstream_url" not in item:
+            errors.append(f"{name}: external-github skills must include upstream_url, even if null")
+        if item.get("origin_type") == "external-github" and item.get("upstream_url") is None:
+            if not item.get("source_note"):
+                errors.append(f"{name}: external-github skills with null upstream_url must include source_note")
 
     for skill_dir in sorted(p for p in SKILLS.iterdir() if p.is_dir()):
         skill_md = skill_dir / "SKILL.md"

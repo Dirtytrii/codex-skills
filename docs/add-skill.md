@@ -36,10 +36,15 @@ skills/<skill-name>/assets/
   "name": "example-skill",
   "path": "skills/example-skill",
   "status": "active",
-  "source": "local|hermes|upstream",
+  "origin_type": "local|external-github|hermes",
+  "upstream_url": null,
+  "maintenance": "local-owned|vendored-upstream|vendored-adapted|hermes-owned",
+  "consumed_by_roles": ["架构"],
   "summary": "一句话说明用途"
 }
 ```
+
+来源字段说明见 `docs/source-policy.md`。
 
 ## 4. 公开前检查
 
@@ -54,4 +59,3 @@ python3 scripts/validate_public_skills.py
 ## 5. 提交
 
 提交信息用中文，说明新增了什么 skill、来源是什么、跑过什么校验。
-
