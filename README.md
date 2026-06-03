@@ -13,10 +13,10 @@
 | `design-taste-frontend` | Landing/作品集/重设计的前端审美防模板化规则 | external-github | UI/PPT |
 | `guizang-ppt-skill` | 横向翻页网页 PPT，杂志风和瑞士风模板 | external-github | UI/PPT |
 | `hatch-pet` | Codex pet 精灵图生成、修复、校验和打包 | local | UI/PPT / 视频 |
-| `pdf` | PDF 读取、生成、渲染校验工作流 | local | QA / 开发 / UI/PPT |
-| `playwright` | 终端 Playwright CLI 浏览器自动化 | external-github | UI/PPT / QA / 开发 |
+| `pdf` | PDF 读取、生成、渲染校验工作流 | local | 测试 / 开发 / UI/PPT |
+| `playwright` | 终端 Playwright CLI 浏览器自动化 | external-github | UI/PPT / 测试 / QA / 开发 |
 | `startup-pressure-test` | 创业想法压力测试、MVP 和首批客户计划 | local | 架构 |
-| `test-case-report-builder` | 测试用例 Excel、测试报告 Word/DOCX 和 QA 证据包 | local | QA |
+| `test-case-report-builder` | 测试用例 Excel、测试报告 Word/DOCX 和测试证据包 | local | 测试 |
 
 暂不公开：
 
@@ -86,5 +86,6 @@ python3 scripts/validate_public_skills.py
 - 新需求先过 `agent-role-orchestrator` 的 `架构` 角色。
 - 已建立角色默认走继承/接续，不重复新建窗口。
 - 安全审计默认委派到安全专项 skill。
-- QA 生成测试用例/测试报告默认使用 `test-case-report-builder`。
+- `测试` 生成测试用例/测试报告默认使用 `test-case-report-builder`。
+- `QA` 保持验收/Review 角色，默认不负责写测试用例和测试报告。
 - 使用中发现可复用优化时，优先沉淀回对应 skill。

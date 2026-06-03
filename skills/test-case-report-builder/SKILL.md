@@ -1,13 +1,13 @@
 ---
 name: test-case-report-builder
-description: Create or update project test-case assets and test reports. Use when Codex is asked to generate test cases in Excel, produce a Word/DOCX test report, summarize automated test execution, turn repository tests into a formal QA artifact, or沉淀/复用 a project testing documentation workflow.
+description: Create or update project test-case assets and test reports. Use when Codex is asked to generate test cases in Excel, produce a Word/DOCX test report, summarize automated test execution, turn repository tests into a formal testing artifact, or沉淀/复用 a project testing documentation workflow.
 ---
 
 # Test Case Report Builder
 
 ## Purpose
 
-Build a reusable QA documentation package for a software project: an Excel workbook containing business test cases and automated-test indexes, plus a Word test report summarizing scope, execution evidence, risks, and release recommendations.
+Build a reusable testing documentation package for a software project: an Excel workbook containing business test cases and automated-test indexes, plus a Word test report summarizing scope, execution evidence, risks, and release recommendations.
 
 Use the repository's real modules, tests, docs, and commands. Do not invent a passing status for tests that were not run.
 
@@ -70,4 +70,4 @@ Never mark a case `通过` just because a related test file exists.
 
 - Prefer project-local paths such as `docs/testing/<project>测试用例.xlsx` and `docs/testing/<project>测试报告.docx` unless the user specifies another location.
 - Use Chinese deliverable names and report prose when the project/user context is Chinese.
-- Keep final responses short: link the `.xlsx` and `.docx`, summarize commands/results, mention any skipped visual QA or environment workaround, and identify the commit if one was made.
+- Keep final responses short: link the `.xlsx` and `.docx`, summarize commands/results, mention any skipped visual verification or environment workaround, and identify the commit if one was made.

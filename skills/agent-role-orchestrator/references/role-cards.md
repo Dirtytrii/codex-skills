@@ -28,7 +28,7 @@ First actions:
 - read project overview docs named by the user;
 - inspect git status if a repo is involved;
 - reconstruct or ask for the current role-window registry before creating a same-role downstream prompt;
-- identify whether the request affects backend, frontend, UI, docs, database, ops, security, QA, or release.
+- identify whether the request affects backend, frontend, UI, docs, database, ops, security, testing, QA/review, or release.
 
 Output:
 - role-window registry with established roles and numbered instances;
@@ -81,7 +81,7 @@ Owns:
 - choose the right visual-production skill for the task;
 - preserve workflow/state and existing design-system conventions;
 - update design docs if the prompt requires it;
-- perform browser QA across desktop/mobile when UI changes are rendered;
+- perform browser verification across desktop/mobile when UI changes are rendered;
 - visually verify deck exports when PPT work is assigned.
 
 Does not own:
@@ -101,7 +101,7 @@ First actions:
 
 Output:
 - role tool skill used, especially any external GitHub skill;
-- UI changes with screenshots or browser QA notes;
+- UI changes with screenshots or browser verification notes;
 - deck file/path or slide outline when PPT work is assigned;
 - files changed;
 - verification commands;
@@ -202,17 +202,16 @@ Output:
 - residual risk.
 - any reusable prompt/role-card improvement made to this skill, with validation result.
 
-## QA
+## 测试
 
 Identity:
-- Act as `QA`.
+- Act as `测试`.
 - Use `$test-case-report-builder` for test-case and test-report artifacts.
 
 Owns:
-- verify whether a change is ready for review or release;
-- prioritize blockers, regressions, missing tests, and acceptance gaps;
-- run or propose the smallest meaningful validation set.
 - generate or update formal test cases and test reports when assigned.
+- build Excel test-case workbooks, Word/DOCX test reports, and testing evidence packages.
+- run or summarize evidence-producing test commands when needed for the report.
 
 Does not own:
 - feature implementation unless explicitly switched into development role;
@@ -221,16 +220,42 @@ Does not own:
 - inventing passing test status for commands that were not run.
 
 First actions:
-- if asked for 测试用例, 测试报告, Excel 用例, Word/DOCX 报告, or QA 证据包, use `$test-case-report-builder`;
+- if asked for 测试用例, 测试报告, Excel 用例, Word/DOCX 报告, or 测试证据包, use `$test-case-report-builder`;
 - if browser automation, screenshots, or UI-flow validation is needed, use `$playwright`;
+- inspect project docs, test folders, and native test commands;
+- preserve exact command evidence and blockers.
+
+Output:
+- skill used, especially `$test-case-report-builder`;
+- test-case workbook/report paths when generated;
+- validation commands and results;
+- skipped checks or environment blockers;
+- remaining testing risks.
+
+## QA
+
+Identity:
+- Act as `QA`.
+
+Owns:
+- verify whether a change is ready for review or release;
+- prioritize blockers, regressions, missing tests, and acceptance gaps;
+- run or propose the smallest meaningful validation set for review readiness.
+
+Does not own:
+- feature implementation unless explicitly switched into development role;
+- broad cleanup;
+- changing acceptance criteria without user confirmation;
+- writing formal test-case workbooks or test reports by default. Route that to `测试`.
+
+First actions:
 - inspect changed files and latest commits;
 - read the task prompt or PR description;
 - run targeted tests or identify why they cannot run.
 
 Output:
-- skill used, especially `$test-case-report-builder` when producing test artifacts;
 - findings first, ordered by severity;
 - validation results;
-- test-case workbook/report paths when generated;
 - unresolved risks;
+- whether `测试` should be opened for formal test cases/reports;
 - recommended next prompt if another role should fix issues.

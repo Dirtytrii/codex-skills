@@ -21,7 +21,8 @@
 `consumed_by_roles` 记录哪些角色默认会调用该 skill。例如：
 
 - `UI/PPT`: `design-taste-frontend`、`guizang-ppt-skill`、`playwright`
-- `QA`: `test-case-report-builder`、`playwright`
+- `测试`: `test-case-report-builder`、`playwright`
+- `QA`: review/readiness validation; may use `playwright` for targeted verification, but does not own test-case/report artifacts by default
 - `安全`: `authorized-blackbox-web-security`
 
 角色消费不代表原创归属。外部 skill 可以作为角色默认工具，但仍必须保持外部来源标记。
@@ -44,4 +45,3 @@
 - `upstream_url`，如果暂时未知就填 `null`，不要编造。
 - `maintenance`。
 - 改动原因和验证结果。
-

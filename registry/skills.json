@@ -6,7 +6,7 @@
     "origin_type": "local",
     "upstream_url": null,
     "maintenance": "local-owned",
-    "consumed_by_roles": ["架构", "开发", "UI/PPT", "视频", "运维", "安全", "QA"],
+    "consumed_by_roles": ["架构", "开发", "UI/PPT", "视频", "运维", "安全", "测试", "QA"],
     "summary": "架构先行的多窗口角色编排、继承、交接提示词"
   },
   {
@@ -57,7 +57,7 @@
     "origin_type": "local",
     "upstream_url": null,
     "maintenance": "local-owned",
-    "consumed_by_roles": ["QA", "开发", "UI/PPT"],
+    "consumed_by_roles": ["测试", "开发", "UI/PPT"],
     "summary": "PDF 读取、生成、渲染校验工作流"
   },
   {
@@ -67,7 +67,7 @@
     "origin_type": "external-github",
     "upstream_url": "https://github.com/microsoft/playwright-cli",
     "maintenance": "vendored-adapted",
-    "consumed_by_roles": ["UI/PPT", "QA", "开发"],
+    "consumed_by_roles": ["UI/PPT", "测试", "QA", "开发"],
     "summary": "终端 Playwright CLI 浏览器自动化"
   },
   {
@@ -87,7 +87,7 @@
     "origin_type": "local",
     "upstream_url": null,
     "maintenance": "local-owned",
-    "consumed_by_roles": ["QA"],
-    "summary": "生成测试用例 Excel、测试报告 Word/DOCX 和 QA 证据包"
+    "consumed_by_roles": ["测试"],
+    "summary": "生成测试用例 Excel、测试报告 Word/DOCX 和测试证据包"
   }
 ]
