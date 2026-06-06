@@ -4,6 +4,8 @@
 
 这个仓库用于保存可公开复用的技能目录，方便在不同 Codex 环境、远程 Hermes 服务器和新机器之间同步。每个 skill 都应是一个可以独立复制到 `${CODEX_HOME:-$HOME/.codex}/skills/` 的目录。
 
+推荐先阅读 [角色分工与推荐使用方式](docs/role-usage.md)：本地 Codex 主要承接架构、开发、UI/PPT、视频、安全、测试和 QA；服务器侧 Hermes agent 优先承接运维只读诊断、部署检查和发布验证。
+
 ## Skills
 
 | Skill | 用途 | 来源 | 主要角色 |
@@ -42,6 +44,7 @@
 ├── docs/
 │   ├── add-skill.md        # 新增 skill 的流程
 │   ├── publication-checklist.md
+│   ├── role-usage.md       # 角色分工和推荐运行环境
 │   └── source-policy.md    # local / external / hermes 来源治理
 ├── scripts/
 │   └── validate_public_skills.py
