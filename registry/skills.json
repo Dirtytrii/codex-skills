@@ -20,6 +20,16 @@
     "summary": "授权黑盒 Web 安全测试和报告"
   },
   {
+    "name": "application-problem-diagnosis-workflow",
+    "path": "skills/application-problem-diagnosis-workflow",
+    "status": "active",
+    "origin_type": "hermes",
+    "upstream_url": null,
+    "maintenance": "hermes-owned",
+    "consumed_by_roles": ["运维", "QA"],
+    "summary": "应用故障先诊断后处理的只读证据收集流程"
+  },
+  {
     "name": "design-taste-frontend",
     "path": "skills/design-taste-frontend",
     "status": "active",
@@ -61,6 +71,26 @@
     "summary": "Vendored gstack engineering-manager plan review workflow"
   },
   {
+    "name": "hermes-cron-empty-output-diagnosis",
+    "path": "skills/hermes-cron-empty-output-diagnosis",
+    "status": "active",
+    "origin_type": "hermes",
+    "upstream_url": null,
+    "maintenance": "hermes-owned",
+    "consumed_by_roles": ["运维"],
+    "summary": "Hermes cron 已运行但输出为空或不可用的只读诊断流程"
+  },
+  {
+    "name": "hermes-python-script-wrapper-for-shell-cron",
+    "path": "skills/hermes-python-script-wrapper-for-shell-cron",
+    "status": "active",
+    "origin_type": "hermes",
+    "upstream_url": null,
+    "maintenance": "hermes-owned",
+    "consumed_by_roles": ["运维"],
+    "summary": "Hermes cron 脚本解释器不匹配和包装方案诊断"
+  },
+  {
     "name": "hatch-pet",
     "path": "skills/hatch-pet",
     "status": "active",
@@ -69,6 +99,16 @@
     "maintenance": "local-owned",
     "consumed_by_roles": ["UI/PPT", "视频"],
     "summary": "Codex pet 精灵图生成、修复、校验和打包"
+  },
+  {
+    "name": "package-update-check-and-plan",
+    "path": "skills/package-update-check-and-plan",
+    "status": "active",
+    "origin_type": "hermes",
+    "upstream_url": null,
+    "maintenance": "hermes-owned",
+    "consumed_by_roles": ["运维", "QA"],
+    "summary": "部署包发现、当前状态比对、更新和回滚计划的只读流程"
   },
   {
     "name": "pdf",
@@ -89,6 +129,46 @@
     "maintenance": "vendored-adapted",
     "consumed_by_roles": ["UI/PPT", "测试", "QA", "开发"],
     "summary": "终端 Playwright CLI 浏览器自动化"
+  },
+  {
+    "name": "post-deployment-readonly-verification",
+    "path": "skills/post-deployment-readonly-verification",
+    "status": "active",
+    "origin_type": "hermes",
+    "upstream_url": null,
+    "maintenance": "hermes-owned",
+    "consumed_by_roles": ["运维", "QA"],
+    "summary": "部署后健康、版本、路由、日志和回滚信号的只读验证流程"
+  },
+  {
+    "name": "pre-deployment-readonly-checklist",
+    "path": "skills/pre-deployment-readonly-checklist",
+    "status": "active",
+    "origin_type": "hermes",
+    "upstream_url": null,
+    "maintenance": "hermes-owned",
+    "consumed_by_roles": ["运维", "QA"],
+    "summary": "部署前主机、包、备份、配置和回滚条件的只读检查清单"
+  },
+  {
+    "name": "proxy-dependent-python-service-diagnosis",
+    "path": "skills/proxy-dependent-python-service-diagnosis",
+    "status": "active",
+    "origin_type": "hermes",
+    "upstream_url": null,
+    "maintenance": "hermes-owned",
+    "consumed_by_roles": ["运维"],
+    "summary": "代理依赖型 Python 服务 HTTP/WebSocket 就绪差异诊断"
+  },
+  {
+    "name": "python-project-deployment-troubleshooting",
+    "path": "skills/python-project-deployment-troubleshooting",
+    "status": "active",
+    "origin_type": "hermes",
+    "upstream_url": null,
+    "maintenance": "hermes-owned",
+    "consumed_by_roles": ["运维", "QA"],
+    "summary": "Python 项目部署启动、依赖、权限、代理和就绪问题诊断"
   },
   {
     "name": "startup-pressure-test",

@@ -89,12 +89,20 @@ For `安全`, always include the relevant downstream security skill in the gener
 - deep repository scan: `$codex-security:deep-security-scan`;
 - fix a validated or plausible security finding: `$codex-security:fix-finding`.
 
-For role tools sourced from external GitHub skills, name them as dependencies instead of treating them as local role logic:
+For role tools sourced from external GitHub skills or Hermes-owned operational skills, name them as dependencies instead of treating them as local role logic:
 - `架构` engineering plan review / lock-in before downstream windows: `$gstack`;
 - `UI/PPT` landing/redesign/frontend taste work: `$design-taste-frontend`;
 - `UI/PPT` web PPT / Swiss deck / magazine deck work: `$guizang-ppt-skill`;
 - browser UI verification, rendered frontend checks, and E2E-like flows: `$playwright`;
 - `测试` test cases, Excel workbook, Word/DOCX test report, or formal testing artifact package: `$test-case-report-builder`.
+- `运维` application incident diagnosis: `$application-problem-diagnosis-workflow`;
+- `运维` package/update planning before deployment: `$package-update-check-and-plan`;
+- `运维` pre-deployment read-only checks: `$pre-deployment-readonly-checklist`;
+- `运维` post-deployment read-only verification: `$post-deployment-readonly-verification`;
+- `运维` Hermes cron empty-output diagnosis: `$hermes-cron-empty-output-diagnosis`;
+- `运维` Hermes cron interpreter-wrapper diagnosis: `$hermes-python-script-wrapper-for-shell-cron`;
+- `运维` proxy-dependent Python service diagnosis: `$proxy-dependent-python-service-diagnosis`;
+- `运维` Python deployment troubleshooting: `$python-project-deployment-troubleshooting`.
 
 ## Workflow
 

@@ -22,8 +22,9 @@
 
 - `架构`: `gstack`、`gstack-plan-eng-review`、`startup-pressure-test`
 - `UI/PPT`: `design-taste-frontend`、`guizang-ppt-skill`、`playwright`
+- `运维`: Hermes-owned 的部署前检查、部署后验证、Hermes cron、Python 服务和代理诊断类 skill
 - `测试`: `test-case-report-builder`、`playwright`
-- `QA`: review/readiness validation; may use `playwright` for targeted verification, but does not own test-case/report artifacts by default
+- `QA`: review/readiness validation; may use `playwright` and Hermes-owned readonly verification skills for targeted verification, but does not own test-case/report artifacts by default
 - `安全`: `authorized-blackbox-web-security`
 
 角色消费不代表原创归属。外部 skill 可以作为角色默认工具，但仍必须保持外部来源标记。
@@ -46,3 +47,27 @@
 - `upstream_url`，如果暂时未知就填 `null`，不要编造。
 - `maintenance`。
 - 改动原因和验证结果。
+
+## Hermes Skill 同步规则
+
+Hermes 同步进来的 skill 默认是运维现场经验沉淀，不等于可以直接公开原始版本。进入仓库前必须先完成脱敏和泛化。
+
+可以公开：
+
+- 只读诊断流程。
+- 部署前检查、部署后验证、健康检查、日志摘要、cron 输出诊断。
+- 使用占位符表达的命令计划和报告格式。
+
+不能公开：
+
+- 真实服务器路径、内网/公网 IP、域名、账号、数据库连接串、token、cookie、JWT、私钥、`.env` 内容。
+- 原始生产日志、客户数据、订单数据、个人信息。
+- 项目专属名称、交易/收益/业务策略细节。
+- 默认会执行写操作、重启、清理、迁移、删除、回滚的流程。
+
+写操作处理规则：
+
+- 修复、重启、清理、迁移、删除、回滚只能放在 `Optional user-approved actions` 或类似“需用户确认后执行”的章节。
+- 默认 workflow 必须保持只读。
+- `registry/skills.json` 中运维原创类使用 `origin_type=hermes` 和 `maintenance=hermes-owned`。
+- 公开仓库的安装结构保持 `skills/<skill-name>/` 扁平目录；Hermes 本地分类路径不要作为公开路径写入。
