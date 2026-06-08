@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Plan Ceo Review"
+  short_description: "战略、范围、用户价值和业务风险审查"
+  default_prompt: "Use $gstack-plan-ceo-review for this task and keep the current role boundary explicit."

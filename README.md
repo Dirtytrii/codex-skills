@@ -13,6 +13,7 @@
 | 场景 | 推荐入口 | 运行环境 |
 | --- | --- | --- |
 | 新需求、需求拆分、多窗口协作 | `$agent-role-orchestrator`，先走 `架构` | Codex 本地窗口 |
+| gstack 产品/架构/工程/设计/QA 方法论审查 | `$gstack` 路由到具体 `$gstack-*` 子方法 | Codex 本地窗口 |
 | 代码实现、文档修改、测试执行 | `开发` 角色提示词 | Codex 本地窗口 |
 | UI、网页 PPT、社交卡、公众号封面 | `UI/PPT`，按任务路由到 `design-taste-frontend` / `guizang-ppt-skill` / `guizang-social-card-skill` | Codex 本地窗口 |
 | 部署检查、发布验证、日志/cron/服务诊断 | Hermes-owned 运维 skills | 服务器侧 Hermes agent 优先 |
@@ -36,28 +37,22 @@
 
 ## Skills
 
-| Skill | 用途 | 来源 | 主要角色 |
+完整机器可读清单在 [registry/skills.json](registry/skills.json)。当前 active skills 共 50 个，按使用方式分组如下：
+
+| 分组 | 代表 skills | 来源 | 主要角色 |
 | --- | --- | --- | --- |
-| `agent-role-orchestrator` | 架构先行的多窗口角色编排、继承、交接提示词 | local | 架构 / 全角色 |
-| `application-problem-diagnosis-workflow` | 应用故障先诊断后处理的只读证据收集流程 | hermes | 运维 / QA |
-| `authorized-blackbox-web-security` | 授权黑盒 Web 安全测试和报告 | local | 安全 |
-| `design-taste-frontend` | Landing/作品集/重设计的前端审美防模板化规则 | external-github | UI/PPT |
-| `guizang-ppt-skill` | 横向翻页网页 PPT，杂志风和瑞士风模板 | external-github | UI/PPT |
-| `guizang-social-card-skill` | 小红书/Rednote 图文组图、社交卡和公众号封面对生成 | external-github | UI/PPT |
-| `gstack` | 架构角色使用的 gstack 工程计划审查适配入口 | external-github | 架构 |
-| `gstack-plan-eng-review` | gstack engineering-manager plan review workflow | external-github | 架构 |
-| `hatch-pet` | Codex pet 精灵图生成、修复、校验和打包 | local | UI/PPT / 视频 |
-| `hermes-cron-empty-output-diagnosis` | Hermes cron 已运行但输出为空或不可用的只读诊断流程 | hermes | 运维 |
-| `hermes-python-script-wrapper-for-shell-cron` | Hermes cron 脚本解释器不匹配和包装方案诊断 | hermes | 运维 |
-| `package-update-check-and-plan` | 部署包发现、当前状态比对、更新和回滚计划的只读流程 | hermes | 运维 / QA |
-| `pdf` | PDF 读取、生成、渲染校验工作流 | local | 测试 / 开发 / UI/PPT |
-| `playwright` | 终端 Playwright CLI 浏览器自动化 | external-github | UI/PPT / 测试 / QA / 开发 |
-| `post-deployment-readonly-verification` | 部署后健康、版本、路由、日志和回滚信号的只读验证流程 | hermes | 运维 / QA |
-| `pre-deployment-readonly-checklist` | 部署前主机、包、备份、配置和回滚条件的只读检查清单 | hermes | 运维 / QA |
-| `proxy-dependent-python-service-diagnosis` | 代理依赖型 Python 服务 HTTP/WebSocket 就绪差异诊断 | hermes | 运维 |
-| `python-project-deployment-troubleshooting` | Python 项目部署启动、依赖、权限、代理和就绪问题诊断 | hermes | 运维 / QA |
-| `startup-pressure-test` | 创业想法压力测试、MVP 和首批客户计划 | local | 架构 |
-| `test-case-report-builder` | 测试用例 Excel、测试报告 Word/DOCX 和测试证据包 | local | 测试 |
+| 角色编排 | `agent-role-orchestrator` | local | 架构 / 全角色 |
+| gstack 方法论路由 | `gstack`，以及 `gstack-office-hours`、`gstack-spec`、`gstack-autoplan`、`gstack-plan-*` | external-github / adapted | 架构 |
+| gstack 执行与复盘 | `gstack-investigate`、`gstack-review`、`gstack-ship`、`gstack-health`、`gstack-devex-review`、`gstack-careful`、`gstack-guard`、`gstack-freeze`、`gstack-unfreeze`、`gstack-learn`、`gstack-retro` | external-github / adapted | 开发 / QA / 架构 |
+| gstack 设计 | `gstack-design-consultation`、`gstack-design-shotgun`、`gstack-design-html`、`gstack-design-review` | external-github / adapted | UI/PPT |
+| gstack QA / 安全 / 发布门禁 | `gstack-qa-only`、`gstack-qa`、`gstack-canary`、`gstack-cso`、`gstack-setup-deploy`、`gstack-land-and-deploy` | external-github / adapted | QA / 安全 / 运维 |
+| UI/PPT 生产 | `design-taste-frontend`、`guizang-ppt-skill`、`guizang-social-card-skill`、`playwright` | external-github | UI/PPT |
+| 视频/视觉资产 | `hatch-pet` | local | UI/PPT / 视频 |
+| 安全审计 | `authorized-blackbox-web-security`，以及 Codex Security 插件 skills | local / plugin | 安全 |
+| 测试资产 | `test-case-report-builder`、`pdf`、`playwright` | local / external | 测试 |
+| Hermes 运维 | `application-problem-diagnosis-workflow`、`package-update-check-and-plan`、`pre-deployment-readonly-checklist`、`post-deployment-readonly-verification`、`hermes-*`、`proxy-dependent-python-service-diagnosis`、`python-project-deployment-troubleshooting` | hermes | 运维 / QA |
+
+gstack 的完整角色映射见 [skills/gstack/references/methodology.md](skills/gstack/references/methodology.md)。本仓库保留的是 Codex 角色体系适配版，不内置上游大体积运行时、浏览器二进制、遥测或 host routing 自动注入。
 
 暂不公开：
 
@@ -80,7 +75,7 @@
 └── README.md
 ```
 
-`skills/` 保持扁平结构：`skills/<skill-name>/SKILL.md`。如果某个 skill 自带 `references/`、`assets/`、`scripts/`、模板或校验脚本，整目录一起复制；不要只复制 `SKILL.md`。
+`skills/` 保持扁平结构：`skills/<skill-name>/SKILL.md`。如果某个 skill 自带 `references/`、`assets/`、`scripts/`、模板或校验脚本，整目录一起复制；不要只复制 `SKILL.md`。例如 `gstack` 的共享方法论在 `skills/gstack/references/methodology.md`，各 `gstack-*` 子 skill 会引用它。
 
 单个 skill 的推荐结构：
 
@@ -140,7 +135,7 @@ python3 scripts/validate_public_skills.py
 
 - 新需求先过 `agent-role-orchestrator` 的 `架构` 角色。
 - 已建立角色默认走继承/接续，不重复新建窗口。
-- `架构` 在非平凡实施计划进入开发前，可使用 `gstack` 做工程计划审查。
+- `架构` 在非平凡实施计划进入开发前，可使用 `gstack` 路由到 `gstack-office-hours`、`gstack-spec`、`gstack-autoplan` 或具体 `gstack-plan-*` 审查。
 - `运维` 优先使用 Hermes-owned 的只读诊断/部署检查 skills；涉及写操作、重启、清理、迁移时必须先获得用户明确授权。
 - 安全审计默认委派到安全专项 skill。
 - `测试` 生成测试用例/测试报告默认使用 `test-case-report-builder`。

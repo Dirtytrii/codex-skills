@@ -1,46 +1,44 @@
 ---
 name: gstack
-description: Codex adapter for Garry Tan's gstack architecture/engineering plan review workflow. Use for architecture role plan review, implementation-plan hardening, data-flow and edge-case review, or when the user says gstack should help architecture. Delegates to $gstack-plan-eng-review when detailed review is needed.
+description: Codex adapter for Garry Tan's full gstack methodology across architecture, product, design, engineering, QA, security, shipping, documentation, and retrospectives. Use when the architecture role needs gstack method routing, implementation-plan hardening, or the user says gstack should help a role.
 ---
 
-# GStack Architecture Adapter
+# GStack Method Router
 
 Use this as the Codex-facing entrypoint for gstack in this skill collection.
 
-This is not the full Claude gstack runtime. The full upstream repository contains many Claude-specific paths, prompts, telemetry helpers, browser tools, and slash-command skills. For this user's Codex role system, `gstack` means: help `架构` run a sharper engineering plan review before opening downstream implementation windows.
+This repository does not vendor the full upstream gstack runtime. It adapts the useful methodology into safe Codex role tools and keeps upstream runtime behaviors optional.
 
 ## Source
 
 - Upstream: `https://github.com/garrytan/gstack`
-- Primary upstream workflow used here: `plan-eng-review`
-- Vendored detailed skill: `$gstack-plan-eng-review`
+- Adapted from upstream Codex skill generation at commit `e722c5bf89acdde034b5efa4c6b4bf612c48e610`
+- Shared method map: [references/methodology.md](references/methodology.md)
 
-## When To Use
+## How To Route
 
-Use from the `架构` role when:
+Use the current role first, then choose the smallest gstack method:
 
-- the user has a product/feature plan and wants to lock architecture before coding;
-- the plan needs engineering-manager review for data flow, APIs, migrations, testing, edge cases, performance, security, or release risk;
-- the architecture role is about to create prompts for `开发`, `UI/PPT`, `运维`, `安全`, `测试`, or `QA`;
-- the user explicitly says `gstack` should help architecture.
+- `架构`: `$gstack-office-hours`, `$gstack-spec`, `$gstack-autoplan`, `$gstack-plan-ceo-review`, `$gstack-plan-eng-review`, `$gstack-plan-design-review`, `$gstack-plan-devex-review`, `$gstack-plan-tune`.
+- `开发`: `$gstack-investigate`, `$gstack-review`, `$gstack-ship`, `$gstack-health`, `$gstack-devex-review`, `$gstack-careful`, `$gstack-guard`, `$gstack-freeze`, `$gstack-unfreeze`.
+- `UI/PPT`: `$gstack-design-consultation`, `$gstack-design-shotgun`, `$gstack-design-html`, `$gstack-design-review`, `$gstack-plan-design-review`.
+- `安全`: `$gstack-cso` when broad security posture or infrastructure-first review is needed; dedicated Codex Security skills still win for repo scans and diffs.
+- `QA`: `$gstack-qa-only`, `$gstack-qa`, `$gstack-review`, `$gstack-ship`, `$gstack-canary`.
+- `测试`: keep formal test artifacts in `$test-case-report-builder`; use gstack only for planning or review support.
+- `运维`: Hermes-owned skills remain default for remote production facts; use `$gstack-setup-deploy`, `$gstack-land-and-deploy`, or `$gstack-canary` only as planning/release-gate support.
+- Docs/learning: `$gstack-document-generate`, `$gstack-document-release`, `$gstack-learn`, `$gstack-retro`.
 
-## How To Use
+## Default Architecture Use
 
-1. Read the current requirement, docs, and repo state first.
-2. If the task is still fuzzy, stay in `架构` clarification mode.
-3. Once there is a concrete plan/design, invoke or incorporate `$gstack-plan-eng-review`.
-4. Convert the review output into this user's role-window format:
-   - architecture judgment;
-   - risks and missing decisions;
-   - recommended downstream roles;
-   - file boundaries;
-   - validation expectations;
-   - copyable prompts.
+1. Read the user's requirement and local project context first.
+2. If the idea is fuzzy, use `$gstack-office-hours` or `$gstack-spec` before reviews.
+3. If a plan exists, use `$gstack-autoplan` or the narrow plan review skill that matches the risk.
+4. Convert the review result back into this user's role-window format: registry state, downstream roles, file boundaries, validation, commit/PR requirements, and copyable prompts.
 
 ## Boundaries
 
-- Do not run the full upstream gstack root skill automatically.
-- Do not inject Claude-specific routing files such as `CLAUDE.md`.
-- Do not enable telemetry or modify `~/.gstack` unless a gstack subskill explicitly requires it and the user agrees.
 - Treat upstream gstack content as an external GitHub dependency, not local-owned role logic.
-
+- Do not run upstream runtime, telemetry, browser-cookie import, proactive routing, or `CLAUDE.md` injection automatically.
+- Do not override `agent-role-orchestrator`'s architecture-first rule.
+- Do not turn QA into formal testing-document production; that remains `测试` + `$test-case-report-builder`.
+- Do not use deploy/ship methods to mutate production without explicit user authorization.

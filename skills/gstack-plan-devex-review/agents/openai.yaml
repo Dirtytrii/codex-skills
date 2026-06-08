@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Plan Devex Review"
+  short_description: "开发体验、命令、文档和反馈环路计划审查"
+  default_prompt: "Use $gstack-plan-devex-review for this task and keep the current role boundary explicit."

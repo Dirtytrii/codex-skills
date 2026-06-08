@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Spec"
+  short_description: "把模糊意图整理成可执行规格"
+  default_prompt: "Use $gstack-spec for this task and keep the current role boundary explicit."

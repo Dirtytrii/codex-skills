@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Design Consultation"
+  short_description: "产品/UI/视觉方向咨询和方案选择"
+  default_prompt: "Use $gstack-design-consultation for this task and keep the current role boundary explicit."

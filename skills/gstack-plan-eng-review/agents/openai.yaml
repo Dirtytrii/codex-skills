@@ -1,4 +1,4 @@
 interface:
-  display_name: "GStack Plan Review"
-  short_description: "Vendored gstack engineering plan review"
-  default_prompt: "Use $gstack-plan-eng-review to harden this implementation plan."
+  display_name: "Gstack Plan Eng Review"
+  short_description: "工程计划、数据流、边界、测试和发布风险审查"
+  default_prompt: "Use $gstack-plan-eng-review for this task and keep the current role boundary explicit."

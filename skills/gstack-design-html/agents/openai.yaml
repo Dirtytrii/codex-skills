@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Design Html"
+  short_description: "HTML 原型、设计板和渲染视觉探索"
+  default_prompt: "Use $gstack-design-html for this task and keep the current role boundary explicit."

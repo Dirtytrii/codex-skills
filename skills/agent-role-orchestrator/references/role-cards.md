@@ -11,7 +11,7 @@ Owns:
 - understand the user's new requirement;
 - read the current project docs/status before judging;
 - clarify boundaries with the user;
-- use `$gstack` for engineering plan review when the plan is concrete enough to lock down;
+- use `$gstack` as the gstack method router when product, design, engineering, DX, QA, release, or risk review would sharpen the plan;
 - maintain the role-window registry for the project/workstream;
 - decide whether each downstream role should be `新建`, `继承`, `接续`, or explicitly numbered such as `开发1号` / `开发2号`;
 - decide whether downstream role windows are needed;
@@ -30,13 +30,14 @@ First actions:
 - inspect git status if a repo is involved;
 - reconstruct or ask for the current role-window registry before creating a same-role downstream prompt;
 - identify whether the request affects backend, frontend, UI, docs, database, ops, security, testing, QA/review, or release.
-- before opening downstream implementation windows for a non-trivial plan, use `$gstack` to harden architecture, data flow, edge cases, and validation scope.
+- if the idea is early, use `$gstack-office-hours` or `$gstack-spec` before downstream prompts.
+- before opening downstream implementation windows for a non-trivial plan, use `$gstack-autoplan` or the focused review skills `$gstack-plan-ceo-review`, `$gstack-plan-eng-review`, `$gstack-plan-design-review`, `$gstack-plan-devex-review`, `$gstack-plan-tune`.
 
 Output:
 - role-window registry with established roles and numbered instances;
 - requirement restatement;
 - architecture judgment;
-- gstack review notes when used;
+- gstack method used and review notes when used;
 - recommended split, or `单架构继续澄清` if downstream windows are not yet needed;
 - copy-paste prompt for each downstream role, marked as `新建`, `继承`, `接续`, or numbered parallel instance;
 - decision points for the user.
@@ -64,6 +65,10 @@ First actions:
 - read the assigned prompt completely;
 - inspect `git status --short --branch`;
 - read the exact files/docs named in the prompt;
+- if root cause is unclear, use `$gstack-investigate` before coding.
+- if the diff needs pre-landing review, use `$gstack-review`.
+- if the task is explicitly about landing/release readiness, use `$gstack-ship`, `$gstack-health`, or `$gstack-devex-review` as appropriate.
+- if the work is risky or ambiguous, use `$gstack-careful`, `$gstack-guard`, `$gstack-freeze`, or `$gstack-unfreeze` to tighten stop conditions.
 - report blockers only after attempting local investigation.
 
 Output:
@@ -96,6 +101,10 @@ Does not own:
 - broad package upgrades unless explicitly allowed.
 
 First actions:
+- if the visual direction needs critique or exploration before production, use `$gstack-design-consultation` or `$gstack-design-shotgun`;
+- if a quick HTML prototype/design board helps, use `$gstack-design-html`;
+- if reviewing a rendered visual artifact, use `$gstack-design-review`;
+- if architecture is still reviewing a UI plan, use `$gstack-plan-design-review`;
 - if the task is landing/redesign/frontend taste work, use `$design-taste-frontend`;
 - if the task is web PPT, Swiss deck, magazine deck, or horizontal swipe presentation, use `$guizang-ppt-skill`;
 - if the task is Xiaohongshu/Rednote images, social cards, carousel images, or WeChat official account cover pairs, use `$guizang-social-card-skill`;
@@ -159,6 +168,7 @@ First actions:
 - confirm environment and target host/service;
 - separate local, CI, staging, and production facts;
 - collect read-only evidence first.
+- if using gstack for release planning, keep it to `$gstack-setup-deploy`, `$gstack-land-and-deploy`, or `$gstack-canary` planning/release gates and do not replace Hermes read-only evidence.
 - if diagnosing an application incident, use `$application-problem-diagnosis-workflow`;
 - if checking an uploaded package or planning an update, use `$package-update-check-and-plan`;
 - if preparing deployment, use `$pre-deployment-readonly-checklist`;
@@ -200,6 +210,7 @@ Does not own:
 First actions:
 - confirm authorization and target scope;
 - classify the audit:
+  - broad infrastructure-first security posture review -> use `$gstack-cso`;
   - public black-box/web surface -> use `$authorized-blackbox-web-security`;
   - repo or scoped-path scan -> use `$codex-security:security-scan`;
   - PR/commit/branch/working-tree diff -> use `$codex-security:security-diff-scan`;
@@ -268,6 +279,10 @@ Does not own:
 First actions:
 - inspect changed files and latest commits;
 - read the task prompt or PR description;
+- if the task is web/UI behavior verification without fixes, use `$gstack-qa-only`;
+- if the user explicitly allows a narrow verify-and-fix loop, use `$gstack-qa`;
+- if release smoke or staged validation is the question, use `$gstack-canary`;
+- if reviewing a diff or ship readiness, use `$gstack-review` or `$gstack-ship`;
 - run targeted tests or identify why they cannot run.
 
 Output:

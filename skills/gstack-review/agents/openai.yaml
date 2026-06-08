@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Review"
+  short_description: "提交前代码/变更审查和风险发现"
+  default_prompt: "Use $gstack-review for this task and keep the current role boundary explicit."

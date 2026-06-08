@@ -20,12 +20,13 @@
 
 `consumed_by_roles` 记录哪些角色默认会调用该 skill。例如：
 
-- `架构`: `gstack`、`gstack-plan-eng-review`、`startup-pressure-test`
+- `架构`: `gstack`、`gstack-office-hours`、`gstack-spec`、`gstack-autoplan`、`gstack-plan-*`、`startup-pressure-test`
+- `开发`: `gstack-investigate`、`gstack-review`、`gstack-ship`、`gstack-health`、`gstack-devex-review`、`gstack-careful`、`gstack-guard`
 - `UI/PPT`: `design-taste-frontend`、`guizang-ppt-skill`、`guizang-social-card-skill`、`playwright`
 - `运维`: Hermes-owned 的部署前检查、部署后验证、Hermes cron、Python 服务和代理诊断类 skill
 - `测试`: `test-case-report-builder`、`playwright`
-- `QA`: review/readiness validation; may use `playwright` and Hermes-owned readonly verification skills for targeted verification, but does not own test-case/report artifacts by default
-- `安全`: `authorized-blackbox-web-security`
+- `QA`: `gstack-qa-only`、`gstack-qa`、`gstack-canary`、`gstack-review`、`playwright`，可按需使用 Hermes-owned 只读验证 skill，但默认不负责测试用例/测试报告资产
+- `安全`: `gstack-cso`、`authorized-blackbox-web-security`
 
 角色消费不代表原创归属。外部 skill 可以作为角色默认工具，但仍必须保持外部来源标记。
 
@@ -47,6 +48,23 @@
 - `upstream_url`，如果暂时未知就填 `null`，不要编造。
 - `maintenance`。
 - 改动原因和验证结果。
+
+### gstack 适配规则
+
+`gstack` 和 `gstack-*` 来自 `https://github.com/garrytan/gstack`，在本仓库中使用 `origin_type=external-github` 和 `maintenance=vendored-adapted`。
+
+本仓库只沉淀 Codex 角色体系需要的方法论入口：
+
+- 保留 product / architecture / design / engineering / QA / security / ship / docs / retro 的方法划分。
+- 使用 `skills/gstack/references/methodology.md` 做共享方法图谱。
+- 每个 `gstack-*` 子 skill 是薄适配入口，负责触发、边界和输出口径。
+
+不要默认提交：
+
+- 上游浏览器或设计二进制运行时。
+- `node_modules`、浏览器下载缓存、构建产物。
+- 上游 telemetry、cookie import、host routing 自动注入配置。
+- `CLAUDE.md` / `.claude/` / `.agents/` 自动改写逻辑，除非用户明确要做上游 gstack 安装/迁移。
 
 ## Hermes Skill 同步规则
 

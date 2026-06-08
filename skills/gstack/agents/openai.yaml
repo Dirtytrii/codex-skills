@@ -1,4 +1,4 @@
 interface:
-  display_name: "GStack Architecture"
-  short_description: "Use gstack review patterns from the architecture role"
-  default_prompt: "Use $gstack to review this architecture plan before opening development windows."
+  display_name: "GStack Method Router"
+  short_description: "Route gstack methods across architecture, engineering, design, QA, security, and release work."
+  default_prompt: "Use $gstack to choose the right gstack method for this role and keep the role boundary explicit."

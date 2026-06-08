@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Unfreeze"
+  short_description: "从冻结状态恢复执行的条件和验证门"
+  default_prompt: "Use $gstack-unfreeze for this task and keep the current role boundary explicit."

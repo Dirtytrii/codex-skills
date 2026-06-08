@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Plan Tune"
+  short_description: "问题频率、自治程度和停止条件校准"
+  default_prompt: "Use $gstack-plan-tune for this task and keep the current role boundary explicit."

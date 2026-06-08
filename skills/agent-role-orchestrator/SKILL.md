@@ -90,11 +90,22 @@ For `安全`, always include the relevant downstream security skill in the gener
 - fix a validated or plausible security finding: `$codex-security:fix-finding`.
 
 For role tools sourced from external GitHub skills or Hermes-owned operational skills, name them as dependencies instead of treating them as local role logic:
-- `架构` engineering plan review / lock-in before downstream windows: `$gstack`;
+- `架构` gstack method routing / plan lock-in before downstream windows: `$gstack`;
+- `架构` early idea and demand reality check: `$gstack-office-hours`;
+- `架构` executable requirement/spec shaping: `$gstack-spec`;
+- `架构` full product/design/engineering/DX plan review: `$gstack-autoplan`;
+- `架构` focused plan reviews: `$gstack-plan-ceo-review`, `$gstack-plan-eng-review`, `$gstack-plan-design-review`, `$gstack-plan-devex-review`, `$gstack-plan-tune`;
+- `开发` bug/root-cause investigation and implementation review: `$gstack-investigate`, `$gstack-review`;
+- `开发` final landing or release readiness when explicitly assigned: `$gstack-ship`, `$gstack-health`, `$gstack-devex-review`;
+- risky work guardrails for `开发`, `运维`, `安全`, or `QA`: `$gstack-careful`, `$gstack-guard`, `$gstack-freeze`, `$gstack-unfreeze`;
 - `UI/PPT` landing/redesign/frontend taste work: `$design-taste-frontend`;
+- `UI/PPT` gstack design critique and exploration: `$gstack-design-consultation`, `$gstack-design-shotgun`, `$gstack-design-html`, `$gstack-design-review`, `$gstack-plan-design-review`;
 - `UI/PPT` web PPT / Swiss deck / magazine deck work: `$guizang-ppt-skill`;
 - `UI/PPT` Xiaohongshu/Rednote carousel images, social cards, or WeChat cover pairs: `$guizang-social-card-skill`;
 - browser UI verification, rendered frontend checks, and E2E-like flows: `$playwright`;
+- `安全` broad infrastructure-first posture review: `$gstack-cso`;
+- `QA` web/UI behavior verification and release gates: `$gstack-qa-only`, `$gstack-qa`, `$gstack-canary`;
+- docs, release notes, learnings, and retrospectives: `$gstack-document-generate`, `$gstack-document-release`, `$gstack-learn`, `$gstack-retro`;
 - `测试` test cases, Excel workbook, Word/DOCX test report, or formal testing artifact package: `$test-case-report-builder`.
 - `运维` application incident diagnosis: `$application-problem-diagnosis-workflow`;
 - `运维` package/update planning before deployment: `$package-update-check-and-plan`;
@@ -104,6 +115,7 @@ For role tools sourced from external GitHub skills or Hermes-owned operational s
 - `运维` Hermes cron interpreter-wrapper diagnosis: `$hermes-python-script-wrapper-for-shell-cron`;
 - `运维` proxy-dependent Python service diagnosis: `$proxy-dependent-python-service-diagnosis`;
 - `运维` Python deployment troubleshooting: `$python-project-deployment-troubleshooting`.
+- `运维` deploy/canary planning support only when it does not replace Hermes read-only production evidence: `$gstack-setup-deploy`, `$gstack-land-and-deploy`, `$gstack-canary`.
 
 ## Workflow
 
@@ -288,14 +300,14 @@ Before finalizing, check:
 - `安全` prompts explicitly invoke the appropriate security skill instead of duplicating that workflow.
 - `测试` prompts for test cases or test reports explicitly invoke `$test-case-report-builder`.
 - `QA` prompts stay focused on review readiness, acceptance risk, and blocker verification; they do not own test-case/report authoring by default.
-- `架构` prompts use `$gstack` when a concrete implementation plan needs engineering-manager review before opening downstream windows.
+- `架构` prompts use `$gstack` as a method router and choose `$gstack-office-hours`, `$gstack-spec`, `$gstack-autoplan`, or focused `$gstack-plan-*` reviews when useful.
 - role prompts distinguish external GitHub skills from local-owned skills when that affects maintenance or self-editing.
 
 ## Common Defaults
 
 Use these defaults unless the user says otherwise:
 - `架构` clarifies requirements, maintains the role-window registry, and decides whether downstream windows are needed; it does not code or commit.
-- `架构` uses `$gstack` for engineering plan review when the plan is concrete enough to harden.
+- `架构` uses `$gstack` for method routing: early ideas go to `$gstack-office-hours` or `$gstack-spec`; concrete plans go to `$gstack-autoplan` or focused `$gstack-plan-*` reviews.
 - `开发` implements within a narrow file scope, runs tests, and commits when asked or when workspace instructions require it.
 - `UI/PPT` and `视频` produce visible artifacts and perform visual verification.
 - `测试` uses `$test-case-report-builder` for test case and test report artifacts.

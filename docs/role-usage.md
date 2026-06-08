@@ -39,14 +39,32 @@
 
 | 角色 | 推荐运行环境 | 核心职责 | 默认 skill |
 | --- | --- | --- | --- |
-| `架构` | Codex 本地窗口 | 需求澄清、架构判断、拆分角色、维护角色台账 | `agent-role-orchestrator`, `gstack`, `gstack-plan-eng-review`, `startup-pressure-test` |
-| `开发` | Codex 本地窗口 | 按架构提示词实现代码、测试、提交 | 由项目技术栈决定，可辅助用 `playwright`, `pdf` |
-| `UI/PPT` | Codex 本地窗口 | UI 体验、视觉改造、网页 PPT、社交卡、公众号封面、演示材料 | `design-taste-frontend`, `guizang-ppt-skill`, `guizang-social-card-skill`, `playwright` |
+| `架构` | Codex 本地窗口 | 需求澄清、架构判断、拆分角色、维护角色台账 | `agent-role-orchestrator`, `gstack`, `gstack-office-hours`, `gstack-spec`, `gstack-autoplan`, `gstack-plan-*`, `startup-pressure-test` |
+| `开发` | Codex 本地窗口 | 按架构提示词实现代码、测试、提交 | 由项目技术栈决定，可辅助用 `gstack-investigate`, `gstack-review`, `gstack-ship`, `gstack-health`, `gstack-careful`, `gstack-guard`, `playwright`, `pdf` |
+| `UI/PPT` | Codex 本地窗口 | UI 体验、视觉改造、网页 PPT、社交卡、公众号封面、演示材料 | `gstack-design-*`, `design-taste-frontend`, `guizang-ppt-skill`, `guizang-social-card-skill`, `playwright` |
 | `视频` | Codex 本地窗口 | 宣传视频脚本、分镜、素材和渲染计划 | `hatch-pet` 或视频插件/工具链 |
-| `运维` | 服务器侧 Hermes agent 优先 | 部署检查、发布验证、日志/cron/服务诊断 | Hermes-owned 运维 skills |
-| `安全` | Codex 本地窗口，必要时低影响远端验证 | 授权安全审计、仓库/PR 安全扫描、黑盒报告 | `authorized-blackbox-web-security` 和 Codex Security 系列 |
+| `运维` | 服务器侧 Hermes agent 优先 | 部署检查、发布验证、日志/cron/服务诊断 | Hermes-owned 运维 skills；`gstack-setup-deploy` / `gstack-land-and-deploy` / `gstack-canary` 只作规划和门禁辅助 |
+| `安全` | Codex 本地窗口，必要时低影响远端验证 | 授权安全审计、仓库/PR 安全扫描、黑盒报告 | `gstack-cso`, `authorized-blackbox-web-security` 和 Codex Security 系列 |
 | `测试` | Codex 本地窗口 | 测试用例、测试报告、证据包 | `test-case-report-builder`, `playwright` |
-| `QA` | Codex 本地窗口 | Review readiness、验收缺口、阻塞风险验证 | `playwright`，必要时使用 Hermes 只读验证 skill |
+| `QA` | Codex 本地窗口 | Review readiness、验收缺口、阻塞风险验证 | `gstack-qa-only`, `gstack-qa`, `gstack-canary`, `gstack-review`, `playwright`，必要时使用 Hermes 只读验证 skill |
+
+## gstack 方法论分发
+
+`gstack` 是外部 GitHub 方法论在本仓库里的 Codex 适配入口。完整映射在 [../skills/gstack/references/methodology.md](../skills/gstack/references/methodology.md)。
+
+| 方法族 | 默认角色 | 用法 |
+| --- | --- | --- |
+| `gstack-office-hours`, `gstack-spec` | 架构 | 早期想法、需求澄清、可执行规格 |
+| `gstack-autoplan`, `gstack-plan-*` | 架构 | CEO/设计/工程/DX 的计划审查和下游拆分 |
+| `gstack-investigate`, `gstack-review`, `gstack-ship`, `gstack-health`, `gstack-devex-review` | 开发 / QA | 根因、代码审查、发布前检查、项目健康 |
+| `gstack-careful`, `gstack-guard`, `gstack-freeze`, `gstack-unfreeze` | 开发 / 运维 / 安全 / QA | 高风险动作前的保守检查、护栏、冻结和恢复 |
+| `gstack-design-*` | UI/PPT | 视觉方向探索、HTML 原型、渲染后设计审查 |
+| `gstack-qa-only`, `gstack-qa`, `gstack-canary` | QA | Web/UI 行为验证、窄范围修复闭环、发布门禁 |
+| `gstack-cso` | 安全 | 基础设施优先的安全态势审查 |
+| `gstack-setup-deploy`, `gstack-land-and-deploy` | 运维 / 架构 | 部署规划和发布门禁；远程生产事实仍交给 Hermes |
+| `gstack-document-*`, `gstack-learn`, `gstack-retro` | 架构 / 开发 / QA | 文档、发布说明、经验沉淀、复盘 |
+
+本仓库不内置上游 gstack 的浏览器/设计二进制运行时，也不自动开启遥测、cookie 导入或 host routing 注入。需要上游完整运行时能力时，单独按上游仓库安装，不把这些运行时文件混入本公开 skills 仓库。
 
 ## 推荐协作流
 

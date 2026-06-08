@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Setup Deploy"
+  short_description: "部署环境、配置、密钥和验证门禁规划"
+  default_prompt: "Use $gstack-setup-deploy for this task and keep the current role boundary explicit."
