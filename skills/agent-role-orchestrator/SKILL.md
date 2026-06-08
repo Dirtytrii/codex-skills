@@ -135,7 +135,7 @@ For role tools sourced from external GitHub skills or Hermes-owned operational s
 - `运维` post-deployment read-only verification: `$post-deployment-readonly-verification`;
 - `运维` Hermes cron empty-output diagnosis: `$hermes-cron-empty-output-diagnosis`;
 - `运维` Hermes cron interpreter-wrapper diagnosis: `$hermes-python-script-wrapper-for-shell-cron`;
-- `运维` proxy-dependent Python runtime behavior: `$proxy-dependent-python-service-diagnosis`;
+- `运维` proxy-dependent Python service diagnosis: `$proxy-dependent-python-service-diagnosis`;
 - `运维` Python deployment troubleshooting: `$python-project-deployment-troubleshooting`.
 - `运维` deploy/canary planning support only when it does not replace Hermes read-only production evidence: `$gstack-setup-deploy`, `$gstack-land-and-deploy`, `$gstack-canary`.
 
