@@ -56,6 +56,26 @@ Maintain this registry in architecture handoffs when possible:
 
 Use `新建` only for first establishment or explicit parallel instances. Use `继承` / `接续` for resets, context refreshes, and ongoing work in an existing role.
 
+### Project Registry File
+
+For project-scoped work with a known local project path, persist the role-window registry in the project whenever file writes are allowed. Use `.codex/role-windows.md` at the project root by default.
+
+Before creating or continuing a role window:
+- read `.codex/role-windows.md` if it exists;
+- merge it with current conversation evidence and thread/tool evidence;
+- prefer existing established role windows over creating duplicates;
+- mark uncertain items as `待确认` instead of inventing thread ids or status.
+
+After a role is created, manually opened by the user, continued, retired, or discovered to be misplaced, update `.codex/role-windows.md` with:
+- role name and lifecycle status: `未建立`, `已建立`, `接续中`, `已关闭`, `误开/废弃`, or `待确认`;
+- known thread id or `待确认`;
+- project path or scope;
+- current responsibility and forbidden responsibility;
+- last known handoff/QA/development result;
+- next recommended action.
+
+Do not write the registry file when the user explicitly forbids file edits, when no project path is known, or when producing a reusable role template. In those cases, include the registry inline in the response and say it was not persisted.
+
 ## Core Rule
 
 Do not invent project state. Use only the current conversation, local files, git state, known memory, and user-provided facts. If a fact is missing, write `待确认` or make a small explicit assumption.
