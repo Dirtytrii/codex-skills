@@ -1,6 +1,6 @@
 ---
 name: agent-role-orchestrator
-description: Create concise role-specific Codex window prompts and current-window handoffs with an architecture-first gateway and role-window registry. Use when the user asks for an architecture/development/UI-PPT/video/ops/security/testing/QA window, says to inherit/reset/continue the current role, asks for the next-window prompt, wants a requirement routed through architecture before deciding whether to open other role windows, wants existing roles reused instead of recreated, wants testing test-case/report prompts, or wants security-audit prompts that delegate to the appropriate security skill.
+description: Create concise role-specific Codex window prompts and current-window handoffs with an architecture-first gateway and role-window registry. Use when the user asks for an architecture/development/UI-PPT/video/ops/security/testing/QA/document-delivery window, says to inherit/reset/continue the current role, asks for the next-window prompt, wants a requirement routed through architecture before deciding whether to open other role windows, wants existing roles reused instead of recreated, wants testing test-case/report prompts, wants delivery-document prompts for requirements/contracts/acceptance/docs, or wants security-audit prompts that delegate to the appropriate security skill.
 ---
 
 # Agent Role Orchestrator
@@ -12,7 +12,7 @@ Turn fuzzy collaboration intent into a copy-paste prompt for the next Codex wind
 Use this skill to:
 - bootstrap a new role window, usually `架构` first;
 - summarize the current thread so a next window can inherit a role;
-- let `架构` decide whether to open `开发`, `UI/PPT`, `视频`, `运维`, `安全`, `测试`, or `QA` windows;
+- let `架构` decide whether to open `开发`, `UI/PPT`, `视频`, `运维`, `安全`, `测试`, `QA`, or `文档/交付` windows;
 - remember whether each role has already been established and reuse it by default;
 - rewrite a project-specific role prompt into a reusable role template.
 - route `安全` work to the right existing security skill by default.
@@ -27,7 +27,7 @@ Only output multiple downstream role prompts when one of these is true:
 - the current thread is already acting as `架构` and has enough evidence to choose downstream roles;
 - the user explicitly overrides the gateway and asks to bypass `架构`.
 
-When the user asks for `开发`, `UI/PPT`, `视频`, `运维`, `安全`, `测试`, or `QA` prompts without an architecture decision, either produce a `架构` prompt first or clearly mark the downstream prompt as `待架构确认`.
+When the user asks for `开发`, `UI/PPT`, `视频`, `运维`, `安全`, `测试`, `QA`, or `文档/交付` prompts without an architecture decision, either produce a `架构` prompt first or clearly mark the downstream prompt as `待架构确认`.
 
 ## Role-Window Registry Rule
 
@@ -52,6 +52,7 @@ Maintain this registry in architecture handoffs when possible:
 - 安全：已建立 / 未建立 / 待确认
 - 测试：已建立 / 未建立 / 待确认
 - QA：已建立 / 未建立 / 待确认
+- 文档/交付：已建立 / 未建立 / 待确认
 ```
 
 Use `新建` only for first establishment or explicit parallel instances. Use `继承` / `接续` for resets, context refreshes, and ongoing work in an existing role.
@@ -75,6 +76,7 @@ After a role is created, manually opened by the user, continued, retired, or dis
 - next recommended action.
 
 Do not write the registry file when the user explicitly forbids file edits, when no project path is known, or when producing a reusable role template. In those cases, include the registry inline in the response and say it was not persisted.
+
 ## Core Rule
 
 Do not invent project state. Use only the current conversation, local files, git state, known memory, and user-provided facts. If a fact is missing, write `待确认` or make a small explicit assumption.
@@ -100,6 +102,7 @@ For common role defaults, read [references/role-cards.md](references/role-cards.
 - 安全;
 - 测试 / test cases / test report;
 - QA / review / 验收.
+- 文档/交付 / delivery docs / requirements / contract / acceptance / handoff.
 
 For `安全`, always include the relevant downstream security skill in the generated prompt:
 - public site, black-box, exposed JS/API, login protection, CORS, headers, or penetration-style report: `$authorized-blackbox-web-security`;
@@ -124,7 +127,7 @@ For role tools sourced from external GitHub skills or Hermes-owned operational s
 - browser UI verification, rendered frontend checks, and E2E-like flows: `$playwright`;
 - `安全` broad infrastructure-first posture review: `$gstack-cso`;
 - `QA` web/UI behavior verification and release gates: `$gstack-qa-only`, `$gstack-qa`, `$gstack-canary`;
-- docs, release notes, learnings, and retrospectives: `$gstack-document-generate`, `$gstack-document-release`, `$gstack-learn`, `$gstack-retro`;
+- `文档/交付` docs, release notes, learnings, and retrospectives: `$gstack-document-generate`, `$gstack-document-release`, `$gstack-learn`, `$gstack-retro`;
 - `测试` test cases, Excel workbook, Word/DOCX test report, or formal testing artifact package: `$test-case-report-builder`.
 - `运维` application incident diagnosis: `$application-problem-diagnosis-workflow`;
 - `运维` package/update planning before deployment: `$package-update-check-and-plan`;
@@ -302,6 +305,10 @@ Prefer short examples when telling the user how to call the skill:
 使用 $agent-role-orchestrator，给我测试窗口。
 ```
 
+```text
+使用 $agent-role-orchestrator，给我文档/交付窗口。
+```
+
 ## Quality Bar
 
 Before finalizing, check:
@@ -319,6 +326,7 @@ Before finalizing, check:
 - `安全` prompts explicitly invoke the appropriate security skill instead of duplicating that workflow.
 - `测试` prompts for test cases or test reports explicitly invoke `$test-case-report-builder`.
 - `QA` prompts stay focused on review readiness, acceptance risk, and blocker verification; they do not own test-case/report authoring by default.
+- `文档/交付` prompts stay focused on requirements, quotes, contracts, acceptance records, handoff docs, change logs, and operator-facing documentation; they do not own code, QA signoff, legal advice, or tax advice.
 - `架构` prompts use `$gstack` as a method router and choose `$gstack-office-hours`, `$gstack-spec`, `$gstack-autoplan`, or focused `$gstack-plan-*` reviews when useful.
 - role prompts distinguish external GitHub skills from local-owned skills when that affects maintenance or self-editing.
 
@@ -331,5 +339,6 @@ Use these defaults unless the user says otherwise:
 - `UI/PPT` and `视频` produce visible artifacts and perform visual verification.
 - `测试` uses `$test-case-report-builder` for test case and test report artifacts.
 - `QA` checks review/release readiness, blockers, and acceptance risk.
+- `文档/交付` maintains the project documentation package across phases: requirements, quotes, contracts/service agreements, acceptance sheets, delivery checklists, operation guides, change confirmations, and handoff notes; it does not write code or replace legal/tax review.
 - `运维` investigates read-only first and avoids restarts, migrations, deletes, or production writes without explicit authorization.
 - `安全` delegates to the matching security skill first, uses low-impact checks by default, and distinguishes evidence from suspicion.
