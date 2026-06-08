@@ -75,7 +75,6 @@ After a role is created, manually opened by the user, continued, retired, or dis
 - next recommended action.
 
 Do not write the registry file when the user explicitly forbids file edits, when no project path is known, or when producing a reusable role template. In those cases, include the registry inline in the response and say it was not persisted.
-
 ## Core Rule
 
 Do not invent project state. Use only the current conversation, local files, git state, known memory, and user-provided facts. If a fact is missing, write `待确认` or make a small explicit assumption.
