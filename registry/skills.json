@@ -11,6 +11,8 @@
       "开发",
       "UI/PPT",
       "视频",
+      "公众号发布",
+      "小红书",
       "运维",
       "安全",
       "测试",
@@ -76,9 +78,25 @@
     "upstream_url": "https://github.com/op7418/guizang-social-card-skill",
     "maintenance": "vendored-upstream",
     "consumed_by_roles": [
-      "UI/PPT"
+      "UI/PPT",
+      "公众号发布",
+      "小红书"
     ],
     "summary": "小红书/Rednote 图文组图、社交卡和公众号封面对生成"
+  },
+  {
+    "name": "wechat-ai-app-ops",
+    "path": "skills/wechat-ai-app-ops",
+    "status": "active",
+    "origin_type": "local",
+    "upstream_url": null,
+    "maintenance": "local-owned",
+    "consumed_by_roles": [
+      "公众号发布",
+      "架构",
+      "UI/PPT"
+    ],
+    "summary": "微信公众号 AI 应用文章、周刊连续性、图文排版和草稿箱 API 工作流"
   },
   {
     "name": "gstack",
