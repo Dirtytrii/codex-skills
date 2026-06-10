@@ -23,6 +23,8 @@
 - `架构`: `gstack`、`gstack-office-hours`、`gstack-spec`、`gstack-autoplan`、`gstack-plan-*`、`startup-pressure-test`
 - `开发`: `gstack-investigate`、`gstack-review`、`gstack-ship`、`gstack-health`、`gstack-devex-review`、`gstack-careful`、`gstack-guard`
 - `UI/PPT`: `design-taste-frontend`、`guizang-ppt-skill`、`guizang-social-card-skill`、`playwright`
+- `公众号发布`: `wechat-ai-app-ops` 承接公众号 AI 应用文章、周刊连续性、草稿箱 API 和本地交接；视觉资产可复用 `guizang-social-card-skill`
+- `小红书`: 预留的小红书/Rednote 笔记和授权发布角色；图文资产可复用 `guizang-social-card-skill`
 - `运维`: Hermes-owned 的部署前检查、部署后验证、Hermes cron、Python 服务和代理诊断类 skill
 - `测试`: `test-case-report-builder`、`playwright`
 - `QA`: `gstack-qa-only`、`gstack-qa`、`gstack-canary`、`gstack-review`、`playwright`，可按需使用 Hermes-owned 只读验证 skill，但默认不负责测试用例/测试报告资产

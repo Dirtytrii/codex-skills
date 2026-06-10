@@ -1,6 +1,6 @@
 # 角色分工与推荐使用方式
 
-这份文档说明本仓库的结构、角色边界和推荐运行环境。核心原则是：`架构` 先判断需求和拆分边界，`开发` 等执行角色按白名单落地，`运维` 优先交给服务器侧 Hermes agent 做只读诊断和受控操作。
+这份文档说明本仓库的结构、角色边界和推荐运行环境。核心原则是：`架构` 先判断需求和拆分边界，`开发` 等执行角色按白名单落地，`公众号发布` / `小红书` 可作为独立内容发布角色单独唤起，`运维` 优先交给服务器侧 Hermes agent 做只读诊断和受控操作。
 
 ## 仓库结构
 
@@ -43,6 +43,8 @@
 | `开发` | Codex 本地窗口 | 按架构提示词实现代码、测试、提交 | 由项目技术栈决定，可辅助用 `gstack-investigate`, `gstack-review`, `gstack-ship`, `gstack-health`, `gstack-careful`, `gstack-guard`, `playwright`, `pdf` |
 | `UI/PPT` | Codex 本地窗口 | UI 体验、视觉改造、网页 PPT、社交卡、公众号封面、演示材料 | `gstack-design-*`, `design-taste-frontend`, `guizang-ppt-skill`, `guizang-social-card-skill`, `playwright` |
 | `视频` | Codex 本地窗口 | 宣传视频脚本、分镜、素材和渲染计划 | `hatch-pet` 或视频插件/工具链 |
+| `公众号发布` | Codex 本地窗口 | 公众号文章排版、草稿、预览、素材检查和授权发布自动化 | `wechat-ai-app-ops`；需要封面/社交卡时交给 `UI/PPT` 或 `guizang-social-card-skill` |
+| `小红书` | Codex 本地窗口 | 小红书/Rednote 笔记、图文组图、标题标签、草稿和授权发布自动化 | `guizang-social-card-skill`, `playwright`；最终发布必须明确授权 |
 | `运维` | 服务器侧 Hermes agent 优先 | 部署检查、发布验证、日志/cron/服务诊断 | Hermes-owned 运维 skills；`gstack-setup-deploy` / `gstack-land-and-deploy` / `gstack-canary` 只作规划和门禁辅助 |
 | `安全` | Codex 本地窗口，必要时低影响远端验证 | 授权安全审计、仓库/PR 安全扫描、黑盒报告 | `gstack-cso`, `authorized-blackbox-web-security` 和 Codex Security 系列 |
 | `测试` | Codex 本地窗口 | 测试用例、测试报告、证据包 | `test-case-report-builder`, `playwright` |
@@ -59,6 +61,8 @@
 | `gstack-investigate`, `gstack-review`, `gstack-ship`, `gstack-health`, `gstack-devex-review` | 开发 / QA | 根因、代码审查、发布前检查、项目健康 |
 | `gstack-careful`, `gstack-guard`, `gstack-freeze`, `gstack-unfreeze` | 开发 / 运维 / 安全 / QA | 高风险动作前的保守检查、护栏、冻结和恢复 |
 | `gstack-design-*` | UI/PPT | 视觉方向探索、HTML 原型、渲染后设计审查 |
+| `wechat-ai-app-ops` | 公众号发布 / 架构 / UI/PPT | 公众号 AI 应用文章、周刊连续性、图文排版、草稿箱 API 和本地交接 |
+| `guizang-social-card-skill` | UI/PPT / 小红书 / 公众号发布 | 小红书图文、社交卡和公众号封面素材生产；发布动作仍归平台发布角色 |
 | `gstack-qa-only`, `gstack-qa`, `gstack-canary` | QA | Web/UI 行为验证、窄范围修复闭环、发布门禁 |
 | `gstack-cso` | 安全 | 基础设施优先的安全态势审查 |
 | `gstack-setup-deploy`, `gstack-land-and-deploy` | 运维 / 架构 | 部署规划和发布门禁；远程生产事实仍交给 Hermes |
@@ -72,7 +76,7 @@
 
 1. 先开或继承 `架构` 窗口。
 2. `架构` 读取项目上下文，判断需求类型、风险和是否需要多角色。
-3. `架构` 只在必要时输出 `开发`、`UI/PPT`、`测试`、`QA`、`安全`、`运维` 等下游提示词。
+3. `架构` 只在必要时输出 `开发`、`UI/PPT`、`视频`、`公众号发布`、`小红书`、`测试`、`QA`、`安全`、`运维` 等下游提示词。
 4. 已建立过的角色默认走 `继承` / `接续`，不要重复新建窗口。
 5. 只有明确需要并行时才开 `开发1号`、`开发2号` 这类编号角色。
 
@@ -82,6 +86,7 @@
 
 - 架构拆分后的代码实现。
 - 前端/UI/PPT/社交卡/视频产物。
+- 公众号文章和小红书笔记的草稿、预览、发布包和明确授权后的发布自动化。
 - 仓库测试、QA、Review 准备。
 - 安全代码审计和低影响黑盒报告。
 
@@ -111,6 +116,17 @@
 - Python 部署问题诊断：`python-project-deployment-troubleshooting`
 
 Hermes 默认只读。重启、清理、迁移、删除、回滚、配置修改、数据库写操作都必须进入“待授权动作”，不能作为默认 workflow 执行。
+
+### 内容发布团队
+
+`公众号发布` 和 `小红书` 是独立内容发布角色：
+
+- 可以由 `架构` 分流，也可以通过 `$agent-role-orchestrator` 单独唤起。
+- `公众号发布` 默认使用 `wechat-ai-app-ops` 处理 AI 应用公众号文章、周刊连续性、图文排版和草稿箱 API。
+- 默认只做草稿、预览、发布包、素材检查和自动化步骤准备。
+- 最终发布、群发、删除、账号设置、凭据变更等动作必须有用户明确授权。
+- 视觉资产生产仍可交给 `UI/PPT`，特别是公众号封面、小红书图文组图和社交卡。
+- 平台账号、登录态、token、cookie 和后台权限不随本仓库同步，必须在目标机器或目标账号环境单独配置。
 
 ### 测试和 QA
 
@@ -168,6 +184,7 @@ done
 - 新需求先过 `架构`。
 - 代码和产物交给 Codex。
 - 远程生产事实交给 Hermes 只读查。
+- 公众号和小红书默认先草稿/预览，最终发布必须显式授权。
 - 测试报告归 `测试`。
 - 验收阻塞归 `QA`。
 - 外部 skill 记来源，Hermes skill 先脱敏。
