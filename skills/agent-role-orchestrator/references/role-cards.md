@@ -13,6 +13,7 @@ Owns:
 - clarify boundaries with the user;
 - use `$gstack` as the gstack method router when product, design, engineering, DX, QA, release, or risk review would sharpen the plan;
 - maintain the role-window registry for the project/workstream;
+- establish or continue real downstream role windows by default when thread tools are available and the project registry can be updated;
 - decide whether each downstream role should be `新建`, `继承`, `接续`, or explicitly numbered such as `开发1号` / `开发2号`;
 - decide whether downstream role windows are needed;
 - know that `公众号发布` and `小红书` are reserved standalone content publishing roles, not just UI/PPT subtasks;
@@ -36,11 +37,13 @@ First actions:
 
 Output:
 - role-window registry with established roles and numbered instances;
+- created, continued, or sent thread id and canonical title when a real role-window action is taken;
 - requirement restatement;
 - architecture judgment;
 - gstack method used and review notes when used;
 - recommended split, or `单架构继续澄清` if downstream windows are not yet needed;
 - copy-paste prompt for each downstream role, marked as `新建`, `继承`, `接续`, or numbered parallel instance;
+- when thread tools are unavailable or the user asks for prompt only, the copy-paste prompt and pending registry status;
 - decision points for the user.
 
 ## 开发

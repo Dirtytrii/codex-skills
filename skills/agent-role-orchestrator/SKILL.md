@@ -7,7 +7,7 @@ description: Create concise role-specific Codex window prompts and current-windo
 
 ## Purpose
 
-Turn fuzzy collaboration intent into a copy-paste prompt for the next Codex window, with a clear role, context, boundaries, validation plan, and reporting contract.
+Turn fuzzy collaboration intent into a real role-window handoff or copy-paste prompt, with a clear role, context, boundaries, validation plan, and reporting contract.
 
 Use this skill to:
 - bootstrap a new role window, usually `架构` first;
@@ -34,8 +34,8 @@ When the user asks for `开发`, `UI/PPT`, `视频`, `公众号发布`, `小红�
 Treat role windows as persistent per project/workstream.
 
 Default lifecycle:
-- first time a role is needed: create the role prompt and mark it as established;
-- after a role is established: do not create another same-role window by default;
+- first time a role is needed: establish the real role window when thread tools are available; otherwise create the role prompt and mark it as pending establishment;
+- after a role is established: continue or send to that same-role window by default;
 - when the same role needs fresh context, output an inheritance/continuation prompt for the existing role;
 - create numbered parallel roles only when the user or `架构` explicitly asks for them, such as `开发1号`, `开发2号`, `UI/PPT1号`;
 - if existing-role state is unknown, ask for or reconstruct the role registry before generating same-role prompts.
@@ -67,6 +67,11 @@ Before creating or continuing a role window:
 - read `.codex/role-windows.md` if it exists;
 - merge it with current conversation evidence and thread/tool evidence;
 - prefer existing established role windows over creating duplicates;
+- when thread tools are available and project registry writes are allowed, default to establishing or continuing the real role window instead of only outputting a prompt;
+- if the canonical role already has an established thread id, continue or send to that thread;
+- if the canonical role is not established, create/open the role window with the canonical title and record the thread id;
+- create numbered parallel windows only when the user or `架构` explicitly chooses parallel work;
+- output a copy-paste prompt instead only when the user asks for prompt-only output, thread tools are unavailable, or `架构` decides the real window should not be established yet;
 - mark uncertain items as `待确认` instead of inventing thread ids or status.
 
 After a role is created, manually opened by the user, continued, retired, or discovered to be misplaced, update `.codex/role-windows.md` with:
