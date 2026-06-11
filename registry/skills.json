@@ -85,6 +85,19 @@
     "summary": "小红书/Rednote 图文组图、社交卡和公众号封面对生成"
   },
   {
+    "name": "humanizer-zh",
+    "path": "skills/humanizer-zh",
+    "status": "active",
+    "origin_type": "external-github",
+    "upstream_url": "https://github.com/op7418/Humanizer-zh",
+    "maintenance": "vendored-upstream",
+    "consumed_by_roles": [
+      "公众号发布",
+      "小红书"
+    ],
+    "summary": "中文 AI 写作去痕、人味化润色和发布前文案校准"
+  },
+  {
     "name": "wechat-ai-app-ops",
     "path": "skills/wechat-ai-app-ops",
     "status": "active",
