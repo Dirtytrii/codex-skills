@@ -18,7 +18,7 @@ git status --short --branch
 2. Read the current handoff and target article files before editing or API calls.
 3. Classify the article as `weekly` or `flexible`.
 4. For weekly articles, review the previous weekly article in the same series before drafting.
-5. Improve the article as a WeChat article, not a cold changelog: use a strong hook, human judgment, varied section structures, visible reader stakes, and explanatory image anchors.
+5. Improve the article as a WeChat article, not a cold changelog: use a strong hook, human judgment, varied section structures, visible reader stakes, and explanatory image anchors. If the copy sounds AI-generated, use `humanizer-zh` for a final human voice pass without changing facts or attribution.
 6. If the article feels visually dry, add 1-2 useful illustrations before draft-box update. Save images inside the WeChat article folder and configure `inline-images.json`.
 7. Format with WeChat-compatible inline HTML and generate a local preview before touching the API.
 8. Write to the WeChat draft box only when authorized. Never publish unless the user explicitly authorizes publishing in the current turn.
@@ -34,6 +34,7 @@ git status --short --branch
 Load these only when the article task needs that capability. If a related skill is not installed in the current Codex environment, state that and continue with the closest safe fallback:
 
 - `wechat-tech-writer`: use for AI technology topic research, source gathering, and first-pass Chinese WeChat article drafting.
+- `humanizer-zh`: use for Chinese article copy humanization, anti-AI texture, and final voice polish before WeChat preview or draft-box handoff.
 - `wechat-article-formatter`: use when Markdown-to-WeChat HTML formatting needs a dedicated formatter or when polishing an existing WeChat HTML layout.
 - `guizang-social-card-skill`: use for WeChat covers, inline social-card-style illustrations, explanatory Swiss-style figures, and image-rich article assets.
 - `imagegen`: use for new bitmap brand assets such as avatars or non-vector visual concepts; copy final project assets into `content/wechat/...`.

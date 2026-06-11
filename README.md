@@ -89,8 +89,8 @@ flowchart TD
 | `开发` | 架构给出的开发提示词 | `$gstack-investigate`, `$gstack-review`, `$gstack-ship`, `$gstack-health`, `$gstack-careful`, `$gstack-guard`, `$playwright`, `$pdf` | 默认包含文件白名单、禁止范围、验证命令、提交要求 |
 | `UI/PPT` | 架构给出的 UI/PPT 提示词 | `$gstack-design-*`, `$design-taste-frontend`, `$guizang-ppt-skill`, `$guizang-social-card-skill`, `$playwright` | UI、网页 PPT、社交卡、公众号封面和视觉验证 |
 | `视频` | 架构给出的视频提示词 | `$hatch-pet`，以及可用的视频/HyperFrames 插件 | 宣传视频脚本、分镜、素材和渲染计划 |
-| `公众号发布` | 架构给出或单独唤起的公众号发布提示词 | `$wechat-ai-app-ops`；需要视觉资产时可交给 `UI/PPT` / `$guizang-social-card-skill` | 公众号 AI 应用文章、周刊连续性、草稿箱、预览、素材检查和授权发布自动化 |
-| `小红书` | 架构给出或单独唤起的小红书提示词 | `$guizang-social-card-skill`, `$playwright` | 小红书/Rednote 笔记、图文组图、标题标签和授权发布自动化 |
+| `公众号发布` | 架构给出或单独唤起的公众号发布提示词 | `$wechat-ai-app-ops`, `$humanizer-zh`；需要视觉资产时可交给 `UI/PPT` / `$guizang-social-card-skill` | 公众号 AI 应用文章、周刊连续性、草稿箱、预览、素材检查和授权发布自动化 |
+| `小红书` | 架构给出或单独唤起的小红书提示词 | `$humanizer-zh`, `$guizang-social-card-skill`, `$playwright` | 小红书/Rednote 笔记、图文组图、标题标签和授权发布自动化 |
 | `运维` | Hermes handoff 提示词 | `$application-problem-diagnosis-workflow`, `$package-update-check-and-plan`, `$pre-deployment-readonly-checklist`, `$post-deployment-readonly-verification`, `$hermes-*`, `$proxy-dependent-python-service-diagnosis`, `$python-project-deployment-troubleshooting` | 远程生产事实由 Hermes 只读查；写操作必须授权 |
 | `安全` | 安全审计提示词 | `$gstack-cso`, `$authorized-blackbox-web-security`, Codex Security 插件 skills | 黑盒、公网、仓库、PR、深度扫描要分开 |
 | `测试` | 测试提示词 | `$test-case-report-builder`, `$playwright`, `$pdf` | 正式测试用例、测试报告和证据包归测试 |
@@ -154,7 +154,7 @@ PY
 
 - Codex 插件本身，例如 Browser、Build Web Apps、Canva、Codex Security、GitHub、HyperFrames、Documents、Spreadsheets 等，需要在目标机器单独启用。
 - 本机私有 memory、Chronicle 屏幕历史、登录态、GitHub SSH key、API token、浏览器 cookie、`.codex/config`、自动化任务。
-- 未纳入公开仓库的本机私有/实验 skill。当前本机额外存在 `chronicle` 和 `humanizer-zh`，不会随本仓库安装到其他电脑。
+- 未纳入公开仓库的本机私有/实验 skill。当前本机额外存在 `chronicle`，不会随本仓库安装到其他电脑。
 - 上游 `gstack` 的大体积浏览器/设计二进制运行时；本仓库沉淀的是适配后的方法论和角色入口。
 - Hermes 服务器上的生产环境、服务状态、日志、密钥和运行时配置；这里只同步脱敏后的可公开运维 skill。
 
@@ -162,7 +162,7 @@ PY
 
 ## Skills
 
-完整机器可读清单在 [registry/skills.json](registry/skills.json)。当前 active skills 共 51 个，按使用方式分组如下：
+完整机器可读清单在 [registry/skills.json](registry/skills.json)。当前 active skills 共 52 个，按使用方式分组如下：
 
 | 分组 | 代表 skills | 来源 | 主要角色 |
 | --- | --- | --- | --- |
@@ -173,6 +173,7 @@ PY
 | gstack QA / 安全 / 发布门禁 | `gstack-qa-only`、`gstack-qa`、`gstack-canary`、`gstack-cso`、`gstack-setup-deploy`、`gstack-land-and-deploy` | external-github / adapted | QA / 安全 / 运维 |
 | UI/PPT 生产 | `design-taste-frontend`、`guizang-ppt-skill`、`guizang-social-card-skill`、`playwright` | external-github | UI/PPT / 小红书 / 公众号发布 |
 | 公众号发布运营 | `wechat-ai-app-ops` | local | 公众号发布 / 架构 / UI/PPT |
+| 中文文案人味化 | `humanizer-zh` | external-github | 小红书 / 公众号发布 |
 | 视频/视觉资产 | `hatch-pet` | local | UI/PPT / 视频 |
 | 安全审计 | `authorized-blackbox-web-security`，以及 Codex Security 插件 skills | local / plugin | 安全 |
 | 测试资产 | `test-case-report-builder`、`pdf`、`playwright` | local / external | 测试 |

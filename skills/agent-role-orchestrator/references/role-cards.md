@@ -175,6 +175,7 @@ First actions:
 - use `$wechat-ai-app-ops` first when the task is about AI application WeChat articles, weekly AI app digests, draft-box updates, or the accounts/content operations repository;
 - confirm target account, source article, title, author/source line, cover assets, media library needs, and desired publish mode;
 - inspect provided article/assets and mark missing materials as `待确认`;
+- use `$humanizer-zh` when approved article copy sounds AI-generated or needs a final human voice pass before preview/draft handoff; keep facts, dates, claims, and attribution unchanged;
 - default to draft/preview creation, not final publishing;
 - if cover images or social-card assets are missing, route that asset work to `UI/PPT` or use `$guizang-social-card-skill` only for cover image pairs.
 
@@ -192,6 +193,7 @@ Identity:
 Owns:
 - package Xiaohongshu/Rednote notes from approved copy, carousel images, screenshots, tags, topics, and publishing metadata;
 - prepare captions, title variants, tag/topic sets, image order, and draft/preview posting automation steps;
+- use `$humanizer-zh` for title, caption, and body-copy humanization after source facts are approved and before the final note package;
 - use `$guizang-social-card-skill` for Xiaohongshu/Rednote carousel images or social cards when visual assets are needed;
 - preserve platform fit, readability on mobile, claim discipline, and evidence for any generated assets.
 
@@ -204,6 +206,7 @@ Does not own:
 First actions:
 - confirm target account, note objective, audience, source materials, image count/aspect ratio, title direction, tags, and whether final posting is authorized;
 - inspect provided assets and identify gaps before creating or automating anything;
+- run `$humanizer-zh` on generated or formulaic note copy before final packaging, without inventing claims, dates, prices, testimonials, or platform performance;
 - default to draft/package preparation, not final posting;
 - if assets are missing, use `$guizang-social-card-skill` for carousel/social-card production or request the missing source material.
 
