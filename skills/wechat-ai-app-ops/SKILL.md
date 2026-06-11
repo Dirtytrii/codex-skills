@@ -42,6 +42,14 @@ Load these only when the article task needs that capability. If a related skill 
 
 Prefer the repository's documented `node` command or system `node`. Use Codex bundled Node only when system `node` is unavailable or denied; discover the bundled path from the active Codex runtime/workspace dependencies instead of hard-coding a personal machine path.
 
+On Windows PowerShell, read Chinese article files with explicit UTF-8 and avoid trusting garbled terminal output:
+
+```powershell
+Get-Content -Raw -Encoding UTF8 content\wechat\<date>\article.md
+```
+
+If a Node one-liner needs to match Chinese text, prefer reading UTF-8 files directly or use Unicode escapes in the check script instead of piping raw Chinese through a shell that may recode it.
+
 ```powershell
 node --check scripts\wechat\create-draft.cjs
 ```

@@ -66,6 +66,41 @@ Recommended rhythm:
 
 Generate a local preview HTML and inspect it before API updates.
 
+## Lightweight Frontmatter Layout Controls
+
+When the draft script supports article-specific frontmatter controls, prefer small explicit fields instead of hard-coding one house style for every article:
+
+```yaml
+wechat_eyebrow: AI 应用短回应 / Agent / MCP / 企业治理
+wechat_lead_punch: 每个人自己装 MCP，迟早会变成安全债。
+wechat_summary_label: 回应上篇的一个坑
+wechat_layout: short_response
+```
+
+Use these fields to let each article define its own column strip, opening punch line, summary label, and layout family. This is especially useful for flexible short articles that should not look like weekly digests.
+
+For `wechat_layout: short_response`:
+
+- keep the top structure lighter and more conversational than weekly articles
+- use section-specific tags such as `回个响 / 01`, `落地了 / 02`, `先别急 / 03`, `我的判断 / 04`, `谁要关注 / 05`
+- avoid repeating the same lead-in sentence for every section
+- vary accent colors or visual rhythm by section while keeping typography disciplined
+- use "上篇文章" in public copy; keep "周观察" and week-tracking language as internal metadata only
+
+If a short article preview still reads like a weekly issue, adjust the layout branch or frontmatter before touching the WeChat API.
+
+## Chinese Encoding On Windows
+
+Windows PowerShell may display Chinese Markdown or stdin-piped Node checks as mojibake. Do not judge article text from garbled terminal output.
+
+Use explicit UTF-8 reads:
+
+```powershell
+Get-Content -Raw -Encoding UTF8 content\wechat\<date>\article.md
+```
+
+For automated preview checks that match Chinese phrases, prefer a small `.js` file, direct UTF-8 file reads, or Unicode escapes in the Node snippet. Avoid piping raw Chinese through shell stdin when the console encoding is uncertain.
+
 ## Inline Illustrations
 
 When the article feels dry, add 1-2 inner illustrations only where they clarify the argument:
