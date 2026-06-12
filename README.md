@@ -90,7 +90,7 @@ flowchart TD
 | `UI/PPT` | 架构给出的 UI/PPT 提示词 | `$gstack-design-*`, `$design-taste-frontend`, `$guizang-ppt-skill`, `$guizang-social-card-skill`, `$playwright` | UI、网页 PPT、社交卡、公众号封面和视觉验证 |
 | `视频` | 架构给出的视频提示词 | `$hatch-pet`，以及可用的视频/HyperFrames 插件 | 宣传视频脚本、分镜、素材和渲染计划 |
 | `公众号发布` | 架构给出或单独唤起的公众号发布提示词 | `$wechat-ai-app-ops`, `$humanizer-zh`；需要视觉资产时可交给 `UI/PPT` / `$guizang-social-card-skill` | 公众号 AI 应用文章、周刊连续性、草稿箱、预览、素材检查和授权发布自动化 |
-| `小红书` | 架构给出或单独唤起的小红书提示词 | `$humanizer-zh`, `$guizang-social-card-skill`, `$playwright` | 小红书/Rednote 笔记、图文组图、标题标签和授权发布自动化 |
+| `小红书` | 架构给出或单独唤起的小红书提示词 | `$cheat-on-content`, `$humanizer-zh`, `$guizang-social-card-skill`, `$playwright` | 小红书/Rednote 笔记、图文组图、标题标签、内容实验和授权发布自动化 |
 | `运维` | Hermes handoff 提示词 | `$application-problem-diagnosis-workflow`, `$package-update-check-and-plan`, `$pre-deployment-readonly-checklist`, `$post-deployment-readonly-verification`, `$hermes-*`, `$proxy-dependent-python-service-diagnosis`, `$python-project-deployment-troubleshooting` | 远程生产事实由 Hermes 只读查；写操作必须授权 |
 | `安全` | 安全审计提示词 | `$gstack-cso`, `$authorized-blackbox-web-security`, Codex Security 插件 skills | 黑盒、公网、仓库、PR、深度扫描要分开 |
 | `测试` | 测试提示词 | `$test-case-report-builder`, `$playwright`, `$pdf` | 正式测试用例、测试报告和证据包归测试 |
@@ -98,7 +98,7 @@ flowchart TD
 
 ## 跨电脑继承
 
-另一台电脑可以通过这个 Git 仓库完整继承“公开 skills + 角色分工 + registry + 使用文档”。继承范围包括 `skills/` 下的 51 个 active skills、`registry/skills.json`、角色关系和安装说明。
+另一台电脑可以通过这个 Git 仓库完整继承“公开 skills + 角色分工 + registry + 使用文档”。继承范围包括 `skills/` 下的 53 个 active skills、`registry/skills.json`、角色关系和安装说明。
 
 首次安装：
 
@@ -162,7 +162,7 @@ PY
 
 ## Skills
 
-完整机器可读清单在 [registry/skills.json](registry/skills.json)。当前 active skills 共 52 个，按使用方式分组如下：
+完整机器可读清单在 [registry/skills.json](registry/skills.json)。当前 active skills 共 53 个，按使用方式分组如下：
 
 | 分组 | 代表 skills | 来源 | 主要角色 |
 | --- | --- | --- | --- |
@@ -174,6 +174,7 @@ PY
 | UI/PPT 生产 | `design-taste-frontend`、`guizang-ppt-skill`、`guizang-social-card-skill`、`playwright` | external-github | UI/PPT / 小红书 / 公众号发布 |
 | 公众号发布运营 | `wechat-ai-app-ops` | local | 公众号发布 / 架构 / UI/PPT |
 | 中文文案人味化 | `humanizer-zh` | external-github | 小红书 / 公众号发布 |
+| 社媒内容实验 | `cheat-on-content` | external-github / adapted | 小红书 / 架构 |
 | 视频/视觉资产 | `hatch-pet` | local | UI/PPT / 视频 |
 | 安全审计 | `authorized-blackbox-web-security`，以及 Codex Security 插件 skills | local / plugin | 安全 |
 | 测试资产 | `test-case-report-builder`、`pdf`、`playwright` | local / external | 测试 |

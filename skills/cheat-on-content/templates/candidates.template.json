@@ -1,0 +1,56 @@
+{
+  "_comment": "Reference JSON shape for a candidate item. See shared-references/candidate-schema.md for full spec. Adapter implementations (in adapters/) emit arrays of items conforming to this shape. The user-visible storage is candidates.md (markdown) — JSON is only used in machine-to-machine transit (e.g. md-to-sqlite migration, trend-source adapter output).",
+  "candidates": [
+    {
+      "id": "e7c2f1a4d3b6",
+      "title": "\"为你好\"高密度家庭体系",
+      "source": "pool:manual",
+      "snapshot_text": "「为你好」三个字是中国家庭对子女控制的最高级修辞，背后是一整套「我比你更懂你的需要」的认知体系。",
+      "snapshot_at": "2026-05-01T10:00:00+08:00",
+      "url": null,
+      "tier": "tier1",
+      "read_status": "deep_read",
+      "category": "家庭",
+      "composite_score": 9.18,
+      "dimension_scores": {"ER": 5, "HP": 5, "QL": 4, "NA": 4, "AB": 5, "SR": 5, "SAT": 4},
+      "scored_under_rubric_version": "v2",
+      "predicted_bucket": "30-100w",
+      "predicted_reason": "ER+SR 双 5 顶配，高密度家庭议题普适且分享安全",
+      "note": "议题厚重，不适合连续 2 篇都打这种"
+    },
+    {
+      "id": "229f5798b1d8",
+      "title": "哈哈长度",
+      "source": "pool:manual",
+      "snapshot_text": "社交媒体中\"哈哈\"长度与沟通意愿的非线性关系研究。",
+      "snapshot_at": "2026-05-03T09:00:00+08:00",
+      "url": null,
+      "tier": "tier1",
+      "read_status": "deep_read",
+      "category": "社交",
+      "composite_score": 8.71,
+      "dimension_scores": {"ER": 3, "HP": 5, "QL": 5, "NA": 4, "AB": 5, "SR": 4, "SAT": 5},
+      "scored_under_rubric_version": "v2",
+      "predicted_bucket": "30-100w",
+      "predicted_reason": "v2.1 候选维度 MS+TS 双 5——v2.1 升级的关键 A/B 验证样本",
+      "note": ""
+    },
+    {
+      "id": "8c4d92e1f0b3",
+      "title": "Show HN: I built a tool that predicts whether your video will go viral",
+      "source": "trend:hackernews",
+      "snapshot_text": "Built over a weekend. Uses a simple multidimensional rubric calibrated against creator's own historical data. Curious what the HN crowd thinks of the methodology.",
+      "snapshot_at": "2026-05-04T09:15:00+08:00",
+      "url": "https://news.ycombinator.com/item?id=12345678",
+      "tier": null,
+      "read_status": "unread",
+      "category": "tech-meta",
+      "composite_score": null,
+      "dimension_scores": null,
+      "scored_under_rubric_version": null,
+      "predicted_bucket": null,
+      "predicted_reason": null,
+      "note": ""
+    }
+  ]
+}
