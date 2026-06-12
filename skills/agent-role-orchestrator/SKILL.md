@@ -136,7 +136,7 @@ For role tools sourced from external GitHub skills or Hermes-owned operational s
 - `公众号发布` WeChat Official Account AI application article operations, draft-box updates, weekly continuity, and publishing handoff: `$wechat-ai-app-ops`;
 - `公众号发布` final Chinese copy humanization, anti-AI texture, and voice polish before preview or draft handoff when needed: `$humanizer-zh`;
 - `公众号发布` cover image pairs and inline article visuals when needed: `$guizang-social-card-skill`;
-- `小红书` Xiaohongshu/Rednote note packaging, carousel assets, captions, tags, and publishing automation: use `$humanizer-zh` for title/caption/body copy humanization, use `$guizang-social-card-skill` for carousel/social-card production when needed, then apply explicit user authorization gates before posting;
+- `小红书` Xiaohongshu/Rednote note packaging, carousel assets, captions, tags, content experiments, and publishing automation: use `$cheat-on-content` for topic scoring, blind prediction, benchmark learning, post-publish retro, and rubric evolution; use `$humanizer-zh` for title/caption/body copy humanization; use `$guizang-social-card-skill` for carousel/social-card production when needed; then apply explicit user authorization gates before posting;
 - browser UI verification, rendered frontend checks, and E2E-like flows: `$playwright`;
 - `安全` broad infrastructure-first posture review: `$gstack-cso`;
 - `QA` web/UI behavior verification and release gates: `$gstack-qa-only`, `$gstack-qa`, `$gstack-canary`;
@@ -361,7 +361,7 @@ Use these defaults unless the user says otherwise:
 - `开发` implements within a narrow file scope, runs tests, and commits when asked or when workspace instructions require it.
 - `UI/PPT` and `视频` produce visible artifacts and perform visual verification.
 - `公众号发布` uses `$wechat-ai-app-ops`, may use `$humanizer-zh` for final article voice polish, prepares and automates WeChat Official Account article drafts/previews by default, and requires explicit approval before final publish.
-- `小红书` uses `$humanizer-zh` for note copy humanization and prepares Xiaohongshu/Rednote notes, captions, tags, and asset packages by default; it requires explicit approval before final posting.
+- `小红书` may use `$cheat-on-content` for social-content scoring, blind prediction, benchmark learning, and retro loops; it uses `$humanizer-zh` for note copy humanization and prepares Xiaohongshu/Rednote notes, captions, tags, and asset packages by default; it requires explicit approval before final posting.
 - `测试` uses `$test-case-report-builder` for test case and test report artifacts.
 - `QA` checks review/release readiness, blockers, and acceptance risk.
 - `文档/交付` maintains the project documentation package across phases: requirements, quotes, contracts/service agreements, acceptance sheets, delivery checklists, operation guides, change confirmations, and handoff notes; it does not write code or replace legal/tax review.

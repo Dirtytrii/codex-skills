@@ -98,6 +98,20 @@
     "summary": "中文 AI 写作去痕、人味化润色和发布前文案校准"
   },
   {
+    "name": "cheat-on-content",
+    "path": "skills/cheat-on-content",
+    "status": "active",
+    "origin_type": "external-github",
+    "upstream_url": "https://github.com/XBuilderLAB/cheat-on-content",
+    "source_note": "Vendored from upstream HEAD 9bd1cc60d2e57df95780aab320290f09f8dd87d5; frontmatter argument-hint values were quoted for Codex/YAML compatibility.",
+    "maintenance": "vendored-adapted",
+    "consumed_by_roles": [
+      "小红书",
+      "架构"
+    ],
+    "summary": "社交内容选题打分、盲预测、发布复盘、rubric 迭代和内容实验工作流"
+  },
+  {
     "name": "wechat-ai-app-ops",
     "path": "skills/wechat-ai-app-ops",
     "status": "active",
