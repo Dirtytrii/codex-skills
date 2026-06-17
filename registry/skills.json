@@ -18,7 +18,7 @@
       "测试",
       "QA"
     ],
-    "summary": "架构先行的多窗口角色编排、继承、源窗口回调和交接提示词"
+    "summary": "架构先行的多窗口角色编排、CodeGraph 启动、开源参考扫描、继承、源窗口回调和交接提示词"
   },
   {
     "name": "authorized-blackbox-web-security",
