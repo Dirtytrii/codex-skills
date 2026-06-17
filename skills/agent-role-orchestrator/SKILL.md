@@ -18,6 +18,7 @@ Use this skill to:
 - route `安全` work to the right existing security skill by default.
 - route `测试` test-case/report work to the test artifact skill by default.
 - require role windows to actively report terminal task state back to the task's source window.
+- bootstrap CodeGraph for new local code projects when available.
 
 ## Architecture-First Rule
 
@@ -29,6 +30,51 @@ Only output multiple downstream role prompts when one of these is true:
 - the user explicitly overrides the gateway and asks to bypass `架构`.
 
 When the user asks for `开发`, `UI/PPT`, `视频`, `公众号发布`, `小红书`, `运维`, `安全`, `测试`, `QA`, or `文档/交付` prompts without an architecture decision, either produce a `架构` prompt first or clearly mark the downstream prompt as `待架构确认`.
+
+## Open-Source Reference Scan Rule
+
+After `架构` has confirmed the requirement enough to describe the problem, it should perform a bounded online scan for open-source or public reference solutions before locking the design or splitting downstream role work, when network access is available and the work is not explicitly offline, private, or confidential.
+
+Keep the scan small and decision-oriented:
+- search for existing GitHub repos, libraries, product docs, demos, architecture notes, issue threads, and prior-art implementations that resemble the requirement;
+- inspect about 3 to 5 plausible candidates or use a short time box, then stop and synthesize;
+- record fit, gaps, license/attribution concerns, maintenance activity, security/privacy risks, and what should or should not be borrowed;
+- do not blindly copy code, prompts, UI, wording, or architecture; convert useful findings into constraints, options, and validation checks;
+- if no useful reference is found, say so and proceed from first principles;
+- if the scan is skipped because the user forbids web access, the network is unavailable, or the context is sensitive/offline, state the reason explicitly.
+
+Include the result in the architecture summary or downstream prompt:
+
+```text
+【开源/可借鉴方案扫描】
+- 检索关键词：
+- 候选方案：
+- 可借鉴点：
+- 不采用/风险：
+- 对下游工作的约束：
+```
+
+## New Project CodeGraph Bootstrap Rule
+
+For a new local code project or a newly opened repository, default to bootstrapping CodeGraph before deeper architecture, impact analysis, or downstream development prompts, when a project path is known and file writes are allowed.
+
+Required behavior:
+- start with `codegraph_status` if the CodeGraph tools are available;
+- if the project is not initialized, run the project-level initialization from the repo root, such as `codegraph init -i`, then re-check status;
+- if CodeGraph is not installed or the tool is unavailable, either prompt the user with the install action or perform a silent user-level install only when the environment provides a known non-destructive installer and policy allows it;
+- do not claim CodeGraph is ready until a fresh status check confirms it;
+- if initialization writes a local index such as `.codegraph/`, keep it local and ignore it unless the project explicitly tracks that directory;
+- skip and state the reason when the task is read-only, the project path is unknown, the repo is not code-oriented, the user forbids writes/install, or initialization repeatedly fails.
+
+After bootstrapping, include the status in the architecture summary:
+
+```text
+【CodeGraph 状态】
+- 可用性：
+- 初始化状态：
+- 索引路径/忽略策略：
+- 跳过或失败原因：
+```
 
 ## Role-Window Registry Rule
 
@@ -204,8 +250,11 @@ Prefer precise evidence over broad rediscovery:
 
 For local repos, inspect before writing prompts when the answer depends on current state:
 - `git status --short --branch`;
+- CodeGraph status/init when this is a new local code project or newly opened repository;
 - relevant docs named by the user;
 - relevant changed files or recent test output.
+
+For `architecture-gateway`, after the requirement is clear enough to describe, apply the Open-Source Reference Scan Rule before finalizing architecture decisions or downstream role prompts.
 
 ### 3. Normalize The Role
 
@@ -276,6 +325,19 @@ Use this structure:
 
 验证：
 ...
+
+CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
+- 可用性：
+- 初始化状态：
+- 索引路径/忽略策略：
+- 跳过或失败原因：
+
+开源/可借鉴方案扫描（架构窗口必填；非架构窗口仅在被明确指派时填写）：
+- 检索关键词：
+- 候选方案：
+- 可借鉴点：
+- 不采用/风险：
+- 对下游工作的约束：
 
 提交/PR 要求：
 ...
@@ -377,8 +439,10 @@ Before finalizing, check:
 - a single new requirement goes through `架构` first unless explicitly bypassed;
 - existing role windows are inherited/continued by default instead of recreated;
 - numbered parallel roles appear only when explicitly requested or selected by `架构`;
+- new local code projects check or initialize CodeGraph before deeper architecture/development work, or include an explicit skip/failure reason.
 - downstream role prompts include file scope, forbidden scope, validation, and commit/report expectations by default.
 - downstream role prompts identify the source window and require active callback to that source when complete, blocked, or awaiting a decision.
+- `架构` prompts require a bounded open-source/reference scan after requirements are confirmed, or include an explicit skip reason.
 - `安全` prompts explicitly invoke the appropriate security skill instead of duplicating that workflow.
 - `测试` prompts for test cases or test reports explicitly invoke `$test-case-report-builder`.
 - `QA` prompts stay focused on review readiness, acceptance risk, and blocker verification; they do not own test-case/report authoring by default.
@@ -389,7 +453,7 @@ Before finalizing, check:
 ## Common Defaults
 
 Use these defaults unless the user says otherwise:
-- `架构` clarifies requirements, maintains the role-window registry, and decides whether downstream windows are needed; it does not code or commit.
+- `架构` clarifies requirements, bootstraps CodeGraph for new local code projects when available, performs a bounded open-source/reference scan when relevant and allowed, maintains the role-window registry, and decides whether downstream windows are needed; it does not code or commit.
 - `架构` uses `$gstack` for method routing: early ideas go to `$gstack-office-hours` or `$gstack-spec`; concrete plans go to `$gstack-autoplan` or focused `$gstack-plan-*` reviews.
 - `开发` implements within a narrow file scope, runs tests, and commits when asked or when workspace instructions require it.
 - `UI/PPT` and `视频` produce visible artifacts and perform visual verification; when their output includes final public-facing Chinese copy, they run `$humanizer-zh` before export or handoff.

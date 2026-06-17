@@ -47,7 +47,7 @@
 
 ## 角色关系
 
-一条新需求默认先进入 `架构`，由 `架构` 判断是否需要启用其他角色。已经建立过的角色默认走 `继承` / `接续`，不要重复新建；只有用户或 `架构` 明确要求并行时才开 `开发1号`、`开发2号` 这类编号窗口。下游窗口完成、阻塞或需要决策时，默认回调任务发起窗口，不无条件回报给 `架构`。
+一条新需求默认先进入 `架构`，由 `架构` 判断是否需要启用其他角色。新本地代码项目会先检查或初始化 CodeGraph；需求确认到足以描述问题后，`架构` 默认先做一轮有边界的开源/可借鉴方案扫描，再锁定设计或拆给下游。已经建立过的角色默认走 `继承` / `接续`，不要重复新建；只有用户或 `架构` 明确要求并行时才开 `开发1号`、`开发2号` 这类编号窗口。下游窗口完成、阻塞或需要决策时，默认回调任务发起窗口，不无条件回报给 `架构`。
 
 ```mermaid
 flowchart TD
@@ -73,7 +73,7 @@ flowchart TD
 
 角色之间的基本关系：
 
-- `架构` 是入口和分流者，负责需求澄清、边界判断、角色台账、文件范围、验收标准和下游提示词。
+- `架构` 是入口和分流者，负责需求澄清、新项目 CodeGraph 启动、开源/可借鉴方案扫描、边界判断、角色台账、文件范围、验收标准和下游提示词。
 - `agent-role-orchestrator` 生成下游角色提示词时会加入回调/通知规则：谁指派任务，谁就是默认回调对象；只有架构是发起方、指定协调方或用户明确要求时，才默认回到架构。
 - `开发`、`UI/PPT`、`视频` 是产物角色，只在 `架构` 给出的范围内执行。
 - `公众号发布` 和 `小红书` 是预留的内容发布角色，可以由 `架构` 分流，也可以单独唤起；正式对外内容输出前必须先用 `humanizer-zh` 做去 AI 味，人设/叙事/对话类片段才按需补 `story-deslop`；默认只做草稿/预览/发布包，最终发布必须显式授权。
@@ -86,7 +86,7 @@ flowchart TD
 
 | 角色 | 默认入口 | 常用 skills | 备注 |
 | --- | --- | --- | --- |
-| `架构` | `$agent-role-orchestrator` | `$gstack`, `$gstack-office-hours`, `$gstack-spec`, `$gstack-autoplan`, `$gstack-plan-*`, `$startup-pressure-test` | 新需求先过架构；架构决定是否启用其他角色 |
+| `架构` | `$agent-role-orchestrator` | `$gstack`, `$gstack-office-hours`, `$gstack-spec`, `$gstack-autoplan`, `$gstack-plan-*`, `$startup-pressure-test` | 新需求先过架构；新本地代码项目先检查或初始化 CodeGraph；需求确认后先做有边界的开源/可借鉴方案扫描；架构决定是否启用其他角色 |
 | `开发` | 架构给出的开发提示词 | `$gstack-investigate`, `$gstack-review`, `$gstack-ship`, `$gstack-health`, `$gstack-careful`, `$gstack-guard`, `$playwright`, `$pdf` | 默认包含文件白名单、禁止范围、验证命令、提交要求 |
 | `UI/PPT` | 架构给出的 UI/PPT 提示词 | `$gstack-design-*`, `$design-taste-frontend`, `$guizang-ppt-skill`, `$guizang-social-card-skill`, `$playwright` | UI、网页 PPT、社交卡、公众号封面和视觉验证 |
 | `视频` | 架构给出的视频提示词 | `$hatch-pet`，以及可用的视频/HyperFrames 插件 | 宣传视频脚本、分镜、素材和渲染计划 |
@@ -265,6 +265,8 @@ python3 scripts/validate_public_skills.py
 ## 维护约定
 
 - 新需求先过 `agent-role-orchestrator` 的 `架构` 角色。
+- 新本地代码项目默认先检查或初始化 CodeGraph；未安装时提示安装，或在环境允许且安装方式明确时做用户级静默安装。
+- `架构` 在需求确认到足以描述问题后，先做有边界的开源/可借鉴方案扫描；若网络不可用、用户禁用或上下文敏感，需要写明跳过原因。
 - 已建立角色默认走继承/接续，不重复新建窗口。
 - 下游角色窗口默认回调任务发起窗口；不要把所有完成/阻塞/决策消息都默认交回架构。
 - `架构` 在非平凡实施计划进入开发前，可使用 `gstack` 路由到 `gstack-office-hours`、`gstack-spec`、`gstack-autoplan` 或具体 `gstack-plan-*` 审查。
