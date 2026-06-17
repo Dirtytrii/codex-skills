@@ -68,6 +68,10 @@ Generate a local preview HTML and inspect it before API updates.
 
 Before preview generation, run a `humanizer-zh` pass over the public article body and section labels. Remove fake reader emotions such as "别急着兴奋" unless the article has actually built that emotion, reduce repetitive "不是...而是..." contrast scaffolding, and replace template labels with content-specific short headings.
 
+Adjacent heading layers must not say the same thing twice. The small kicker, section title, and first sentence should each do a different job: context, claim, then evidence. If two neighboring headings both mean "先看这条线" or repeat the same noun, rewrite one before preview.
+
+Avoid meta-explainer phrases such as "翻译成人话就是" / "说人话就是" in public copy. They sound like the writer is narrating the act of simplifying instead of simply writing clearly. Replace them with direct transitions such as "拆开看，是三件事" or no transition at all.
+
 ## Lightweight Frontmatter Layout Controls
 
 When the draft script supports article-specific frontmatter controls, prefer small explicit fields instead of hard-coding one house style for every article:
@@ -86,6 +90,7 @@ For `wechat_layout: short_response`, treat it as a flexible layout family, not a
 - keep the top structure lighter and more conversational than weekly articles
 - choose fresh short section labels for each article; do not reuse the same labels such as `短回应`, `先别急`, `我的判断`, or `谁要关注` by default
 - prefer short titles with bite: 2-6 Chinese characters where possible, or one compact spoken phrase
+- do not overuse question titles; rotate between claim titles, image-like nouns, tension statements, and only occasional questions
 - avoid repeating the same lead-in sentence for every section
 - vary visual rhythm by article: image-led cards, side-by-side comparisons, ledger/checklist blocks, quote punches, timeline strips, or mini diagrams
 - vary accent colors or section shapes by article while keeping typography disciplined

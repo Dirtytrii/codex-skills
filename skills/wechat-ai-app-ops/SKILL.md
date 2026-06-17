@@ -21,7 +21,7 @@ git status --short --branch
 5. Improve the article as a WeChat article, not a cold changelog: use a strong hook, human judgment, varied section structures, visible reader stakes, and explanatory image anchors. Before generating preview or draft-box handoff, run a `humanizer-zh` pass to remove template phrasing, fake reader emotions, repetitive contrast structures, and AI-ish section labels without changing facts or attribution.
 6. If the article feels visually dry, add 1-2 useful illustrations before draft-box update. Save images inside the WeChat article folder and configure `inline-images.json`.
 7. Format with WeChat-compatible inline HTML and generate a local preview before touching the API.
-8. Write to the WeChat draft box only when authorized. Never publish unless the user explicitly authorizes publishing in the current turn.
+8. Write to the WeChat draft box only when authorized. Before the user publishes, remind them that 原创、赞赏、留言 should stay enabled by default. Never publish unless the user explicitly authorizes publishing in the current turn.
 
 ## References
 

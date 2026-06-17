@@ -71,6 +71,7 @@ Use this exact section order:
 账号：<account or 待确认>
 图片数量：<N>
 图片尺寸：<全部 1080x1440 | mixed details | 未检查>
+标题长度：<N> / 20
 标签数量：<N> / 10
 文案去 AI 味：<已运行 humanizer-zh | 已运行 humanizer-zh + story-deslop | 待确认>
 标题覆盖：<short judgment>
@@ -91,6 +92,7 @@ For a re-edit, append one extra section:
 ## Checks
 
 - Tags must be 10 or fewer. If more than 10, trim or ask which to keep.
+- Publish title must be 20 characters or fewer. Prefer 12-18 characters when possible. Count each Chinese character, Latin letter, number, punctuation mark, and visible space as one character. If the title is over 20, shorten it or mark the package as `需补齐`.
 - The image directory should be an absolute path to an `output\` folder, not individual images.
 - Prefer `xhs-*.png` ordering for upload.
 - Check PNG dimensions when images exist. Expected card size is `1080x1440`.

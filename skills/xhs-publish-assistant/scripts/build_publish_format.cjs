@@ -55,12 +55,16 @@ function firstMeaningfulLine(text) {
   for (const raw of text.split("\n")) {
     const line = normalizeLine(raw);
     if (!line) continue;
-    if (line === "首推：" || line === "推荐：") continue;
+    if (/^(首推|推荐|首选标题|备选标题)[:：]$/.test(line)) continue;
     if (/^[-*]\s*/.test(line)) return line.replace(/^[-*]\s*/, "").trim();
     if (/^>\s*/.test(line)) return line.replace(/^>\s*/, "").trim();
     if (!line.startsWith("```")) return line;
   }
   return "";
+}
+
+function visibleLength(text) {
+  return Array.from(text || "").length;
 }
 
 function normalizeTags(text) {
@@ -181,27 +185,30 @@ const title = firstMeaningfulLine(titleSection)
   || firstMeaningfulLine(section(markdown, [/^标题池$/]))
   || "";
 
-const body = section(markdown, [/^建议正文$/, /^正文笔记/, /^正文$/]);
+const body = section(markdown, [/^建议正文$/, /^发布正文$/, /^正文笔记/, /^正文$/]);
 const tagsSection = section(markdown, [/^话题标签$/, /^标签$/, /^话题$/]);
 const tags = normalizeTags(tagsSection || body);
 const imageInfo = inspectImages(outputDir);
 const account = findAccount(markdown, sourceInfo.articleDir);
 const baseline = phaseBaseline(markdown);
+const titleLength = visibleLength(title);
 
 const titleJudgment = title
-  ? "需人工确认：是否覆盖人群 + 场景 + 系统识别关键词"
+  ? titleLength <= 20
+    ? `${titleLength}/20；需人工确认：是否覆盖人群 + 场景 + 系统识别关键词`
+    : `${titleLength}/20；标题超长，需要压缩到 20 字以内`
   : "缺标题";
 const coverJudgment = imageInfo.count
   ? "需人工确认：首图是否有情绪冲突 + 点击理由"
   : "缺配图";
-const ready = title && body && tags.length <= 10 && imageInfo.count > 0 ? "可发布" : "需补齐";
+const ready = title && titleLength <= 20 && body && tags.length <= 10 && imageInfo.count > 0 ? "可发布" : "需补齐";
 
 const sections = [];
 sections.push(`**标题**\n\`\`\`text\n${title || "（缺标题）"}\n\`\`\``);
 sections.push(`**正文**\n\`\`\`text\n${body || "（缺正文）"}\n\`\`\``);
 sections.push(`**标签**\n\`\`\`text\n${tags.length ? tags.join(" ") : "（缺标签）"}\n\`\`\``);
 sections.push(`**配图目录**\n\`\`\`text\n${outputDir}\n\`\`\``);
-sections.push(`**发布前检查**\n\`\`\`text\n账号：${account}\n图片数量：${imageInfo.count}\n图片尺寸：${imageInfo.status}\n标签数量：${tags.length} / 10\n文案去 AI 味：待确认（输出前应已运行 humanizer-zh）\n标题覆盖：${titleJudgment}\n封面职责：${coverJudgment}\n图片顺序：按 output 目录内 xhs-*.png 文件名顺序上传\n状态：${ready}\n\`\`\``);
+sections.push(`**发布前检查**\n\`\`\`text\n账号：${account}\n图片数量：${imageInfo.count}\n图片尺寸：${imageInfo.status}\n标题长度：${titleLength} / 20\n标签数量：${tags.length} / 10\n文案去 AI 味：待确认（输出前应已运行 humanizer-zh）\n标题覆盖：${titleJudgment}\n封面职责：${coverJudgment}\n图片顺序：按 output 目录内 xhs-*.png 文件名顺序上传\n状态：${ready}\n\`\`\``);
 
 if (sourceInfo.isReedit) {
   sections.push(`**二次编辑记录**\n\`\`\`text\n这是已发布笔记二次编辑。\n编辑前基线：${baseline || "待补"}\n编辑后请告诉我实际保存时间，我会登记为 reedit_phase。\n\`\`\``);

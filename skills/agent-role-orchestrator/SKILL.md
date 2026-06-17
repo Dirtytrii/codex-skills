@@ -17,6 +17,7 @@ Use this skill to:
 - rewrite a project-specific role prompt into a reusable role template.
 - route `安全` work to the right existing security skill by default.
 - route `测试` test-case/report work to the test artifact skill by default.
+- require role windows to actively report terminal task state back to the task's source window.
 
 ## Architecture-First Rule
 
@@ -83,6 +84,19 @@ After a role is created, manually opened by the user, continued, retired, or dis
 - next recommended action.
 
 Do not write the registry file when the user explicitly forbids file edits, when no project path is known, or when producing a reusable role template. In those cases, include the registry inline in the response and say it was not persisted.
+
+## Source-Window Callback Rule
+
+Role-window communication is source-directed, not architecture-directed by default.
+
+When window `A` assigns, delegates, or hands off a task to window `B`:
+- name `A` as the task source and callback target in `B`'s prompt, including role name and thread id when known;
+- require `B` to actively notify `A` when the task is complete, blocked, or needs a decision from `A`;
+- use thread tools to send that callback when available; if direct thread messaging is unavailable, require `B` to output a copy-paste-ready callback message addressed to `A`;
+- do not tell every downstream role to report to `架构` unless `架构` is actually the source window, the designated coordinator, or the user explicitly says so;
+- if `B` delegates a subtask to `C`, `B` becomes the source for `C` while still remaining responsible for reporting its own task state back to `A`.
+
+This callback rule is separate from user-facing final reports. A downstream window may summarize for the user, but it must still close the loop with its task source.
 
 ## Core Rule
 
@@ -224,6 +238,7 @@ For each agent/window, include:
 - validation commands or manual verification;
 - commit/PR expectations;
 - final report format.
+- source-window callback target and the rule for actively notifying it.
 
 When splitting agents, avoid overlap. If overlap is unavoidable, name the shared files and the coordination rule.
 
@@ -264,6 +279,11 @@ Use this structure:
 
 提交/PR 要求：
 ...
+
+回调/通知规则：
+- 本任务发起方：<角色名 + thread id，未知则写待确认>。
+- 完成、阻塞或需要发起方决策时，主动通知发起方窗口；不要只等待用户转述。
+- 如无法直接发送到发起方窗口，请输出一段可复制的“给发起方的回调消息”。
 
 完成后请回传：
 ...
@@ -358,6 +378,7 @@ Before finalizing, check:
 - existing role windows are inherited/continued by default instead of recreated;
 - numbered parallel roles appear only when explicitly requested or selected by `架构`;
 - downstream role prompts include file scope, forbidden scope, validation, and commit/report expectations by default.
+- downstream role prompts identify the source window and require active callback to that source when complete, blocked, or awaiting a decision.
 - `安全` prompts explicitly invoke the appropriate security skill instead of duplicating that workflow.
 - `测试` prompts for test cases or test reports explicitly invoke `$test-case-report-builder`.
 - `QA` prompts stay focused on review readiness, acceptance risk, and blocker verification; they do not own test-case/report authoring by default.

@@ -19,6 +19,8 @@ WECHAT_MP_HTML_PREVIEW_PATH
 WECHAT_MP_DRY_RUN
 WECHAT_MP_UPDATE_DRAFT_MEDIA_ID
 WECHAT_MP_THUMB_MEDIA_ID
+WECHAT_MP_NEED_OPEN_COMMENT
+WECHAT_MP_ONLY_FANS_CAN_COMMENT
 ```
 
 Never echo, save, commit, or summarize AppSecret. When checking configuration, report only whether keys are present.
@@ -40,6 +42,23 @@ Prefer updating the existing draft instead of creating duplicates:
 - Keep `publish_state` as `draft_updated_not_published` or equivalent.
 
 Do not persist these IDs into `.env.wechat.local` unless the user explicitly wants a repeatable local workflow. Prefer setting them in the current shell from `wechat-draft-result.json`.
+
+## Publish-Panel Defaults
+
+Before handing a draft to the user for final publication, remind them to keep these WeChat publish-panel settings on by default:
+
+- 原创：开启
+- 赞赏：开启
+- 留言：开启，优先使用“留言自动精选公开”
+
+The draft API can set the comment fields. This repository's script defaults to:
+
+```text
+need_open_comment=1
+only_fans_can_comment=0
+```
+
+Use `WECHAT_MP_NEED_OPEN_COMMENT`, `WECHAT_MP_ONLY_FANS_CAN_COMMENT`, or matching article frontmatter fields only when a specific article needs to override the default. Original and appreciation are publish-panel settings; do not claim the script has enabled them unless they were checked in the WeChat UI.
 
 ## Inline Body Images
 
