@@ -16,9 +16,38 @@
       "运维",
       "安全",
       "测试",
-      "QA"
+      "QA",
+      "文档/交付",
+      "知识库"
     ],
-    "summary": "架构先行的多窗口角色编排、CodeGraph 启动、开源参考扫描、继承、源窗口回调和交接提示词"
+    "summary": "架构先行的多窗口角色编排、CodeGraph 启动、开源参考扫描、多方案选型、源窗口回调和交接提示词"
+  },
+  {
+    "name": "delivery-document-package",
+    "path": "skills/delivery-document-package",
+    "status": "active",
+    "origin_type": "local",
+    "upstream_url": null,
+    "maintenance": "local-owned",
+    "consumed_by_roles": [
+      "文档/交付",
+      "架构"
+    ],
+    "summary": "客户交付文档包、验收材料、交接清单和合同相邻文档维护"
+  },
+  {
+    "name": "photo-to-cute-3d-toy",
+    "path": "skills/photo-to-cute-3d-toy",
+    "status": "active",
+    "origin_type": "local",
+    "upstream_url": null,
+    "maintenance": "local-owned",
+    "consumed_by_roles": [
+      "UI/PPT",
+      "视频",
+      "架构"
+    ],
+    "summary": "照片参考到可爱 3D 玩具/GLB 资产的提示词、路线和交付包工作流"
   },
   {
     "name": "authorized-blackbox-web-security",
@@ -142,6 +171,19 @@
     "summary": "小红书发布前复制包整理、标题长度检查、标签数量检查、配图目录和图片尺寸检查"
   },
   {
+    "name": "xhs-comment-research",
+    "path": "skills/xhs-comment-research",
+    "status": "active",
+    "origin_type": "local",
+    "upstream_url": null,
+    "maintenance": "local-owned",
+    "consumed_by_roles": [
+      "小红书",
+      "架构"
+    ],
+    "summary": "读取和分析小红书/Rednote 评论，用于内容选题、受众研究和回复策略"
+  },
+  {
     "name": "wechat-ai-app-ops",
     "path": "skills/wechat-ai-app-ops",
     "status": "active",
@@ -154,6 +196,32 @@
       "UI/PPT"
     ],
     "summary": "微信公众号 AI 应用文章、周刊连续性、图文排版、草稿箱 API 和发布面板提醒工作流"
+  },
+  {
+    "name": "wechat-article-formatter",
+    "path": "skills/wechat-article-formatter",
+    "status": "active",
+    "origin_type": "local",
+    "upstream_url": null,
+    "maintenance": "local-owned",
+    "consumed_by_roles": [
+      "公众号发布",
+      "UI/PPT"
+    ],
+    "summary": "将 Markdown 文章转换为适配微信公众号编辑器的美化 HTML"
+  },
+  {
+    "name": "wechat-tech-writer",
+    "path": "skills/wechat-tech-writer",
+    "status": "active",
+    "origin_type": "local",
+    "upstream_url": null,
+    "maintenance": "local-owned",
+    "consumed_by_roles": [
+      "公众号发布",
+      "架构"
+    ],
+    "summary": "搜索、整理和改写技术内容，生成适合微信公众号的中文技术科普初稿"
   },
   {
     "name": "gstack",

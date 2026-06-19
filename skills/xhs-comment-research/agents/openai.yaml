@@ -1,0 +1,4 @@
+interface:
+  display_name: "XHS Comment Research"
+  short_description: "Read and analyze Xiaohongshu comments from logged-in Chrome"
+  default_prompt: "Use xhs-comment-research to collect loaded Xiaohongshu comments read-only and summarize audience themes."
