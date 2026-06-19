@@ -56,11 +56,14 @@ Confidence 派生表见 [shared-references/state-management.md](../../shared-ref
 - **PREDICTION_DIR = predictions/** — 落盘目录
 - **BLIND_CHECK = strict** — strict（默认）/ lenient（仅警告，不推荐）—— 跟 [blind-prediction-protocol.md](../../shared-references/blind-prediction-protocol.md) "见过数据"边界相关
 - **BLIND_SCORING = on**（默认）/ off —— 是否走 [cheat-score-blind](../cheat-score-blind/SKILL.md) sub-agent。off 等价于 `--skip-blind` flag，标 `last_prediction_self_scored: true` 给 cheat-status 警告
+- **DEFAULT_REVIEW_MODE = blind_subagent_plus_main_compare** —— 默认不是二选一。正常预测必须先让 `cheat-score-blind` 子 agent 盲打，再由主 Claude 做一套主窗口自评分用于对照和 disagreement detection。不要把“盲打 + 主窗口对照”叫 `--skip-blind`；`--skip-blind` 只表示完全跳过子 agent。
 - **DISAGREEMENT_THRESHOLD = 2** —— blind 与主 Claude 自评的单维度差异 |Δ| ≥ 此值 → Phase 2.5 弹用户裁定
 - **BUCKET_PRESET = auto** — 自动派生：有 baseline_plays → 按 baseline × {0.3 / 1 / 3 / 10 / 30}；无 baseline → 平台通用默认
 - **MIN_ANCHORS = 2** — 锚点对比期望 2 个；不够时显式标"锚点 N/A"段（不删段，不省略）
 
 > 💡 调用时覆盖：`/cheat-predict scripts/<id>.md — BLIND_CHECK: lenient` / `--skip-blind`（都不推荐）
+
+> Workspace standing authorization: when the current project or user instruction has explicitly authorized sub-agent use for blind scoring, treat future predictions in that workstream as requesting `blind_subagent_plus_main_compare` unless the user revokes it or the runtime policy blocks sub-agents.
 
 ## Inputs
 
@@ -134,7 +137,11 @@ Confidence 派生表见 [shared-references/state-management.md](../../shared-ref
 
 ### Phase 2: 委派 cheat-score-blind sub-agent 拿盲打分
 
-**BLIND_SCORING=on**（默认）—— 主 Claude 不再 inline 打分。通过 Task tool spawn `cheat-score-blind`，让一个 context-isolated 的 sub-agent 只看 script + rubric_notes.md 给出 N 维分。
+**BLIND_SCORING=on**（默认）—— 通过 Task/sub-agent tool spawn `cheat-score-blind`，让一个 context-isolated 的 sub-agent 只看 script + rubric_notes.md 给出 N 维分。
+
+默认评审模式是 `blind_subagent_plus_main_compare`：sub-agent 的盲打分是正式分数来源；主 Claude 仍要独立打一套主窗口自评分，只用于 Phase 2.5 的差异检测和解释校准，不替代 sub-agent。
+
+只有用户明确说“跳过盲打 / 这次不用子 agent / 直接自评”，或运行环境确实没有可用 sub-agent，才允许 `--skip-blind`。一旦走 `--skip-blind`，必须写 `BlindScored By: main-claude-self`，并更新 `last_prediction_self_scored: true`。不要把“盲打 + 主窗口对照”误记成 `--skip-blind`。
 
 详见 [cheat-score-blind/SKILL.md](../cheat-score-blind/SKILL.md) 的"主 Claude 调用契约"段。**Task prompt 必须精简**：
 

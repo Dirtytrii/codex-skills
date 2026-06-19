@@ -4,7 +4,7 @@
 
 这个仓库用于保存可公开复用的技能目录，方便在不同 Codex 环境、远程 Hermes 服务器和新机器之间同步。每个 skill 都应是一个可以独立复制到 `${CODEX_HOME:-$HOME/.codex}/skills/` 的目录。
 
-推荐先阅读 [角色分工与推荐使用方式](docs/role-usage.md)：本地 Codex 主要承接架构、开发、UI/PPT、视频、公众号发布、小红书、安全、测试和 QA；服务器侧 Hermes agent 优先承接运维只读诊断、部署检查和发布验证。
+推荐先阅读 [角色分工与推荐使用方式](docs/role-usage.md)：本地 Codex 主要承接架构、开发、UI/PPT、视频、公众号发布、小红书、文档/交付、知识库、安全、测试和 QA；服务器侧 Hermes agent 优先承接运维只读诊断、部署检查和发布验证。
 
 ## 快速使用
 
@@ -18,6 +18,8 @@
 | UI、网页 PPT、社交卡、公众号封面 | `UI/PPT`，按任务路由到 `design-taste-frontend` / `guizang-ppt-skill` / `guizang-social-card-skill` | Codex 本地窗口 |
 | 公众号文章排版、草稿、预览和授权发布 | `公众号发布` 角色提示词，默认用 `$wechat-ai-app-ops` | Codex 本地窗口 |
 | 小红书笔记、图文组图、标题标签和发布格式 | `小红书` 角色提示词，可单独唤起；发布前用 `xhs-publish-assistant` 输出复制包 | Codex 本地窗口 |
+| 交付清单、验收表、演示脚本和交接文档 | `文档/交付` 角色提示词，默认用 `$delivery-document-package` | Codex 本地窗口 |
+| Obsidian/个人知识库整理、索引和标签体系 | `知识库` 角色提示词 | Codex 本地窗口 |
 | 部署检查、发布验证、日志/cron/服务诊断 | Hermes-owned 运维 skills | 服务器侧 Hermes agent 优先 |
 | 测试用例、测试报告、证据包 | `$test-case-report-builder`，由 `测试` 角色承接 | Codex 本地窗口 |
 | Review readiness、验收缺口、阻塞风险 | `QA` 角色 | Codex 本地窗口 |
@@ -61,12 +63,16 @@ flowchart TD
   A -->|"授权审计/安全风险"| S["安全"]
   A -->|"测试用例/测试报告"| T["测试"]
   A -->|"验收/Review readiness"| Q["QA"]
+  A -->|"交付/验收/交接文档"| DOC["文档/交付"]
+  A -->|"个人知识库/笔记体系"| KB["知识库"]
   D --> Q
   UI --> Q
   S --> D
   O --> Q
   T --> Q
   Q --> A
+  DOC --> A
+  KB --> A
   UI --> WA
   UI --> XHS
 ```
@@ -75,8 +81,10 @@ flowchart TD
 
 - `架构` 是入口和分流者，负责需求澄清、新项目 CodeGraph 启动、开源/可借鉴方案扫描、边界判断、角色台账、文件范围、验收标准和下游提示词。
 - `agent-role-orchestrator` 生成下游角色提示词时会加入回调/通知规则：谁指派任务，谁就是默认回调对象；只有架构是发起方、指定协调方或用户明确要求时，才默认回到架构。
-- `开发`、`UI/PPT`、`视频` 是产物角色，只在 `架构` 给出的范围内执行。
+- `开发`、`UI/PPT`、`UI/Frontend`、`视频` 是产物角色，只在 `架构` 给出的范围内执行；纯前端或视觉保真任务默认先让 `UI/PPT` / `UI/Frontend` 负责视觉方向。
 - `公众号发布` 和 `小红书` 是预留的内容发布角色，可以由 `架构` 分流，也可以单独唤起；正式对外内容输出前必须先用 `humanizer-zh` 做去 AI 味，人设/叙事/对话类片段才按需补 `story-deslop`；默认只做草稿/预览/发布包，最终发布必须显式授权。
+- `文档/交付` 负责客户交付材料、验收记录、演示脚本和交接清单；不替代法务、税务、QA 签收或开发事实确认。
+- `知识库` 负责个人笔记库的目录、索引、标签、MOC 和链接整理；不删除、不公开、不把高风险个人笔记改写成专业建议。
 - `运维` 优先交给服务器侧 Hermes agent；本地 Codex 主要负责编写 Hermes 提示词、判断回传证据和组织验收口径。
 - `安全` 先走授权和范围确认，再调用安全专项 skill 或 Codex Security 插件。
 - `测试` 负责正式测试资产，例如 Excel 测试用例、Word/DOCX 测试报告和测试证据包。
@@ -86,12 +94,14 @@ flowchart TD
 
 | 角色 | 默认入口 | 常用 skills | 备注 |
 | --- | --- | --- | --- |
-| `架构` | `$agent-role-orchestrator` | `$gstack`, `$gstack-office-hours`, `$gstack-spec`, `$gstack-autoplan`, `$gstack-plan-*`, `$startup-pressure-test` | 新需求先过架构；新本地代码项目先检查或初始化 CodeGraph；需求确认后先做有边界的开源/可借鉴方案扫描；架构决定是否启用其他角色 |
+| `架构` | `$agent-role-orchestrator` | `$gstack`, `$gstack-office-hours`, `$gstack-spec`, `$gstack-autoplan`, `$gstack-plan-*`, `$startup-pressure-test` | 新需求先过架构；复杂需求先给多方案技术选型；新本地代码项目先检查或初始化 CodeGraph；需求确认后先做有边界的开源/可借鉴方案扫描；架构决定是否启用其他角色 |
 | `开发` | 架构给出的开发提示词 | `$gstack-investigate`, `$gstack-review`, `$gstack-ship`, `$gstack-health`, `$gstack-careful`, `$gstack-guard`, `$playwright`, `$pdf` | 默认包含文件白名单、禁止范围、验证命令、提交要求 |
-| `UI/PPT` | 架构给出的 UI/PPT 提示词 | `$gstack-design-*`, `$design-taste-frontend`, `$guizang-ppt-skill`, `$guizang-social-card-skill`, `$playwright` | UI、网页 PPT、社交卡、公众号封面和视觉验证 |
+| `UI/PPT` / `UI/Frontend` | 架构给出的 UI/PPT 提示词 | `$gstack-design-*`, `$design-taste-frontend`, `$guizang-ppt-skill`, `$guizang-social-card-skill`, `$photo-to-cute-3d-toy`, `$playwright` | UI、网页 PPT、社交卡、公众号封面、照片到玩具资产规划和视觉验证 |
 | `视频` | 架构给出的视频提示词 | `$hatch-pet`，以及可用的视频/HyperFrames 插件 | 宣传视频脚本、分镜、素材和渲染计划 |
-| `公众号发布` | 架构给出或单独唤起的公众号发布提示词 | `$wechat-ai-app-ops`, `$humanizer-zh`；需要视觉资产时可交给 `UI/PPT` / `$guizang-social-card-skill` | 公众号 AI 应用文章、周刊连续性、草稿箱、预览、素材检查和授权发布自动化 |
-| `小红书` | 架构给出或单独唤起的小红书提示词 | `$cheat-on-content`, `$humanizer-zh`, `$guizang-social-card-skill`, `$xhs-publish-assistant`, `$playwright` | 小红书/Rednote 笔记、图文组图、标题标签、发布复制包、内容实验和授权发布自动化 |
+| `公众号发布` | 架构给出或单独唤起的公众号发布提示词 | `$wechat-ai-app-ops`, `$wechat-tech-writer`, `$wechat-article-formatter`, `$humanizer-zh`；需要视觉资产时可交给 `UI/PPT` / `$guizang-social-card-skill` | 公众号 AI 应用文章、技术选题初稿、HTML 排版、周刊连续性、草稿箱、预览、素材检查和授权发布自动化 |
+| `小红书` | 架构给出或单独唤起的小红书提示词 | `$cheat-on-content`, `$xhs-comment-research`, `$humanizer-zh`, `$guizang-social-card-skill`, `$xhs-publish-assistant`, `$playwright` | 小红书/Rednote 笔记、评论研究、图文组图、标题标签、发布复制包、内容实验和授权发布自动化 |
+| `文档/交付` | 架构给出的文档/交付提示词 | `$delivery-document-package`, `$gstack-document-generate`, `$gstack-document-release`, `$gstack-learn`, `$gstack-retro` | 交付清单、验收材料、演示脚本、变更确认、操作指南和交接文档 |
+| `知识库` | 架构给出或单独唤起的知识库提示词 | `$agent-role-orchestrator` 角色卡 | 个人知识库、Obsidian vault、索引/MOC、标签、链接和高风险笔记边界 |
 | `运维` | Hermes handoff 提示词 | `$application-problem-diagnosis-workflow`, `$package-update-check-and-plan`, `$pre-deployment-readonly-checklist`, `$post-deployment-readonly-verification`, `$hermes-*`, `$proxy-dependent-python-service-diagnosis`, `$python-project-deployment-troubleshooting` | 远程生产事实由 Hermes 只读查；写操作必须授权 |
 | `安全` | 安全审计提示词 | `$gstack-cso`, `$authorized-blackbox-web-security`, Codex Security 插件 skills | 黑盒、公网、仓库、PR、深度扫描要分开 |
 | `测试` | 测试提示词 | `$test-case-report-builder`, `$playwright`, `$pdf` | 正式测试用例、测试报告和证据包归测试 |
@@ -99,7 +109,7 @@ flowchart TD
 
 ## 跨电脑继承
 
-另一台电脑可以通过这个 Git 仓库完整继承“公开 skills + 角色分工 + registry + 使用文档”。继承范围包括 `skills/` 下的 55 个 active skills、`registry/skills.json`、角色关系和安装说明。
+另一台电脑可以通过这个 Git 仓库完整继承“公开 skills + 角色分工 + registry + 使用文档”。继承范围包括 `skills/` 下的 60 个 active skills、`registry/skills.json`、角色关系和安装说明。
 
 首次安装：
 
@@ -163,7 +173,7 @@ PY
 
 ## Skills
 
-完整机器可读清单在 [registry/skills.json](registry/skills.json)。当前 active skills 共 55 个，按使用方式分组如下：
+完整机器可读清单在 [registry/skills.json](registry/skills.json)。当前 active skills 共 60 个，按使用方式分组如下：
 
 | 分组 | 代表 skills | 来源 | 主要角色 |
 | --- | --- | --- | --- |
@@ -172,13 +182,14 @@ PY
 | gstack 执行与复盘 | `gstack-investigate`、`gstack-review`、`gstack-ship`、`gstack-health`、`gstack-devex-review`、`gstack-careful`、`gstack-guard`、`gstack-freeze`、`gstack-unfreeze`、`gstack-learn`、`gstack-retro` | external-github / adapted | 开发 / QA / 架构 |
 | gstack 设计 | `gstack-design-consultation`、`gstack-design-shotgun`、`gstack-design-html`、`gstack-design-review` | external-github / adapted | UI/PPT |
 | gstack QA / 安全 / 发布门禁 | `gstack-qa-only`、`gstack-qa`、`gstack-canary`、`gstack-cso`、`gstack-setup-deploy`、`gstack-land-and-deploy` | external-github / adapted | QA / 安全 / 运维 |
-| UI/PPT 生产 | `design-taste-frontend`、`guizang-ppt-skill`、`guizang-social-card-skill`、`playwright` | external-github | UI/PPT / 小红书 / 公众号发布 |
-| 公众号发布运营 | `wechat-ai-app-ops` | local | 公众号发布 / 架构 / UI/PPT |
+| UI/PPT 生产 | `design-taste-frontend`、`guizang-ppt-skill`、`guizang-social-card-skill`、`photo-to-cute-3d-toy`、`playwright` | local / external-github | UI/PPT / 小红书 / 公众号发布 / 视频 |
+| 公众号发布运营 | `wechat-ai-app-ops`、`wechat-tech-writer`、`wechat-article-formatter` | local | 公众号发布 / 架构 / UI/PPT |
 | 中文文案人味化 | `humanizer-zh` | external-github | 小红书 / 公众号发布 / UI/PPT / 视频 |
 | 中文叙事去 AI 味 | `story-deslop` | external-github / adapted | 架构 / 公众号发布 / 小红书 / 视频 |
 | 社媒内容实验 | `cheat-on-content` | external-github / adapted | 小红书 / 架构 |
-| 小红书发布格式 | `xhs-publish-assistant` | local | 小红书 |
+| 小红书发布格式与评论研究 | `xhs-publish-assistant`、`xhs-comment-research` | local | 小红书 / 架构 |
 | 视频/视觉资产 | `hatch-pet` | local | UI/PPT / 视频 |
+| 文档/交付 | `delivery-document-package` | local | 文档/交付 / 架构 |
 | 安全审计 | `authorized-blackbox-web-security`，以及 Codex Security 插件 skills | local / plugin | 安全 |
 | 测试资产 | `test-case-report-builder`、`pdf`、`playwright` | local / external | 测试 |
 | Hermes 运维 | `application-problem-diagnosis-workflow`、`package-update-check-and-plan`、`pre-deployment-readonly-checklist`、`post-deployment-readonly-verification`、`hermes-*`、`proxy-dependent-python-service-diagnosis`、`python-project-deployment-troubleshooting` | hermes | 运维 / QA |
