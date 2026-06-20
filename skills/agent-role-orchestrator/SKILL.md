@@ -168,6 +168,32 @@ When window `A` assigns, delegates, or hands off a task to window `B`:
 
 This callback rule is separate from user-facing final reports. A downstream window may summarize for the user, but it must still close the loop with its task source.
 
+## Loop Engineering Rule
+
+Treat role-window collaboration as a closed loop, not just parallel conversation.
+
+Every non-trivial multi-window task must carry an explicit loop state. Use the smallest useful state set from:
+- `待拆解`
+- `已派发`
+- `执行中`
+- `开发完成`
+- `QA 未通过`
+- `返工中`
+- `QA 通过`
+- `架构终验`
+- `完成`
+- `阻塞`
+
+When `QA`, `架构`, or any source window sends work back, feedback must be structured enough to change the next iteration. Include:
+- problem or gap;
+- evidence, file path, screenshot, command output, or reproduction step;
+- severity or acceptance impact;
+- suggested return target: `架构` / `开发` / `UI/Frontend` / `QA` / another named role;
+- decision needed, if any;
+- next loop state.
+
+At loop close, `架构` or the final coordinator must consider whether the result should update durable behavior. If the same issue is likely to recur, record a proposed sedimentation target such as `SKILL.md`, `README.md`, role prompt template, QA checklist, validation command, or project docs. Do not edit those targets unless the user has authorized the edit or the current task explicitly asks for skill/workflow maintenance.
+
 ## Core Rule
 
 Do not invent project state. Use only the current conversation, local files, git state, known memory, and user-provided facts. If a fact is missing, write `待确认` or make a small explicit assumption.
@@ -318,6 +344,7 @@ For each agent/window, include:
 - commit/PR expectations;
 - final report format.
 - source-window callback target and the rule for actively notifying it.
+- loop state, structured feedback expectations, and whether durable rule sedimentation should be considered at the end.
 
 When splitting agents, avoid overlap. If overlap is unavoidable, name the shared files and the coordination rule.
 
@@ -363,6 +390,11 @@ Use this structure:
 验证：
 ...
 
+闭环状态：
+- 当前状态：
+- 上一轮反馈：
+- 本轮退出条件：
+
 CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
 - 可用性：
 - 初始化状态：
@@ -383,6 +415,19 @@ CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
 - 本任务发起方：<角色名 + thread id，未知则写待确认>。
 - 完成、阻塞或需要发起方决策时，主动通知发起方窗口；不要只等待用户转述。
 - 如无法直接发送到发起方窗口，请输出一段可复制的“给发起方的回调消息”。
+
+结构化反馈格式（返工/验收失败/需要决策时必填）：
+- 问题/缺口：
+- 证据/复现：
+- 影响等级：
+- 建议回流对象：
+- 需要决策：
+- 下一闭环状态：
+
+规则沉淀：
+- 本轮是否暴露可复用流程问题：
+- 建议沉淀位置：
+- 是否需要另开 skill/README/清单更新：
 
 完成后请回传：
 ...
@@ -482,6 +527,9 @@ Before finalizing, check:
 - next-window prompts can stand alone without this conversation, while still marking uncertain facts as `待确认`;
 - commit instructions match the user's known preference when available;
 - a single new requirement goes through `架构` first unless explicitly bypassed;
+- non-trivial multi-window work carries a loop state and exit condition;
+- QA or source-window feedback is structured with evidence, impact, return target, decision needs, and next state;
+- final coordination considers whether reusable lessons should be sedimented into a skill, README, checklist, prompt template, validation command, or project docs;
 - complex new requirements include a multi-option technical options brief and an explicit route-selection gate before downstream implementation;
 - pure frontend or visual-fidelity work routes visual ownership to `UI/PPT` / `UI/Frontend` by default, with `开发` used for scoped implementation rather than as a catch-all;
 - existing role windows are inherited/continued by default instead of recreated;
