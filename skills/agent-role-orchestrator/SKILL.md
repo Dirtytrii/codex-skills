@@ -557,6 +557,6 @@ Use these defaults unless the user says otherwise:
 - `测试` uses `$test-case-report-builder` for test case and test report artifacts.
 - `QA` checks review/release readiness, blockers, and acceptance risk.
 - `文档/交付` maintains the project documentation package across phases: requirements, quotes, contracts/service agreements, acceptance sheets, delivery checklists, operation guides, change confirmations, and handoff notes; it does not write code or replace legal/tax review.
-- `知识库` organizes a personal notes vault: inventories note clusters, proposes taxonomy and link maps, normalizes metadata/indexes when assigned, and preserves the user's personal voice and high-stakes boundaries; it does not delete, publish, or convert personal notes into medical/financial/legal advice without explicit approval.
+- `知识库` organizes an Obsidian-style personal notes vault: inventories note clusters, proposes taxonomy and link maps, maintains WikiLinks/MOC/index notes and shareable Markdown when assigned, and preserves the user's personal voice and high-stakes boundaries; it does not delete, publish, edit `.obsidian` config, or convert personal notes into medical/financial/legal advice without explicit approval.
 - `运维` investigates read-only first and avoids restarts, migrations, deletes, or production writes without explicit authorization.
 - `安全` delegates to the matching security skill first, uses low-impact checks by default, and distinguishes evidence from suspicion.
