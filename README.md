@@ -4,7 +4,7 @@
 
 这个仓库用于保存可公开复用的技能目录，方便在不同 Codex 环境、远程 Hermes 服务器和新机器之间同步。每个 skill 都应是一个可以独立复制到 `${CODEX_HOME:-$HOME/.codex}/skills/` 的目录。
 
-推荐先阅读 [角色分工与推荐使用方式](docs/role-usage.md)：本地 Codex 主要承接架构、开发、UI/PPT、视频、公众号发布、小红书、文档/交付、知识库、安全、测试和 QA；服务器侧 Hermes agent 优先承接运维只读诊断、部署检查和发布验证。
+推荐先阅读 [角色分工与推荐使用方式](docs/role-usage.md)：本地 Codex 主要承接架构、开发、UI/PPT、视频、公众号发布、小红书、文档/交付、知识库、DBA、安全、测试和 QA；服务器侧 Hermes agent 优先承接运维只读诊断、部署检查和发布验证。
 
 ## 快速使用
 
@@ -21,14 +21,15 @@
 | 交付清单、验收表、演示脚本和交接文档 | `文档/交付` 角色提示词，默认用 `$delivery-document-package` | Codex 本地窗口 |
 | Obsidian/个人知识库整理、索引和标签体系 | `知识库` 角色提示词 | Codex 本地窗口 |
 | 部署检查、发布验证、日志/cron/服务诊断 | Hermes-owned 运维 skills | 服务器侧 Hermes agent 优先 |
-| 测试用例、测试报告、证据包 | `$test-case-report-builder`，由 `测试` 角色承接 | Codex 本地窗口 |
+| 数据库容量、锁、binlog/WAL、长事务、备份/清理风险 | `DBA` 角色提示词，先只读诊断；kill/purge/DDL/resize/cleanup 等动作需二次授权 | Codex 本地窗口，按权限收集数据库证据 |
+| 测试用例、测试报告、证据包、压测/负载/性能/并发验证 | `$test-case-report-builder`，由 `测试` 角色承接；压测类任务需确认环境、流量上限和停止条件 | Codex 本地窗口 |
 | Review readiness、验收缺口、阻塞风险 | `QA` 角色 | Codex 本地窗口 |
 | 授权安全审计 | `authorized-blackbox-web-security` 或 Codex Security 系列 | Codex 本地窗口，必要时低影响远端验证 |
 
 常用调用示例：
 
 ```text
-使用 $agent-role-orchestrator，先按架构角色梳理这个需求，并判断是否需要开发/UI/公众号发布/小红书/测试/运维窗口。
+使用 $agent-role-orchestrator，先按架构角色梳理这个需求，并判断是否需要开发/UI/公众号发布/小红书/测试/DBA/运维窗口。
 ```
 
 ```text
@@ -37,6 +38,10 @@
 
 ```text
 使用 $agent-role-orchestrator，给我小红书窗口。
+```
+
+```text
+使用 $agent-role-orchestrator，给我 DBA 窗口。
 ```
 
 ```text
@@ -49,9 +54,9 @@
 
 ## 角色关系
 
-一条新需求默认先进入 `架构`，由 `架构` 判断是否需要启用其他角色。新本地代码项目会先检查或初始化 CodeGraph；需求确认到足以描述问题后，`架构` 默认先做一轮有边界的开源/可借鉴方案扫描，再锁定设计或拆给下游。已经建立过的角色默认走 `继承` / `接续`，不要重复新建；只有用户或 `架构` 明确要求并行时才开 `开发1号`、`开发2号` 这类编号窗口。下游窗口完成、阻塞或需要决策时，默认回调任务发起窗口，不无条件回报给 `架构`。
+一条新需求默认先进入 `架构`，由 `架构` 判断是否需要启用其他角色。新本地代码项目会先检查或初始化 CodeGraph；需求确认到足以描述问题后，`架构` 默认先做一轮有边界的开源/可借鉴方案扫描，再锁定设计或拆给下游。已经建立过的角色默认走 `继承` / `接续`，不要重复新建；只有用户或 `架构` 明确要求并行时才开 `开发1号`、`开发2号` 这类编号窗口。下游窗口完成、阻塞或需要决策时，默认回调任务发起窗口，不无条件回报给 `架构`；回调里必须显式填写 `可复用优化沉淀：无 / 建议 / 已沉淀`。
 
-这套多窗口协作按 `loop engineering` 管理，而不是只做并行聊天。非平凡多窗口任务要显式维护闭环状态，例如 `待拆解`、`已派发`、`执行中`、`开发完成`、`QA 未通过`、`返工中`、`QA 通过`、`架构终验`、`完成` 或 `阻塞`。`QA` 或发起窗口打回问题时，反馈必须结构化：说明问题/缺口、证据或复现、影响等级、建议回流对象、是否需要决策、下一闭环状态。闭环结束时，`架构` 或最终协调窗口要判断是否有可复用经验需要沉淀到 skill、README、角色提示词、QA 清单、验证命令或项目文档中。
+这套多窗口协作按 `loop engineering` 管理，而不是只做并行聊天。非平凡多窗口任务要显式维护闭环状态，例如 `待拆解`、`已派发`、`执行中`、`开发完成`、`QA 未通过`、`返工中`、`QA 通过`、`架构终验`、`完成` 或 `阻塞`。`QA` 或发起窗口打回问题时，反馈必须结构化：说明问题/缺口、证据或复现、影响等级、建议回流对象、是否需要决策、下一闭环状态。闭环结束时，`架构` 或最终协调窗口要判断是否有可复用经验需要沉淀到 skill、README、角色提示词、QA 清单、验证命令或项目文档中，并用 `无 / 建议 / 已沉淀` 三态说明处理结果。
 
 ```mermaid
 flowchart TD
@@ -62,6 +67,7 @@ flowchart TD
   A -->|"公众号文章发布"| WA["公众号发布"]
   A -->|"小红书笔记发布"| XHS["小红书"]
   A -->|"远程生产/部署/日志"| O["运维（Hermes 优先）"]
+  A -->|"数据库容量/锁/binlog/WAL"| DBA["DBA"]
   A -->|"授权审计/安全风险"| S["安全"]
   A -->|"测试用例/测试报告"| T["测试"]
   A -->|"验收/Review readiness"| Q["QA"]
@@ -71,6 +77,8 @@ flowchart TD
   UI --> Q
   S --> D
   O --> Q
+  O --> DBA
+  DBA --> Q
   T --> Q
   Q --> A
   DOC --> A
@@ -88,8 +96,9 @@ flowchart TD
 - `文档/交付` 负责客户交付材料、验收记录、演示脚本和交接清单；不替代法务、税务、QA 签收或开发事实确认。
 - `知识库` 负责个人笔记库的目录、索引、标签、MOC 和链接整理；不删除、不公开、不把高风险个人笔记改写成专业建议。
 - `运维` 优先交给服务器侧 Hermes agent；本地 Codex 主要负责编写 Hermes 提示词、判断回传证据和组织验收口径。
+- `DBA` 负责数据库实例侧证据和动作方案，例如容量、临时空间、binlog/WAL、长事务、锁、备份恢复、分区/归档和高风险清理；默认只读，危险动作必须二次授权。
 - `安全` 先走授权和范围确认，再调用安全专项 skill 或 Codex Security 插件。
-- `测试` 负责正式测试资产，例如 Excel 测试用例、Word/DOCX 测试报告和测试证据包。
+- `测试` 负责正式测试资产，例如 Excel 测试用例、Word/DOCX 测试报告、测试证据包，以及被指派时的独立压力/负载/性能/并发验证。
 - `QA` 负责验收、Review readiness、阻塞风险和缺口确认，不默认写测试用例或测试报告。
 
 ## Multi-Window / Role-Based Loop Engineering 设计
@@ -98,14 +107,14 @@ flowchart TD
 
 | 设计亮点 | 仓库里的实现方式 | 价值 |
 | --- | --- | --- |
-| 角色窗口是长期工作单元 | `agent-role-orchestrator` 维护角色窗口台账，默认继承/接续已有角色，而不是反复新建 | 降低上下文丢失，让架构、开发、UI、QA、内容发布等角色持续积累同一项目状态 |
+| 角色窗口是长期工作单元 | `agent-role-orchestrator` 维护角色窗口台账，默认继承/接续已有角色，而不是反复新建 | 降低上下文丢失，让架构、开发、UI、QA、DBA、内容发布等角色持续积累同一项目状态 |
 | 架构是 controller，不是全能执行者 | 新需求先过 `架构`，由它澄清目标、做多方案选型、检查 CodeGraph、扫描开源参考，再决定是否派给下游 | 避免一开始就把任务拆碎或让开发角色兜底所有问题 |
 | skill 是角色工具，不是孤立命令 | 每个角色只加载适合自己的 skill，例如开发用 gstack 调查/评审，公众号发布用 WeChat 相关 skill，小红书用内容实验和发布格式 skill | 让 skill 组合有明确边界，减少“一个窗口什么都做”的失控感 |
 | 回调按任务来源流动 | Source-Window Callback Rule 要求 B 完成、阻塞或需要决策时通知派活的 A；只有架构是发起方或协调方时才默认回架构 | 支持 A 派 B、B 再派 C 的链式协作，避免所有信息都挤回一个架构窗口 |
 | 闭环状态显式化 | 非平凡多窗口任务维护 `待拆解`、`已派发`、`执行中`、`开发完成`、`QA 未通过`、`返工中`、`QA 通过`、`架构终验`、`完成`、`阻塞` 等状态 | 让任务不只是“聊到哪算哪”，而是能判断当前处于哪一轮、是否该继续迭代 |
 | QA 是 evaluator | QA 负责验收、Review readiness、阻塞风险和缺口确认，不默认写测试用例或替开发修问题 | 把“产出”和“判断产出是否可接受”拆开，减少自证通过 |
 | 反馈必须能改变下一轮 | 返工/验收失败/需要决策时，反馈要包含问题、证据、影响等级、回流对象、决策需求和下一状态 | 让反馈可执行，而不是只留下“还不行”“再优化一下”这种模糊意见 |
-| 闭环结束要沉淀规则 | 架构或最终协调窗口判断是否要把复用经验沉淀到 skill、README、角色提示词、QA 清单、验证命令或项目文档 | 让一次项目里的经验进入下一次默认行为，形成可维护的自我改进链路 |
+| 闭环结束要沉淀规则 | 架构或最终协调窗口必须用 `无 / 建议 / 已沉淀` 三态判断是否要把复用经验沉淀到 skill、README、角色提示词、QA 清单、验证命令或项目文档 | 让一次项目里的经验进入下一次默认行为，形成可维护的自我改进链路 |
 | 跨电脑可继承 | README、registry、source policy 和 `skills/` 共同描述角色、来源、能力边界和安装方式 | 新机器同步仓库后，不只拿到文件，也继承这套协作模型 |
 
 可以把这套设计理解为：
@@ -118,7 +127,7 @@ flowchart TD
 → 结构化反馈
 → 返工或决策
 → 架构终验
-→ 规则沉淀
+→ 可复用优化沉淀（无 / 建议 / 已沉淀）
 ```
 
 这也是本仓库和普通 prompt collection 最大的区别：这里的 skill 不是一次性回答模板，而是能被角色窗口反复调用、反馈、验收和沉淀的协作单元。
@@ -135,9 +144,10 @@ flowchart TD
 | `小红书` | 架构给出或单独唤起的小红书提示词 | `$cheat-on-content`, `$xhs-comment-research`, `$humanizer-zh`, `$guizang-social-card-skill`, `$xhs-publish-assistant`, `$playwright` | 小红书/Rednote 笔记、评论研究、图文组图、标题标签、发布复制包、内容实验和授权发布自动化 |
 | `文档/交付` | 架构给出的文档/交付提示词 | `$delivery-document-package`, `$gstack-document-generate`, `$gstack-document-release`, `$gstack-learn`, `$gstack-retro` | 交付清单、验收材料、演示脚本、变更确认、操作指南和交接文档 |
 | `知识库` | 架构给出或单独唤起的知识库提示词 | `$agent-role-orchestrator` 角色卡 | 个人知识库、Obsidian vault、索引/MOC、标签、链接和高风险笔记边界 |
-| `运维` | Hermes handoff 提示词 | `$application-problem-diagnosis-workflow`, `$package-update-check-and-plan`, `$pre-deployment-readonly-checklist`, `$post-deployment-readonly-verification`, `$hermes-*`, `$proxy-dependent-python-service-diagnosis`, `$python-project-deployment-troubleshooting` | 远程生产事实由 Hermes 只读查；写操作必须授权 |
+| `运维` | Hermes handoff 提示词 | `$application-problem-diagnosis-workflow`, `$package-update-check-and-plan`, `$pre-deployment-readonly-checklist`, `$post-deployment-readonly-verification`, `$hermes-*`, `$proxy-dependent-python-service-diagnosis`, `$python-project-deployment-troubleshooting` | 远程生产事实由 Hermes 只读查；写操作必须授权；数据库实例主因转 DBA |
+| `DBA` | 架构给出或单独唤起的 DBA 提示词 | `$agent-role-orchestrator` 角色卡 | 数据库容量、临时空间、binlog/WAL、长事务、锁、备份恢复、分区/归档和高风险清理；默认只读，危险动作二次授权 |
 | `安全` | 安全审计提示词 | `$gstack-cso`, `$authorized-blackbox-web-security`, Codex Security 插件 skills | 黑盒、公网、仓库、PR、深度扫描要分开 |
-| `测试` | 测试提示词 | `$test-case-report-builder`, `$playwright`, `$pdf` | 正式测试用例、测试报告和证据包归测试 |
+| `测试` | 测试提示词 | `$test-case-report-builder`, `$playwright`, `$pdf` | 正式测试用例、测试报告、证据包，以及被指派时的压力/负载/性能/并发验证 |
 | `QA` | QA/验收提示词 | `$gstack-qa-only`, `$gstack-qa`, `$gstack-canary`, `$gstack-review`, `$playwright`, Hermes 只读验证 skills | Review readiness、验收缺口、阻塞风险，不默认写测试报告 |
 
 ## 跨电脑继承
@@ -210,7 +220,7 @@ PY
 
 | 分组 | 代表 skills | 来源 | 主要角色 |
 | --- | --- | --- | --- |
-| 角色编排 | `agent-role-orchestrator` | local | 架构 / 全角色 |
+| 角色编排 | `agent-role-orchestrator` | local | 架构 / 全角色（含 DBA） |
 | gstack 方法论路由 | `gstack`，以及 `gstack-office-hours`、`gstack-spec`、`gstack-autoplan`、`gstack-plan-*` | external-github / adapted | 架构 |
 | gstack 执行与复盘 | `gstack-investigate`、`gstack-review`、`gstack-ship`、`gstack-health`、`gstack-devex-review`、`gstack-careful`、`gstack-guard`、`gstack-freeze`、`gstack-unfreeze`、`gstack-learn`、`gstack-retro` | external-github / adapted | 开发 / QA / 架构 |
 | gstack 设计 | `gstack-design-consultation`、`gstack-design-shotgun`、`gstack-design-html`、`gstack-design-review` | external-github / adapted | UI/PPT |
@@ -315,10 +325,11 @@ python3 scripts/validate_public_skills.py
 - 下游角色窗口默认回调任务发起窗口；不要把所有完成/阻塞/决策消息都默认交回架构。
 - 非平凡多窗口任务必须携带闭环状态和本轮退出条件；状态可从 `待拆解`、`已派发`、`执行中`、`开发完成`、`QA 未通过`、`返工中`、`QA 通过`、`架构终验`、`完成`、`阻塞` 中取最小必要集合。
 - QA、架构或发起窗口给出的返工反馈必须结构化，至少包含问题/缺口、证据/复现、影响等级、建议回流对象、需要决策和下一闭环状态。
-- 每个闭环结束时都要判断是否需要规则沉淀；可沉淀到 skill、README、角色提示词、QA 清单、验证命令或项目文档，只有在用户授权或任务明确要求时才直接修改。
+- 每个闭环结束时都要判断是否需要规则沉淀；回传中必须写 `可复用优化沉淀：无 / 建议 / 已沉淀`，可沉淀到 skill、README、角色提示词、QA 清单、验证命令或项目文档，只有在用户授权或任务明确要求时才直接修改。
 - `架构` 在非平凡实施计划进入开发前，可使用 `gstack` 路由到 `gstack-office-hours`、`gstack-spec`、`gstack-autoplan` 或具体 `gstack-plan-*` 审查。
-- `运维` 优先使用 Hermes-owned 的只读诊断/部署检查 skills；涉及写操作、重启、清理、迁移时必须先获得用户明确授权。
+- `运维` 优先使用 Hermes-owned 的只读诊断/部署检查 skills；涉及写操作、重启、清理、迁移时必须先获得用户明确授权；数据库实例容量、锁、binlog/WAL、长事务、备份恢复或高风险清理转 `DBA`。
+- `DBA` 默认只读收集数据库实例证据；kill、purge、DDL、resize、restore、cleanup 等危险动作必须二次授权。
 - 安全审计默认委派到安全专项 skill。
-- `测试` 生成测试用例/测试报告默认使用 `test-case-report-builder`。
+- `测试` 生成测试用例/测试报告默认使用 `test-case-report-builder`；压力/负载/性能/并发验证必须明确环境、流量上限、数据隔离、停止条件、指标和证据。
 - `QA` 保持验收/Review 角色，默认不负责写测试用例和测试报告。
 - 使用中发现可复用优化时，优先沉淀回对应 skill。

@@ -1,6 +1,6 @@
 ---
 name: agent-role-orchestrator
-description: Create concise role-specific Codex window prompts and current-window handoffs with an architecture-first gateway and role-window registry. Use when the user asks for an architecture/development/UI-PPT/UI-Frontend/video/ops/security/testing/QA/document-delivery/WeChat Official Account publishing/Xiaohongshu/personal knowledge-base window, says to inherit/reset/continue the current role, asks for the next-window prompt, wants a requirement routed through architecture before deciding whether to open other role windows, wants existing roles reused instead of recreated, wants testing test-case/report prompts, wants delivery-document prompts for requirements/contracts/acceptance/docs, wants content publishing roles, wants personal knowledge-base organization, or wants security-audit prompts that delegate to the appropriate security skill.
+description: Create concise role-specific Codex window prompts and current-window handoffs with an architecture-first gateway and role-window registry. Use when the user asks for an architecture/development/UI-PPT/UI-Frontend/video/ops/DBA/security/testing/QA/document-delivery/WeChat Official Account publishing/Xiaohongshu/personal knowledge-base window, says to inherit/reset/continue the current role, asks for the next-window prompt, wants a requirement routed through architecture before deciding whether to open other role windows, wants existing roles reused instead of recreated, wants testing test-case/report/stress-test prompts, wants delivery-document prompts for requirements/contracts/acceptance/docs, wants content publishing roles, wants personal knowledge-base organization, or wants security-audit prompts that delegate to the appropriate security skill.
 ---
 
 # Agent Role Orchestrator
@@ -12,11 +12,12 @@ Turn fuzzy collaboration intent into a real role-window handoff or copy-paste pr
 Use this skill to:
 - bootstrap a new role window, usually `架构` first;
 - summarize the current thread so a next window can inherit a role;
-- let `架构` decide whether to open `开发`, `UI/PPT` / `UI/Frontend`, `视频`, `公众号发布`, `小红书`, `运维`, `安全`, `测试`, `QA`, `文档/交付`, or `知识库` windows;
+- let `架构` decide whether to open `开发`, `UI/PPT` / `UI/Frontend`, `视频`, `公众号发布`, `小红书`, `运维`, `DBA`, `安全`, `测试`, `QA`, `文档/交付`, or `知识库` windows;
 - remember whether each role has already been established and reuse it by default;
 - rewrite a project-specific role prompt into a reusable role template.
 - route `安全` work to the right existing security skill by default.
 - route `测试` test-case/report work to the test artifact skill by default.
+- route independent stress, load, performance, and concurrency validation to the `测试` role by default.
 - require role windows to actively report terminal task state back to the task's source window.
 - bootstrap CodeGraph for new local code projects when available.
 
@@ -29,7 +30,7 @@ Only output multiple downstream role prompts when one of these is true:
 - the current thread is already acting as `架构` and has enough evidence to choose downstream roles;
 - the user explicitly overrides the gateway and asks to bypass `架构`.
 
-When the user asks for `开发`, `UI/PPT`, `视频`, `公众号发布`, `小红书`, `运维`, `安全`, `测试`, `QA`, `文档/交付`, or `知识库` prompts without an architecture decision, either produce a `架构` prompt first or clearly mark the downstream prompt as `待架构确认`.
+When the user asks for `开发`, `UI/PPT`, `视频`, `公众号发布`, `小红书`, `运维`, `DBA`, `安全`, `测试`, `QA`, `文档/交付`, or `知识库` prompts without an architecture decision, either produce a `架构` prompt first or clearly mark the downstream prompt as `待架构确认`.
 
 ## Complex Requirement Technical Options Rule
 
@@ -121,6 +122,7 @@ Maintain this registry in architecture handoffs when possible:
 - 公众号发布：已建立 / 未建立 / 待确认
 - 小红书：已建立 / 未建立 / 待确认
 - 运维：已建立 / 未建立 / 待确认
+- DBA：已建立 / 未建立 / 待确认
 - 安全：已建立 / 未建立 / 待确认
 - 测试：已建立 / 未建立 / 待确认
 - QA：已建立 / 未建立 / 待确认
@@ -198,9 +200,16 @@ At loop close, `架构` or the final coordinator must consider whether the resul
 
 Do not invent project state. Use only the current conversation, local files, git state, known memory, and user-provided facts. If a fact is missing, write `待确认` or make a small explicit assumption.
 
-## Self-Improvement Rule
+## Reusable Optimization Capture Rule
 
-If using this skill reveals a reusable prompt gap or role-boundary improvement, update this skill directly when the user has authorized self-editing or the current request asks for skill improvement.
+If using this skill reveals a reusable prompt gap, role-boundary improvement, validation habit, callback habit, or source-policy improvement, make it visible in the generated role prompt and in the callback/completion message under `可复用优化沉淀`.
+
+Use this three-state wording:
+- `无`: no reusable workflow change was discovered this round.
+- `建议`: a reusable improvement was discovered, but it needs user approval or a separate maintenance task before editing.
+- `已沉淀`: the current task explicitly authorizes skill/workflow maintenance and the improvement was already written to the named target.
+
+Update this skill directly only when the user has authorized self-editing or the current request asks for skill/workflow improvement. Otherwise, return the proposed target and rationale instead of silently editing.
 
 Default edit targets:
 - [SKILL.md](SKILL.md) for workflow, gateway, output-shape, or invocation rules;
@@ -218,8 +227,9 @@ For common role defaults, read [references/role-cards.md](references/role-cards.
 - 公众号发布 / 微信公众号 / WeChat Official Account article publishing;
 - 小红书 / Rednote publishing / Xiaohongshu notes;
 - 运维 / deployment / production verification;
+- DBA / database administration / MySQL instance capacity / binlog / WAL / InnoDB / long transaction incident;
 - 安全;
-- 测试 / test cases / test report;
+- 测试 / test cases / test report / stress testing / load testing / performance testing;
 - QA / review / 验收.
 - 文档/交付 / delivery docs / requirements / contract / acceptance / handoff.
 - 知识库 / personal knowledge base / Obsidian vault / notes taxonomy.
@@ -269,6 +279,7 @@ For role tools sourced from external GitHub skills or Hermes-owned operational s
 - `文档/交付` docs, release notes, learnings, and retrospectives: `$gstack-document-generate`, `$gstack-document-release`, `$gstack-learn`, `$gstack-retro`;
 - `文档/交付` client-facing delivery packages, acceptance forms, delivery checklists, demo scripts, and handoff notes: `$delivery-document-package`;
 - `测试` test cases, Excel workbook, Word/DOCX test report, or formal testing artifact package: `$test-case-report-builder`.
+- `测试` independent stress/load/performance/concurrency validation: use native project test commands or appropriate tools, preserve exact evidence, and keep environment-impacting work behind explicit safety approval.
 - `运维` application incident diagnosis: `$application-problem-diagnosis-workflow`;
 - `运维` package/update planning before deployment: `$package-update-check-and-plan`;
 - `运维` pre-deployment read-only checks: `$pre-deployment-readonly-checklist`;
@@ -278,6 +289,7 @@ For role tools sourced from external GitHub skills or Hermes-owned operational s
 - `运维` proxy-dependent Python service diagnosis: `$proxy-dependent-python-service-diagnosis`;
 - `运维` Python deployment troubleshooting: `$python-project-deployment-troubleshooting`.
 - `运维` deploy/canary planning support only when it does not replace Hermes read-only production evidence: `$gstack-setup-deploy`, `$gstack-land-and-deploy`, `$gstack-canary`.
+- `DBA` MySQL/Postgres instance-side capacity, binlog/WAL, InnoDB/transaction, lock, temp-space, backup/restore, partitioning, and data-retention incidents: keep the first pass read-only; separate evidence collection from actions such as kill, purge, DDL, resize, backup restore, or data cleanup; route from `运维` to `DBA` when the dominant risk is database-engine state rather than app/service state.
 
 ## Workflow
 
@@ -425,9 +437,10 @@ CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
 - 下一闭环状态：
 
 规则沉淀：
-- 本轮是否暴露可复用流程问题：
-- 建议沉淀位置：
-- 是否需要另开 skill/README/清单更新：
+- 可复用优化沉淀：无 / 建议 / 已沉淀
+- 具体问题或优化：
+- 目标位置：skill / README / 角色提示词 / QA 清单 / 验证命令 / 项目文档 / 待确认
+- 已执行变更或建议后续：
 
 完成后请回传：
 ...
@@ -505,6 +518,10 @@ Prefer short examples when telling the user how to call the skill:
 ```
 
 ```text
+使用 $agent-role-orchestrator，给我 DBA 窗口。
+```
+
+```text
 使用 $agent-role-orchestrator，给我测试窗口。
 ```
 
@@ -529,7 +546,7 @@ Before finalizing, check:
 - a single new requirement goes through `架构` first unless explicitly bypassed;
 - non-trivial multi-window work carries a loop state and exit condition;
 - QA or source-window feedback is structured with evidence, impact, return target, decision needs, and next state;
-- final coordination considers whether reusable lessons should be sedimented into a skill, README, checklist, prompt template, validation command, or project docs;
+- final coordination reports reusable lessons as `无`, `建议`, or `已沉淀`, with target and rationale when applicable;
 - complex new requirements include a multi-option technical options brief and an explicit route-selection gate before downstream implementation;
 - pure frontend or visual-fidelity work routes visual ownership to `UI/PPT` / `UI/Frontend` by default, with `开发` used for scoped implementation rather than as a catch-all;
 - existing role windows are inherited/continued by default instead of recreated;
@@ -537,9 +554,11 @@ Before finalizing, check:
 - new local code projects check or initialize CodeGraph before deeper architecture/development work, or include an explicit skip/failure reason.
 - downstream role prompts include file scope, forbidden scope, validation, and commit/report expectations by default.
 - downstream role prompts identify the source window and require active callback to that source when complete, blocked, or awaiting a decision.
+- generated role prompts and completion/callback formats include `可复用优化沉淀：无 / 建议 / 已沉淀`.
 - `架构` prompts require a bounded open-source/reference scan after requirements are confirmed, or include an explicit skip reason.
 - `安全` prompts explicitly invoke the appropriate security skill instead of duplicating that workflow.
 - `测试` prompts for test cases or test reports explicitly invoke `$test-case-report-builder`.
+- `测试` prompts for stress/load/performance/concurrency validation specify environment, data isolation, traffic limits, stop conditions, metrics, and evidence capture.
 - `QA` prompts stay focused on review readiness, acceptance risk, and blocker verification; they do not own test-case/report authoring by default.
 - `文档/交付` prompts stay focused on requirements, quotes, contracts, acceptance records, handoff docs, change logs, and operator-facing documentation; they do not own code, QA signoff, legal advice, or tax advice.
 - `架构` prompts use `$gstack` as a method router and choose `$gstack-office-hours`, `$gstack-spec`, `$gstack-autoplan`, or focused `$gstack-plan-*` reviews when useful.
@@ -554,9 +573,10 @@ Use these defaults unless the user says otherwise:
 - `UI/PPT` (also `UI/Frontend` for frontend visual work) and `视频` produce visible artifacts and perform visual verification; when their output includes final public-facing Chinese copy, they run `$humanizer-zh` before export or handoff.
 - `公众号发布` uses `$wechat-ai-app-ops`, runs `$humanizer-zh` before final preview/draft handoff, prepares and automates WeChat Official Account article drafts/previews by default, and requires explicit approval before final publish.
 - `小红书` may use `$cheat-on-content` for social-content scoring, blind prediction, benchmark learning, and retro loops; it uses `$humanizer-zh` before final note/publish copy, uses `$xhs-publish-assistant` for copy-ready publish bundles, and requires explicit approval before final posting.
-- `测试` uses `$test-case-report-builder` for test case and test report artifacts.
+- `测试` uses `$test-case-report-builder` for test case and test report artifacts, and owns independent stress/load/performance/concurrency validation when assigned.
 - `QA` checks review/release readiness, blockers, and acceptance risk.
 - `文档/交付` maintains the project documentation package across phases: requirements, quotes, contracts/service agreements, acceptance sheets, delivery checklists, operation guides, change confirmations, and handoff notes; it does not write code or replace legal/tax review.
 - `知识库` organizes an Obsidian-style personal notes vault: inventories note clusters, proposes taxonomy and link maps, maintains WikiLinks/MOC/index notes and shareable Markdown when assigned, and preserves the user's personal voice and high-stakes boundaries; it does not delete, publish, edit `.obsidian` config, or convert personal notes into medical/financial/legal advice without explicit approval.
 - `运维` investigates read-only first and avoids restarts, migrations, deletes, or production writes without explicit authorization.
+- `DBA` owns database-instance evidence and action plans for capacity, temp space, binlog/WAL, long transactions, locks, backups, schema/data retention, and risky database maintenance; it starts read-only and requires explicit second approval before kill, purge, DDL, resize, or data cleanup.
 - `安全` delegates to the matching security skill first, uses low-impact checks by default, and distinguishes evidence from suspicion.
