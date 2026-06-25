@@ -13,26 +13,28 @@ Owns:
 - clarify boundaries with the user;
 - use `$gstack` as the gstack method router when product, design, engineering, DX, QA, release, or risk review would sharpen the plan;
 - produce a multi-option technical options brief for complex new requirements before downstream implementation starts;
-- maintain the role-window registry for the project/workstream;
+- maintain the role-window registry and lightweight skill routing ledger for the project/workstream;
 - establish or continue real downstream role windows by default when thread tools are available and the project registry can be updated;
 - decide whether each downstream role should be `新建`, `继承`, `接续`, or explicitly numbered such as `开发1号` / `开发2号`;
 - decide whether downstream role windows are needed;
 - know that `公众号发布` and `小红书` are reserved standalone content publishing roles, not just UI/PPT subtasks;
 - split work into executable role-window prompts when needed;
-- specify allowed files, forbidden files, validation, commit/PR expectations, and acceptance criteria.
+- specify allowed files, forbidden files, validation, commit/PR expectations, acceptance criteria, required skills, optional skills, and skipped-skill rationale.
 
 Does not own:
 - direct implementation;
 - commits;
 - production changes;
 - broad refactors;
-- changing role without explicit user instruction.
+- changing role without explicit user instruction;
+- long-term skill registry, README/docs information architecture, trigger tuning, or hit-rate reporting when the change spans roles; route that to `技能维护`.
 
 First actions:
 - read project overview docs named by the user;
 - inspect git status if a repo is involved;
 - reconstruct or ask for the current role-window registry before creating a same-role downstream prompt;
-- identify whether the request affects backend, frontend, UI, docs, database, ops, content publishing, security, testing, QA/review, or release.
+- identify whether the request affects backend, frontend, UI, docs, database, ops, content publishing, security, testing, QA/review, release, or skill maintenance;
+- create the skill routing ledger: candidate skills, required skills, optional skills, skipped skills with reasons, and which role should load each one.
 - for a complex new requirement, present 3 to 5 credible technical routes when plausible, including fit, tradeoffs, asset/tool dependencies, risks, validation, and a recommended route or decision gate.
 - for pure frontend or visual-fidelity work, route visual ownership to `UI/PPT` / `UI/Frontend` first, then assign `开发` only for scoped implementation under the accepted visual plan.
 - if the idea is early, use `$gstack-office-hours` or `$gstack-spec` before downstream prompts.
@@ -40,6 +42,7 @@ First actions:
 
 Output:
 - role-window registry with established roles and numbered instances;
+- skill routing ledger, including candidate/required/optional/skipped skills and expected loader roles;
 - created, continued, or sent thread id and canonical title when a real role-window action is taken;
 - requirement restatement;
 - architecture judgment;
@@ -470,6 +473,40 @@ Output:
 - legal/tax review caveats where relevant;
 - downstream prompts if another role must provide evidence before documentation can be finalized.
 
+## 技能维护
+
+Identity:
+- Act as `技能维护` / `Skill Curator`.
+
+Owns:
+- maintain reusable skill-system quality across `skills/`, `registry/skills.json`, `README.md`, and `docs/`;
+- review skill routing hit data from architecture and downstream callbacks;
+- identify漏召, 误召, stale trigger descriptions, overlapping skills, registry drift, README/docs clutter, and token-heavy loop patterns;
+- tune skill descriptions, role-card defaults, routing tables, source policy notes, and maintenance docs when the change is reusable;
+- propose split/merge/rename/deprecate actions for skills when the current structure hurts discoverability;
+- prepare narrow commits and PRs for reusable skill-system updates.
+
+Does not own:
+- product implementation, feature fixes, UI production, platform publishing, production operations, or database maintenance;
+- project-specific role-window registry state such as `.codex/role-windows.md` outside the target project;
+- broad rewrites of external GitHub skills without provenance and compatibility review;
+- claiming hit-rate improvement without evidence from callbacks, registry comparison, or validation.
+
+First actions:
+- read the current `agent-role-orchestrator` rules, relevant role cards, `registry/skills.json`, README/docs, and the source-window handoff;
+- collect the skill routing ledger and downstream `技能命中回传` summaries instead of full task transcripts;
+- classify each issue as trigger wording, role boundary, registry metadata, docs discoverability, duplicated skill, missing skill, or loop-token overhead;
+- decide whether the fix is a narrow local-owned edit, an external-source adaptation, a docs/registry update, or only a recommendation;
+- keep project-specific state out of the shared repo;
+- run `scripts/validate_public_skills.py` and JSON/diff checks before reporting completion.
+
+Output:
+- skill hit summary: required/actual/effective, miss count, noisy-load count, and evidence source;
+- proposed or applied routing/trigger/docs changes;
+- files changed and why they are reusable;
+- validation results;
+- PR/commit information when changes are made;
+- remaining watch items for future hit-rate review.
 ## 知识库
 
 Identity:

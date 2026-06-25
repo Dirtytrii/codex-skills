@@ -1,6 +1,6 @@
 ---
 name: agent-role-orchestrator
-description: Create concise role-specific Codex window prompts and current-window handoffs with an architecture-first gateway and role-window registry. Use when the user asks for an architecture/development/UI-PPT/UI-Frontend/video/ops/DBA/security/testing/QA/document-delivery/WeChat Official Account publishing/Xiaohongshu/personal knowledge-base window, says to inherit/reset/continue the current role, asks for the next-window prompt, wants a requirement routed through architecture before deciding whether to open other role windows, wants existing roles reused instead of recreated, wants testing test-case/report/stress-test prompts, wants delivery-document prompts for requirements/contracts/acceptance/docs, wants content publishing roles, wants personal knowledge-base organization, or wants security-audit prompts that delegate to the appropriate security skill.
+description: Create concise role-specific Codex window prompts and current-window handoffs with an architecture-first gateway and role-window registry. Use when the user asks for an architecture/development/UI-PPT/UI-Frontend/video/ops/DBA/security/testing/QA/document-delivery/WeChat Official Account publishing/Xiaohongshu/personal knowledge-base/skill-maintenance window, says to inherit/reset/continue the current role, asks for the next-window prompt, wants a requirement routed through architecture before deciding whether to open other role windows, wants existing roles reused instead of recreated, wants testing test-case/report/stress-test prompts, wants delivery-document prompts for requirements/contracts/acceptance/docs, wants content publishing roles, wants personal knowledge-base organization, wants skill hit-rate/statistics/curation prompts, or wants security-audit prompts that delegate to the appropriate security skill.
 ---
 
 # Agent Role Orchestrator
@@ -12,13 +12,16 @@ Turn fuzzy collaboration intent into a real role-window handoff or copy-paste pr
 Use this skill to:
 - bootstrap a new role window, usually `架构` first;
 - summarize the current thread so a next window can inherit a role;
-- let `架构` decide whether to open `开发`, `UI/PPT` / `UI/Frontend`, `视频`, `公众号发布`, `小红书`, `运维`, `DBA`, `安全`, `测试`, `QA`, `文档/交付`, or `知识库` windows;
+- let `架构` decide whether to open `开发`, `UI/PPT` / `UI/Frontend`, `视频`, `公众号发布`, `小红书`, `运维`, `DBA`, `安全`, `测试`, `QA`, `文档/交付`, `知识库`, or `技能维护` windows;
 - remember whether each role has already been established and reuse it by default;
 - rewrite a project-specific role prompt into a reusable role template.
 - route `安全` work to the right existing security skill by default.
 - route `测试` test-case/report work to the test artifact skill by default.
 - route independent stress, load, performance, and concurrency validation to the `测试` role by default.
 - require role windows to actively report terminal task state back to the task's source window.
+- measure skill routing with a lightweight candidate/required/actual/effective hit ledger.
+- keep loop callbacks token-efficient by passing deltas, evidence links, and decisions instead of full transcripts.
+- route cross-role skill curation, registry updates, README/docs structure, and hit-rate retrospectives to `技能维护` by default.
 - bootstrap CodeGraph for new local code projects when available.
 
 ## Architecture-First Rule
@@ -30,7 +33,7 @@ Only output multiple downstream role prompts when one of these is true:
 - the current thread is already acting as `架构` and has enough evidence to choose downstream roles;
 - the user explicitly overrides the gateway and asks to bypass `架构`.
 
-When the user asks for `开发`, `UI/PPT`, `视频`, `公众号发布`, `小红书`, `运维`, `DBA`, `安全`, `测试`, `QA`, `文档/交付`, or `知识库` prompts without an architecture decision, either produce a `架构` prompt first or clearly mark the downstream prompt as `待架构确认`.
+When the user asks for `开发`, `UI/PPT`, `视频`, `公众号发布`, `小红书`, `运维`, `DBA`, `安全`, `测试`, `QA`, `文档/交付`, `知识库`, or `技能维护` prompts without an architecture decision, either produce a `架构` prompt first or clearly mark the downstream prompt as `待架构确认`.
 
 ## Complex Requirement Technical Options Rule
 
@@ -128,6 +131,7 @@ Maintain this registry in architecture handoffs when possible:
 - QA：已建立 / 未建立 / 待确认
 - 文档/交付：已建立 / 未建立 / 待确认
 - 知识库：已建立 / 未建立 / 待确认
+- 技能维护：已建立 / 未建立 / 待确认
 ```
 
 Use `新建` only for first establishment or explicit parallel instances. Use `继承` / `接续` for resets, context refreshes, and ongoing work in an existing role.
@@ -169,6 +173,62 @@ When window `A` assigns, delegates, or hands off a task to window `B`:
 - if `B` delegates a subtask to `C`, `B` becomes the source for `C` while still remaining responsible for reporting its own task state back to `A`.
 
 This callback rule is separate from user-facing final reports. A downstream window may summarize for the user, but it must still close the loop with its task source.
+## Skill Routing Measurement Rule
+
+When `架构` creates or updates a non-trivial role prompt, include a lightweight skill routing ledger. `架构` owns the routing decision and the aggregate hit-rate view; downstream roles own reporting what they actually loaded and whether it affected the work.
+
+Use four hit levels:
+- `候选命中`: the task may need this skill.
+- `必选命中`: `架构` marks this skill as required for the role.
+- `实际命中`: the downstream role actually loaded and used the skill.
+- `有效命中`: the skill changed scope, output, validation, safety, or decision quality.
+
+Minimum metrics:
+- `技能路由命中率 = 实际命中的必选 skill 数 / 架构标记的必选 skill 数`.
+- `误召率 = 加载但最终无效的 skill 数 / 总加载 skill 数`.
+- `漏召数 = 任务结束后发现本该使用但没有使用的 skill 数`.
+
+Add this ledger to architecture prompts and multi-role splits:
+
+```text
+技能路由台账：
+- 候选 skill：
+- 必选 skill：
+- 可选 skill：
+- 跳过 skill 及原因：
+- 预期加载角色：
+```
+
+Require downstream roles to callback with:
+
+```text
+技能命中回传：
+- 已加载并使用：
+- 架构要求但未使用：
+- 临时发现应补用：
+- 误召/无效加载：
+- 影响产出的 skill：
+```
+
+If the ledger reveals recurring misses, noisy triggers, stale descriptions, overlapping skills, or registry drift, route maintenance to `技能维护` unless the current role has explicit authorization to make a narrow self-edit.
+
+## Loop Token Compression Rule
+
+Loop engineering must save tokens instead of multiplying them. Each callback should pass only state deltas and evidence handles, not the full transcript or all intermediate reasoning.
+
+Default callback shape:
+
+```text
+压缩回调：
+- 当前状态：
+- 本轮变化：
+- 证据链接/文件/命令：
+- 需要决策：
+- 下一回流对象：
+- 可复用优化沉淀：无 / 建议 / 已沉淀
+```
+
+Use full context only when the receiver cannot act without it. Prefer paths, commit hashes, screenshots, command summaries, PR links, and short acceptance notes over pasted logs. `架构` should consume QA/source summaries instead of rereading every downstream transcript. `技能维护` should consume skill-hit summaries instead of raw task histories.
 
 ## Loop Engineering Rule
 
@@ -194,7 +254,7 @@ When `QA`, `架构`, or any source window sends work back, feedback must be stru
 - decision needed, if any;
 - next loop state.
 
-At loop close, `架构` or the final coordinator must consider whether the result should update durable behavior. If the same issue is likely to recur, record a proposed sedimentation target such as `SKILL.md`, `README.md`, role prompt template, QA checklist, validation command, or project docs. Do not edit those targets unless the user has authorized the edit or the current task explicitly asks for skill/workflow maintenance.
+At loop close, `架构` or the final coordinator must consider whether the result should update durable behavior. If the same issue is likely to recur, record a proposed sedimentation target such as `SKILL.md`, `README.md`, role prompt template, QA checklist, validation command, or project docs. Do not edit those targets unless the user has authorized the edit or the current task explicitly asks for skill/workflow maintenance. For cross-role skill routing, registry, README/docs structure, hit-rate, or token-compression improvements, route the landing work to `技能维护`.
 
 ## Core Rule
 
@@ -202,12 +262,14 @@ Do not invent project state. Use only the current conversation, local files, git
 
 ## Reusable Optimization Capture Rule
 
-If using this skill reveals a reusable prompt gap, role-boundary improvement, validation habit, callback habit, or source-policy improvement, make it visible in the generated role prompt and in the callback/completion message under `可复用优化沉淀`.
+If using this skill reveals a reusable prompt gap, role-boundary improvement, validation habit, callback habit, skill routing miss, token-compression issue, or source-policy improvement, make it visible in the generated role prompt and in the callback/completion message under `可复用优化沉淀`.
 
 Use this three-state wording:
 - `无`: no reusable workflow change was discovered this round.
 - `建议`: a reusable improvement was discovered, but it needs user approval or a separate maintenance task before editing.
 - `已沉淀`: the current task explicitly authorizes skill/workflow maintenance and the improvement was already written to the named target.
+
+Use this ownership split: the discovering role proposes, `架构` decides whether it is worth sedimenting and where, and `技能维护` lands cross-role edits such as registry, README/docs, hit metrics, trigger descriptions, split/merge/rename, or recurring miss fixes.
 
 Update this skill directly only when the user has authorized self-editing or the current request asks for skill/workflow improvement. Otherwise, return the proposed target and rationale instead of silently editing.
 
@@ -233,6 +295,7 @@ For common role defaults, read [references/role-cards.md](references/role-cards.
 - QA / review / 验收.
 - 文档/交付 / delivery docs / requirements / contract / acceptance / handoff.
 - 知识库 / personal knowledge base / Obsidian vault / notes taxonomy.
+- 技能维护 / Skill Curator / skill hit-rate / registry / README / source policy / trigger tuning.
 
 For `安全`, always include the relevant downstream security skill in the generated prompt:
 - public site, black-box, exposed JS/API, login protection, CORS, headers, or penetration-style report: `$authorized-blackbox-web-security`;
@@ -413,6 +476,13 @@ CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
 - 索引路径/忽略策略：
 - 跳过或失败原因：
 
+技能路由台账（架构窗口和多角色拆分必填；单一执行角色可写“不适用/继承架构台账”）：
+- 候选 skill：
+- 必选 skill：
+- 可选 skill：
+- 跳过 skill 及原因：
+- 预期加载角色：
+
 开源/可借鉴方案扫描（架构窗口必填；非架构窗口仅在被明确指派时填写）：
 - 检索关键词：
 - 候选方案：
@@ -436,10 +506,24 @@ CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
 - 需要决策：
 - 下一闭环状态：
 
+压缩回调：
+- 当前状态：
+- 本轮变化：
+- 证据链接/文件/命令：
+- 需要决策：
+- 下一回流对象：
+
+技能命中回传：
+- 已加载并使用：
+- 架构要求但未使用：
+- 临时发现应补用：
+- 误召/无效加载：
+- 影响产出的 skill：
+
 规则沉淀：
 - 可复用优化沉淀：无 / 建议 / 已沉淀
 - 具体问题或优化：
-- 目标位置：skill / README / 角色提示词 / QA 清单 / 验证命令 / 项目文档 / 待确认
+- 目标位置：skill / README / 角色提示词 / QA 清单 / 验证命令 / registry / source policy / 项目文档 / 待确认
 - 已执行变更或建议后续：
 
 完成后请回传：
@@ -533,6 +617,10 @@ Prefer short examples when telling the user how to call the skill:
 使用 $agent-role-orchestrator，给我知识库窗口。
 ```
 
+```text
+使用 $agent-role-orchestrator，给我技能维护窗口。
+```
+
 ## Quality Bar
 
 Before finalizing, check:
@@ -554,6 +642,9 @@ Before finalizing, check:
 - new local code projects check or initialize CodeGraph before deeper architecture/development work, or include an explicit skip/failure reason.
 - downstream role prompts include file scope, forbidden scope, validation, and commit/report expectations by default.
 - downstream role prompts identify the source window and require active callback to that source when complete, blocked, or awaiting a decision.
+- architecture and multi-role prompts include a `技能路由台账` with candidate/required/optional/skipped skills and expected loader roles.
+- downstream role prompts include `技能命中回传` so required/actual/effective skill use can be measured.
+- callbacks use `压缩回调` delta fields and avoid replaying full transcripts unless necessary.
 - generated role prompts and completion/callback formats include `可复用优化沉淀：无 / 建议 / 已沉淀`.
 - `架构` prompts require a bounded open-source/reference scan after requirements are confirmed, or include an explicit skip reason.
 - `安全` prompts explicitly invoke the appropriate security skill instead of duplicating that workflow.
@@ -563,11 +654,12 @@ Before finalizing, check:
 - `文档/交付` prompts stay focused on requirements, quotes, contracts, acceptance records, handoff docs, change logs, and operator-facing documentation; they do not own code, QA signoff, legal advice, or tax advice.
 - `架构` prompts use `$gstack` as a method router and choose `$gstack-office-hours`, `$gstack-spec`, `$gstack-autoplan`, or focused `$gstack-plan-*` reviews when useful.
 - role prompts distinguish external GitHub skills from local-owned skills when that affects maintenance or self-editing.
+- recurring skill misses, noisy triggers, registry drift, README/docs information architecture, and cross-role skill edits route to `技能维护`.
 
 ## Common Defaults
 
 Use these defaults unless the user says otherwise:
-- `架构` clarifies requirements, writes a multi-option technical options brief for complex new requirements, bootstraps CodeGraph for new local code projects when available, performs a bounded open-source/reference scan when relevant and allowed, maintains the role-window registry, and decides whether downstream windows are needed; it does not code or commit.
+- `架构` clarifies requirements, writes a multi-option technical options brief for complex new requirements, bootstraps CodeGraph for new local code projects when available, performs a bounded open-source/reference scan when relevant and allowed, maintains the role-window registry and skill routing ledger, and decides whether downstream windows are needed; it does not code, commit, or own long-term skill curation.
 - `架构` uses `$gstack` for method routing: early ideas go to `$gstack-office-hours` or `$gstack-spec`; concrete plans go to `$gstack-autoplan` or focused `$gstack-plan-*` reviews.
 - `开发` implements within a narrow file scope, runs tests, and commits when asked or when workspace instructions require it; it should not own UI/visual direction when the dominant risk is visual fidelity.
 - `UI/PPT` (also `UI/Frontend` for frontend visual work) and `视频` produce visible artifacts and perform visual verification; when their output includes final public-facing Chinese copy, they run `$humanizer-zh` before export or handoff.
@@ -577,6 +669,7 @@ Use these defaults unless the user says otherwise:
 - `QA` checks review/release readiness, blockers, and acceptance risk.
 - `文档/交付` maintains the project documentation package across phases: requirements, quotes, contracts/service agreements, acceptance sheets, delivery checklists, operation guides, change confirmations, and handoff notes; it does not write code or replace legal/tax review.
 - `知识库` organizes an Obsidian-style personal notes vault: inventories note clusters, proposes taxonomy and link maps, maintains WikiLinks/MOC/index notes and shareable Markdown when assigned, and preserves the user's personal voice and high-stakes boundaries; it does not delete, publish, edit `.obsidian` config, or convert personal notes into medical/financial/legal advice without explicit approval.
+- `技能维护` owns skill-hit retrospectives, trigger tuning, registry/README/docs/source-policy updates, role-card split/merge/rename suggestions, and reusable skill PRs; it does not implement product work or absorb project-specific role-window state.
 - `运维` investigates read-only first and avoids restarts, migrations, deletes, or production writes without explicit authorization.
 - `DBA` owns database-instance evidence and action plans for capacity, temp space, binlog/WAL, long transactions, locks, backups, schema/data retention, and risky database maintenance; it starts read-only and requires explicit second approval before kill, purge, DDL, resize, or data cleanup.
 - `安全` delegates to the matching security skill first, uses low-impact checks by default, and distinguishes evidence from suspicion.
