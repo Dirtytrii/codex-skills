@@ -195,6 +195,168 @@ def content_tone_gate(role: str) -> str:
 """
 
 
+def effective_token_profile(role: str, args: argparse.Namespace) -> str:
+    if args.profile != "auto":
+        return args.profile
+    if args.risk == "critical" or args.loop_depth == "L3":
+        return "full"
+    if role == "架构" or args.new_code_project or args.loop_depth == "L2":
+        return "standard"
+    return "compact"
+
+
+def token_profile_strategy(profile: str) -> str:
+    strategies = {
+        "compact": "只保留闭环必需字段；省略深层技术方案、CodeGraph 和开源扫描占位，适合 L0/L1 小闭环。",
+        "standard": "保留常规路由、验证、技能台账和必要技术/内容门禁，适合 L2 普通协作。",
+        "full": "保留完整深层检查、CodeGraph、开源扫描和门禁字段，适合 L3、高风险、关键 PR 或新代码项目。",
+    }
+    return strategies[profile]
+
+
+def build_compact_prompt(
+    *,
+    args: argparse.Namespace,
+    role: str,
+    route: ModelRoute,
+    callback_target: str,
+    project: str,
+    read_first: list[str],
+    allowed: list[str],
+    forbidden: list[str],
+    validation: list[str],
+    candidate_skills: list[str],
+    required_skills: list[str],
+    optional_skills: list[str],
+    skipped_skills: list[str],
+    profile: str,
+) -> str:
+    return f"""【给 {role} 窗口的提示词】
+
+你现在担任：
+{role}
+
+背景：
+- 项目/路径：{project}
+- 交接方式：{args.mode}
+- 来源窗口：{callback_target}
+- 当前已知上下文：{args.context or "待确认"}
+
+模型建议：
+- model：{route.model}
+- thinking：{route.thinking}
+- 升级/降级条件：{route.escalation}
+
+Token Budget Profile：
+- profile：{profile}
+- 策略：{token_profile_strategy(profile)}
+
+{role_execution_guidance(role)}
+{ui_preview_route_guidance(role)}
+{content_research_guidance(role)}
+{content_tone_gate(role)}
+角色树位置（总控/架构/内容主编/执行角色）：
+{ROLE_TREE_POSITION[role]}
+
+{loop_depth_explanation(args.loop_depth, args.override_reason)}
+负责人交互边界：
+- 总控 / CEO 只直接对接负责人层或治理角色；技术执行默认由架构 / CTO 派发，内容执行默认由内容主编派发。
+- 总控不编写代码、测试脚本、验收脚本或自动化验证脚本；需要产物时交给对应负责人拆下游。
+
+目标：
+{args.objective}
+
+请先阅读/检查：
+{lines_or_default(read_first, "agent-role-orchestrator/SKILL.md；项目 .codex/role-windows.md（若存在）；与目标直接相关的项目文件")}
+
+允许修改：
+{lines_or_default(allowed, "待确认；未确认前只读")}
+
+禁止修改：
+{lines_or_default(forbidden, default_forbidden(role))}
+
+实现/工作要求：
+{args.work_requirements or "只处理本轮目标；不搬运完整旧聊天、长日志或大段源码；不确定信息写待确认。"}
+
+验证：
+{lines_or_default(validation, "说明无法验证的原因；可验证项必须给出命令、文件、截图或人工检查步骤")}
+
+闭环状态：
+- 当前状态：{args.loop_state}
+- 上一轮反馈：{args.previous_feedback or "无 / 待确认"}
+- 本轮退出条件：{args.exit_condition or "完成目标、阻塞并说明证据、或需要来源窗口决策"}
+
+上下文预算：
+- 默认只传状态增量、证据句柄、决策需求和下一回流对象。
+- compact 档不输出大段候选方案占位；需要深层设计、CodeGraph 或开源扫描时升级到 standard/full。
+- 当上下文接近过长或 compact 失败时，用台账、提交、PR、文件证据和压缩交接卡接续。
+
+闭环完成条件：
+- 完成、阻塞或需要发起方决策时，必须同时完成两件事：1. 更新 .codex/role-windows.md 并提交；2. 向来源 thread 主动发送压缩回调。
+- 仅完成第 1 项不算闭环；来源 thread 未收到回调时，负责人层仍应视为待回流。
+- 如果当前窗口没有发送工具，最终输出必须以 <codex_delegation> 或“压缩回调”开头，供系统/用户转发。
+
+路由前检查（总控、架构、内容主编和多角色派发必填）：
+- 是否读取 agent-role-orchestrator：{route_check_value(args.read_orchestrator)}
+- 是否读取 .codex/role-windows.md：{route_check_value(args.read_ledger)}
+- 是否复用已有角色线程：{args.reuse_thread or "待确认"}
+- 是否写清 source-window callback：是
+- 是否写清允许/禁止范围：是
+- 是否写清验证与提交要求：是
+- 是否包含技能路由台账：是
+- 是否需要更新 .codex/role-windows.md：{args.update_ledger or "待确认"}
+
+技能路由台账（总控、架构、内容主编和多角色拆分必填；单一执行角色可写“不适用/继承来源台账”）：
+- 候选 skill：{csv_or_default(candidate_skills, "待确认")}
+- 必选 skill：{csv_or_default(required_skills, "无 / 待确认")}
+- 可选 skill：{csv_or_default(optional_skills, "无 / 待确认")}
+- 跳过 skill 及原因：{csv_or_default(skipped_skills, "无")}
+- 预期加载角色：{role}
+
+提交/PR 要求：
+{args.commit_requirements or "遵循项目 AGENTS.md；未要求提交时先回报变更和验证证据。"}
+
+回调/通知规则：
+- 本任务发起方：{callback_target}。
+- 完成、阻塞或需要发起方决策时，主动通知发起方窗口；不要只等待用户转述。
+- 如无法直接发送到发起方窗口，请输出一段可复制的“给发起方的回调消息”，且最终输出必须以 <codex_delegation> 或“压缩回调”开头。
+
+结构化反馈格式（返工/验收失败/需要决策时必填）：
+- 问题/缺口：
+- 证据/复现：
+- 影响等级：
+- 建议回流对象：
+- 需要决策：
+- 下一闭环状态：
+
+压缩回调：
+- 当前状态：
+- 本轮变化：
+- 证据链接/文件/命令：
+- 需要决策：
+- 下一回流对象：
+
+技能命中回传：
+- 已加载并使用：
+- 来源窗口要求但未使用：
+- 临时发现应补用：
+- 误召/无效加载：
+- 影响产出的 skill：
+
+规则沉淀：
+- 可复用优化沉淀：无 / 建议 / 已沉淀
+- 具体问题或优化：
+- 目标位置：skill / README / 角色提示词 / QA 清单 / 验证命令 / registry / source policy / 项目文档 / 待确认
+- 已执行变更或建议后续：
+
+完成后请回传：
+{args.return_requirements or "压缩回调、验证证据、技能命中回传、规则沉淀状态。"}
+
+角色底线：
+{args.boundary or "守住角色边界；不越权发布、写生产、改凭据、编造证据或扩大范围。"}
+"""
+
+
 def build_prompt(args: argparse.Namespace) -> str:
     role = canonical_role(args.role)
     validate_source_route(role, args)
@@ -214,6 +376,25 @@ def build_prompt(args: argparse.Namespace) -> str:
     needs_technical = "必填" if role == "架构" else "不适用"
     needs_codegraph = "必填" if args.new_code_project or role == "架构" else "不适用"
     needs_scan = "必填" if role == "架构" else "不适用"
+    profile = effective_token_profile(role, args)
+
+    if profile == "compact":
+        return build_compact_prompt(
+            args=args,
+            role=role,
+            route=route,
+            callback_target=callback_target,
+            project=project,
+            read_first=read_first,
+            allowed=allowed,
+            forbidden=forbidden,
+            validation=validation,
+            candidate_skills=candidate_skills,
+            required_skills=required_skills,
+            optional_skills=optional_skills,
+            skipped_skills=skipped_skills,
+            profile=profile,
+        )
 
     return f"""【给 {role} 窗口的提示词】
 
@@ -230,6 +411,10 @@ def build_prompt(args: argparse.Namespace) -> str:
 - model：{route.model}
 - thinking：{route.thinking}
 - 升级/降级条件：{route.escalation}
+
+Token Budget Profile：
+- profile：{profile}
+- 策略：{token_profile_strategy(profile)}
 
 {role_execution_guidance(role)}
 {ui_preview_route_guidance(role)}
@@ -373,6 +558,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--project", help="Project path or scope.")
     parser.add_argument("--mode", default="新建", choices=["新建", "继承", "接续", "重置"])
     parser.add_argument("--loop-depth", default="L1", choices=["L0", "L1", "L2", "L3"], help="Collapsible routing depth. L0 direct user-to-executor; L1 owner layer; L2 owner-to-executor loop; L3 high-risk gated loop.")
+    parser.add_argument("--profile", default="auto", choices=["auto", "compact", "standard", "full"], help="Token budget profile. auto chooses compact for L0/L1 owner/simple prompts, standard for L2/architecture/new-code prompts, and full for L3/critical prompts.")
     parser.add_argument("--risk", default="normal", choices=["normal", "critical"], help="Use critical for release gates, adversarial QA, compliance, or high-risk public claims.")
     parser.add_argument("--source-role", help="Source/callback role. Defaults to 用户 only for 总控/架构, otherwise 待确认.")
     parser.add_argument("--source-thread", help="Source thread id. Defaults to 待确认.")
