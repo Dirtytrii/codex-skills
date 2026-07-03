@@ -57,6 +57,7 @@ python skills/agent-role-orchestrator/scripts/render_role_prompt.py \
   --objective "实现订单列表筛选修复" \
   --source-role 架构 \
   --source-thread thread-123 \
+  --profile auto \
   --required-skill gstack-investigate \
   --validation "npm test"
 ```
@@ -457,6 +458,16 @@ Default callback shape:
 
 Use full context only when the receiver cannot act without it. Prefer paths, commit hashes, screenshots, command summaries, PR links, and short acceptance notes over pasted logs. `总控`, `架构`, and `内容主编` should consume downstream/source summaries instead of rereading every transcript. `技能维护` should consume skill-hit summaries instead of raw task histories.
 
+## Token Budget Profile Rule
+
+Every non-trivial generated role prompt must choose the smallest safe Token Budget Profile. Use `scripts/render_role_prompt.py --profile auto` by default so the tool, not the model's memory, applies the routing table.
+
+- `compact`: for L0/L1 small loops, owner-layer triage, mechanical follow-up, or focused execution. Keep only role identity, model route, source callback, allowed/forbidden scope, validation, skill routing ledger, compressed callback, skill-hit report, and reusable-optimization capture. Do not emit large placeholder sections for technical alternatives, CodeGraph, or open-source scans unless they are actually needed.
+- `standard`: for normal L2 collaboration, architecture-owned work, new local code projects, or tasks where implementation scope must be explicit but risk is not critical.
+- `full`: for L3, critical PR review, adversarial QA, security/DBA/operations gates, production or account-impacting actions, high-risk public claims, or any task whose receiver cannot act safely without deeper checks.
+
+`auto` chooses `full` for `--risk critical` or `L3`, `standard` for `架构`, new code projects, or `L2`, and `compact` for the remaining L0/L1 prompts. A human may override with `--profile compact|standard|full`, but the prompt must state the chosen `Token Budget Profile` so reviewers can catch over-broad or under-specified delegation.
+
 ## Loop Engineering Rule
 
 Treat role-window collaboration as a closed loop, not just parallel conversation.
@@ -708,6 +719,10 @@ Use this structure:
 - model：
 - thinking：
 - 升级/降级条件：
+
+Token Budget Profile：
+- profile：compact / standard / full
+- 策略：
 
 角色树位置（总控/架构/内容主编/执行角色）：
 ...

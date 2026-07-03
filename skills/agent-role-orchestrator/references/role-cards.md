@@ -15,6 +15,7 @@ Owns:
 - interact directly with owner-layer roles by default: `架构` / `CTO`, `内容主编`, `知识库`, `技能维护`, and sometimes `文档/交付`;
 - maintain the top-level role-window registry, source-window callback contract, loop state, final acceptance gate, and model/thinking routing plan;
 - choose model and thinking overrides when creating or continuing role windows, and record the intended route in prompts when thread tools are unavailable;
+- choose the smallest safe Token Budget Profile (`compact` / `standard` / `full`) when generating role prompts, defaulting to `render_role_prompt.py --profile auto`;
 - keep token use bounded by preferring existing role windows, compressed callbacks, evidence handles, and narrow role prompts;
 - treat owner-layer completion as fail-closed: a downstream owner or execution role is not closed until `.codex/role-windows.md` is updated/committed and a compressed callback reaches its source thread;
 - decide when a reusable workflow issue should be routed to `技能维护`.
@@ -32,6 +33,7 @@ First actions:
 - inspect git status if a repo is involved and the answer depends on repository state;
 - classify the request as technical delivery, content publishing, knowledge-base work, skill-system maintenance, operations/DBA/security, documentation/delivery, or a small direct task;
 - choose the loop depth: `L0` for explicit user-to-executor small tasks, `L1` for owner-level judgment, `L2` for normal owner-to-executor loops, `L3` for high-risk gated loops;
+- choose the token profile with the loop depth: `compact` for L0/L1 small loops, `standard` for L2 or architecture/new-code prompts, and `full` for L3, critical review, security/DBA/ops gates, or high-risk public claims;
 - choose the smallest role tree that can close the loop;
 - decide model/thinking defaults for each new or continued role window.
 
