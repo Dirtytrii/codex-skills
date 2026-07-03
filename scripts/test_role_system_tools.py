@@ -264,6 +264,76 @@ def test_render_prompt_allows_ceo_to_owner_layer_and_explicit_override() -> None
     assert "用户明确要求绕过架构" in override.stdout
 
 
+def test_render_prompt_auto_compacts_l1_owner_prompt() -> None:
+    compact = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "内容主编",
+            "--objective",
+            "判断公众号和小红书内容任务是否需要拆下游",
+            "--source-role",
+            "总控",
+            "--loop-depth",
+            "L1",
+        ]
+    )
+    full_same_role = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "内容主编",
+            "--objective",
+            "判断公众号和小红书内容任务是否需要拆下游",
+            "--source-role",
+            "总控",
+            "--loop-depth",
+            "L1",
+            "--profile",
+            "full",
+        ]
+    )
+    assert "Token Budget Profile：" in compact.stdout
+    assert "profile：compact" in compact.stdout
+    assert "策略：只保留闭环必需字段" in compact.stdout
+    assert len(compact.stdout) < len(full_same_role.stdout)
+    assert "模型建议：" in compact.stdout
+    assert "负责人交互边界：" in compact.stdout
+    assert "技能路由台账" in compact.stdout
+    assert "技能命中回传：" in compact.stdout
+    assert "压缩回调：" in compact.stdout
+    assert "技术方案（架构/CTO 处理复杂技术需求必填" not in compact.stdout
+    assert "CodeGraph 状态（新本地代码项目必填" not in compact.stdout
+    assert "开源/可借鉴方案扫描" not in compact.stdout
+
+
+def test_render_prompt_full_profile_keeps_deep_sections() -> None:
+    full = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "架构",
+            "--objective",
+            "设计高风险技术改造并拆下游",
+            "--source-role",
+            "总控",
+            "--loop-depth",
+            "L3",
+            "--profile",
+            "full",
+            "--new-code-project",
+        ]
+    )
+    assert "Token Budget Profile：" in full.stdout
+    assert "profile：full" in full.stdout
+    assert "技术方案（架构/CTO 处理复杂技术需求必填" in full.stdout
+    assert "CodeGraph 状态（新本地代码项目必填" in full.stdout
+    assert "开源/可借鉴方案扫描" in full.stdout
+
+
 def test_render_prompt_routes_development_lead_and_subagents() -> None:
     dev = run(
         [
@@ -427,6 +497,8 @@ def main() -> int:
         test_render_prompt_rejects_ceo_direct_technical_execution,
         test_render_prompt_rejects_ceo_direct_content_execution,
         test_render_prompt_allows_ceo_to_owner_layer_and_explicit_override,
+        test_render_prompt_auto_compacts_l1_owner_prompt,
+        test_render_prompt_full_profile_keeps_deep_sections,
         test_render_prompt_routes_development_lead_and_subagents,
         test_render_prompt_routes_qa_default_and_critical_models,
         test_render_prompt_includes_readonly_x_mcp_for_content_roles,

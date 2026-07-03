@@ -4,6 +4,7 @@ tmp/
 dist/
 node_modules/
 .venv/
+.codegraph/
 __pycache__/
 .pytest_cache/
 .backup-*/

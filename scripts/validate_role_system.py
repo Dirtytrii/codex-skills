@@ -73,6 +73,10 @@ def validate_docs(errors: list[str]) -> None:
             "check_codegraph.py",
             "aggregate_skill_hits.py",
             "上下文预算",
+            "Token Budget Profile",
+            "`compact`",
+            "`standard`",
+            "`full`",
             "Loop 深度",
             "总控只直接对接负责人层",
             "开发负责人 / Dev Lead",
@@ -101,6 +105,10 @@ def validate_docs(errors: list[str]) -> None:
             "check_codegraph.py",
             "aggregate_skill_hits.py",
             "压缩交接卡",
+            "Token Budget Profile",
+            "`compact`",
+            "`standard`",
+            "`full`",
             "Loop 深度",
             "总控只直接对接负责人层",
             "开发负责人 / Dev Lead",
@@ -135,6 +143,11 @@ def validate_orchestrator(errors: list[str]) -> None:
             "模型建议：",
             "技能命中回传：",
             "上下文预算",
+            "Token Budget Profile Rule",
+            "--profile auto",
+            "`compact`",
+            "`standard`",
+            "`full`",
             "Loop Depth And Owner-Layer Routing Rule",
             "负责人交互边界",
             "开发负责人",
@@ -163,6 +176,8 @@ def validate_orchestrator(errors: list[str]) -> None:
             "validate_role_loop.py",
             "check_codegraph.py",
             "aggregate_skill_hits.py",
+            "Token Budget Profile",
+            "--profile auto",
             "反老登味 / 反 AI 味内容闸门",
             "预览图实现路线选择",
             "preview implementation route decision",
@@ -200,6 +215,11 @@ def validate_scripts(errors: list[str]) -> None:
         if not script.is_file():
             errors.append(f"missing role-system script: {script.relative_to(ROOT)}")
 
+    require_contains(
+        RENDER_PROMPT,
+        ["--profile", "effective_token_profile", "build_compact_prompt", "Token Budget Profile"],
+        errors,
+    )
     run([PYTHON, "-m", "py_compile", *(str(script) for script in ROLE_SCRIPTS), str(Path(__file__))], errors)
 
     with tempfile.TemporaryDirectory() as temp:
@@ -234,6 +254,10 @@ def validate_scripts(errors: list[str]) -> None:
             errors,
         )
         run([PYTHON, str(VALIDATE_LOOP), "--prompt", str(prompt)], errors)
+        if prompt.exists():
+            prompt_text = prompt.read_text(encoding="utf-8")
+            if "profile：compact" not in prompt_text:
+                errors.append("render_role_prompt.py auto profile did not compact an L1 execution prompt")
 
         good_callback.write_text(
             """压缩回调：
