@@ -109,6 +109,66 @@ def route_check_value(value: bool) -> str:
     return "是" if value else "待确认"
 
 
+def task_dispatch_decision(role: str, args: argparse.Namespace) -> str:
+    size = args.task_size
+    if role == "总控":
+        routes = {
+            "tiny": (
+                "总控自办",
+                "只允许低风险、局部、可验证的小改动；如果出现跨文件设计、测试脚本、验收脚本、生产/账号/数据风险或不确定需求，立即升级到负责人层。",
+            ),
+            "small": (
+                "总控可直派开发",
+                "仅限单一、短、小、可验证的低风险开发任务；内容执行仍默认交给内容主编，技术复杂度上升时回流架构 / CTO。",
+            ),
+            "medium": (
+                "总控 -> 负责人层",
+                "交给架构 / CTO 或内容主编判断方案、范围和是否需要拆下游；总控只看结果、风险、决策点和验收建议。",
+            ),
+            "large": (
+                "启动完整角色团队",
+                "按总控 -> 架构/内容主编 -> 执行角色 -> 负责人层 -> 总控闭环推进，并按需加入测试/QA/安全/DBA/运维等门禁。",
+            ),
+            "critical": (
+                "启动 L3 高风险门禁团队",
+                "必须走负责人层和独立门禁；涉及生产、账号、数据库、安全、发布、关键 PR 或公开高风险声明时不得自办或直派执行。",
+            ),
+        }
+        route, rule = routes[size]
+        return f"""任务分发决策：
+- 任务规模：{size}
+- 建议路径：{route}
+- 执行规则：{rule}
+"""
+
+    if args.source_role == "总控" and role == "开发" and size == "small":
+        return """任务分发决策：
+- 任务规模：small
+- 建议路径：总控直派开发
+- 执行规则：仅处理单一、短、小、可验证的低风险开发任务；一旦出现架构判断、跨文件整合或风险升级，回流架构 / CTO。
+"""
+
+    if args.source_role == "总控" and role in TECHNICAL_EXECUTION_ROLES:
+        return f"""任务分发决策：
+- 任务规模：{size}
+- 建议路径：默认应先回到架构 / CTO
+- 执行规则：除 small 开发直派或用户明确 override 外，总控不直接派发技术执行角色。
+"""
+
+    if args.source_role == "总控" and role in CONTENT_EXECUTION_ROLES:
+        return f"""任务分发决策：
+- 任务规模：{size}
+- 建议路径：默认应先回到内容主编
+- 执行规则：除用户明确 override 外，总控不直接派发内容执行角色。
+"""
+
+    return f"""任务分发决策：
+- 任务规模：{size}
+- 建议路径：继承来源窗口的角色分发决策
+- 执行规则：保持当前角色边界；范围扩大或风险升级时回流来源窗口。
+"""
+
+
 def validate_source_route(role: str, args: argparse.Namespace) -> None:
     source_role = args.source_role or ""
     if source_role != "总控":
@@ -116,6 +176,8 @@ def validate_source_route(role: str, args: argparse.Namespace) -> None:
     if role in OWNER_LAYER_ROLES:
         return
     if role in TECHNICAL_EXECUTION_ROLES:
+        if role == "开发" and args.task_size == "small":
+            return
         if not args.allow_ceo_direct_dispatch:
             raise ValueError("总控不能直接派发技术执行角色；请先派给 架构 / CTO，由架构拆给开发、UI/PPT、测试、QA、安全、DBA 或运维。")
         if not args.override_reason:
@@ -127,9 +189,11 @@ def validate_source_route(role: str, args: argparse.Namespace) -> None:
             raise ValueError("总控直派内容执行角色必须提供 --override-reason，说明用户为何明确要求绕过 内容主编。")
 
 
-def default_forbidden(role: str) -> str:
+def default_forbidden(role: str, task_size: str = "medium") -> str:
     defaults = "未授权的生产环境、账号设置、凭据、发布动作、数据库写操作、无关重构"
     if role == "总控":
+        if task_size == "tiny":
+            return defaults + "、跨文件代码实现、测试脚本、验收脚本、自动化验证脚本、需要架构判断或多人协作的任务"
         return defaults + "、代码实现、测试脚本、验收脚本、自动化验证脚本、直接指挥技术或内容执行角色"
     return defaults
 
@@ -259,6 +323,7 @@ Token Budget Profile：
 {ROLE_TREE_POSITION[role]}
 
 {loop_depth_explanation(args.loop_depth, args.override_reason)}
+{task_dispatch_decision(role, args)}
 负责人交互边界：
 - 总控 / CEO 只直接对接负责人层或治理角色；技术执行默认由架构 / CTO 派发，内容执行默认由内容主编派发。
 - 总控不编写代码、测试脚本、验收脚本或自动化验证脚本；需要产物时交给对应负责人拆下游。
@@ -273,7 +338,7 @@ Token Budget Profile：
 {lines_or_default(allowed, "待确认；未确认前只读")}
 
 禁止修改：
-{lines_or_default(forbidden, default_forbidden(role))}
+{lines_or_default(forbidden, default_forbidden(role, args.task_size))}
 
 实现/工作要求：
 {args.work_requirements or "只处理本轮目标；不搬运完整旧聊天、长日志或大段源码；不确定信息写待确认。"}
@@ -424,6 +489,7 @@ Token Budget Profile：
 {ROLE_TREE_POSITION[role]}
 
 {loop_depth_explanation(args.loop_depth, args.override_reason)}
+{task_dispatch_decision(role, args)}
 负责人交互边界：
 - 总控 / CEO 只直接对接负责人层或治理角色：架构 / CTO、内容主编、知识库、技能维护、文档/交付，或用户明确指定的例外。
 - 技术执行角色（开发、UI/PPT、测试、QA、安全、DBA、运维）默认由架构 / CTO 派发、验收和回流；总控只接收架构汇总的项目结果、风险、决策点和最终验收建议。
@@ -448,7 +514,7 @@ Token Budget Profile：
 {lines_or_default(allowed, "待确认；未确认前只读")}
 
 禁止修改：
-{lines_or_default(forbidden, default_forbidden(role))}
+{lines_or_default(forbidden, default_forbidden(role, args.task_size))}
 
 实现/工作要求：
 {args.work_requirements or "按角色边界推进；不确定信息写待确认；不要编造线程、事实、验证结果或发布状态。"}
@@ -559,6 +625,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--mode", default="新建", choices=["新建", "继承", "接续", "重置"])
     parser.add_argument("--loop-depth", default="L1", choices=["L0", "L1", "L2", "L3"], help="Collapsible routing depth. L0 direct user-to-executor; L1 owner layer; L2 owner-to-executor loop; L3 high-risk gated loop.")
     parser.add_argument("--profile", default="auto", choices=["auto", "compact", "standard", "full"], help="Token budget profile. auto chooses compact for L0/L1 owner/simple prompts, standard for L2/architecture/new-code prompts, and full for L3/critical prompts.")
+    parser.add_argument("--task-size", default="medium", choices=["tiny", "small", "medium", "large", "critical"], help="Task dispatch size. tiny lets CEO self-handle only local low-risk changes; small allows CEO -> 开发 direct dispatch; medium routes to owner layer; large/critical uses full role teams and gates.")
     parser.add_argument("--risk", default="normal", choices=["normal", "critical"], help="Use critical for release gates, adversarial QA, compliance, or high-risk public claims.")
     parser.add_argument("--source-role", help="Source/callback role. Defaults to 用户 only for 总控/架构, otherwise 待确认.")
     parser.add_argument("--source-thread", help="Source thread id. Defaults to 待确认.")

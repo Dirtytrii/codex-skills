@@ -191,7 +191,7 @@ def test_callback_must_start_with_forwardable_prefix() -> None:
         assert "callback must start with <codex_delegation> or 压缩回调" in result.stdout
 
 
-def test_render_prompt_rejects_ceo_direct_technical_execution() -> None:
+def test_render_prompt_rejects_ceo_direct_technical_execution_without_small_or_override() -> None:
     result = run(
         [
             PYTHON,
@@ -207,6 +207,64 @@ def test_render_prompt_rejects_ceo_direct_technical_execution() -> None:
     )
     assert result.returncode != 0
     assert "总控不能直接派发技术执行角色" in result.stderr
+
+
+def test_render_prompt_allows_ceo_direct_small_development_dispatch() -> None:
+    result = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "开发",
+            "--objective",
+            "修改一个低风险单文件文案",
+            "--source-role",
+            "总控",
+            "--task-size",
+            "small",
+        ]
+    )
+    assert "任务分发决策：" in result.stdout
+    assert "任务规模：small" in result.stdout
+    assert "建议路径：总控直派开发" in result.stdout
+    assert "单一、短、小、可验证" in result.stdout
+    assert "一旦出现架构判断、跨文件整合或风险升级，回流架构 / CTO" in result.stdout
+
+
+def test_render_prompt_outputs_ceo_dispatch_decision_by_task_size() -> None:
+    tiny = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "总控",
+            "--objective",
+            "顺手修正一个 README 错别字",
+            "--task-size",
+            "tiny",
+        ]
+    )
+    assert "任务分发决策：" in tiny.stdout
+    assert "任务规模：tiny" in tiny.stdout
+    assert "建议路径：总控自办" in tiny.stdout
+    assert "只允许低风险、局部、可验证的小改动" in tiny.stdout
+
+    large = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "总控",
+            "--objective",
+            "启动一个涉及前后端、QA 和发布门禁的新功能",
+            "--task-size",
+            "large",
+        ]
+    )
+    assert "任务规模：large" in large.stdout
+    assert "建议路径：启动完整角色团队" in large.stdout
+    assert "总控 -> 架构/内容主编 -> 执行角色" in large.stdout
+    assert "测试/QA/安全/DBA/运维等门禁" in large.stdout
 
 
 def test_render_prompt_rejects_ceo_direct_content_execution() -> None:
@@ -494,7 +552,9 @@ def main() -> int:
         test_check_codegraph_reports_state_without_guessing,
         test_aggregate_skill_hits_quantifies_required_actual_and_misfires,
         test_callback_must_start_with_forwardable_prefix,
-        test_render_prompt_rejects_ceo_direct_technical_execution,
+        test_render_prompt_rejects_ceo_direct_technical_execution_without_small_or_override,
+        test_render_prompt_allows_ceo_direct_small_development_dispatch,
+        test_render_prompt_outputs_ceo_dispatch_decision_by_task_size,
         test_render_prompt_rejects_ceo_direct_content_execution,
         test_render_prompt_allows_ceo_to_owner_layer_and_explicit_override,
         test_render_prompt_auto_compacts_l1_owner_prompt,

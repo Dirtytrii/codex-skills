@@ -57,6 +57,7 @@ python skills/agent-role-orchestrator/scripts/render_role_prompt.py \
   --objective "实现订单列表筛选修复" \
   --source-role 架构 \
   --source-thread thread-123 \
+  --task-size small \
   --profile auto \
   --required-skill gstack-investigate \
   --validation "npm test"
@@ -129,8 +130,22 @@ Rules:
 - Technical execution roles (`开发`, `UI/PPT`, `测试`, `QA`, `安全`, `DBA`, `运维`) are dispatched and accepted by `架构` / `CTO` by default.
 - Content execution roles (`公众号发布`, `小红书`, `视频`) are dispatched and accepted by `内容主编` by default.
 - `总控` tracks project-level outcome, risks, tradeoffs, decisions, priority, model budget, and final acceptance; it does not chase implementation details with execution roles.
-- `总控` must not write or edit code, test scripts, acceptance scripts, automation validation scripts, or implementation-level verification helpers. If such artifacts are needed, route them to `开发` or `测试`; `架构` and/or `QA` review the evidence.
-- Direct `总控 -> 执行角色` dispatch is allowed only when the user explicitly requests the bypass. Mark it as an override, record the reason, and keep the source as `用户明确 override`, not the normal CEO path.
+- Direct `总控 -> 开发` dispatch is allowed for `small` development tasks only: a single, short, small, low-risk, verifiable change. If architecture judgment, cross-file integration, UI direction, tests/acceptance scripts, production/account/data/security risk, or repeated correction appears, route back to `架构` / `CTO`.
+- Direct `总控 -> 其他执行角色` dispatch is allowed only when the user explicitly requests the bypass. Mark it as an override, record the reason, and keep the source as `用户明确 override`, not the normal CEO path.
+
+## CEO Task Dispatch Decision Rule
+
+Before acting or creating downstream prompts, `总控` must output a `任务分发决策` with task size, recommended path, and boundary. This makes "CEO self-handles" a deliberate choice instead of drift into implementation.
+
+| Size | Default Path | Boundary |
+| --- | --- | --- |
+| `tiny` | `总控自办` | Only low-risk, local, verifiable changes. Stop and route to owner layer if design, cross-file work, test/acceptance scripts, production/account/data risk, or uncertainty appears. |
+| `small` | `总控直派开发` | Only one short, small, verifiable low-risk development task. Callback goes to `总控`; escalation goes to `架构` / `CTO`. |
+| `medium` | `总控 -> 负责人层` | Owner-level judgment is needed, but a full team may not be needed yet. |
+| `large` | `完整角色团队` | `总控 -> 架构/内容主编 -> 执行角色 -> 负责人层 -> 总控`, with validation and callbacks. |
+| `critical` | `L3 高风险门禁团队` | Releases, production, accounts, security, DBA, critical PRs, public high-risk claims, or anything needing independent gates. |
+
+Generated prompts should use `scripts/render_role_prompt.py --task-size tiny|small|medium|large|critical`. Default to `medium` when unknown. A `tiny` self-handled task may include a small code or docs edit, but it must not grow silently; if the work expands, record the expansion and re-route.
 
 ## CEO And Architecture Entry Guard Rule
 
@@ -735,6 +750,11 @@ Loop 深度（可折叠路由）：
 - L3：高风险闭环，在 L2 基础上加入测试、QA、安全、DBA、运维等独立复核或门禁。
 - 选择原则：能 L0/L1 解决就不要升级到 L2/L3；一旦进入总控管理流，总控不直接指挥执行层。
 
+任务分发决策：
+- 任务规模：tiny / small / medium / large / critical
+- 建议路径：
+- 执行规则：
+
 负责人交互边界：
 - 总控 / CEO 只直接对接负责人层或治理角色：架构 / CTO、内容主编、知识库、技能维护、文档/交付，或用户明确指定的例外。
 - 技术执行角色（开发、UI/PPT、测试、QA、安全、DBA、运维）默认由架构 / CTO 派发、验收和回流；总控只接收架构汇总的项目结果、风险、决策点和最终验收建议。
@@ -971,8 +991,9 @@ Before finalizing, check:
 - commit instructions match the user's known preference when available;
 - a single new requirement goes through `总控` first unless explicitly bypassed;
 - role prompts choose a `Loop 深度` (`L0`/`L1`/`L2`/`L3`) and do not force the longest chain when a shorter loop can close safely;
+- `总控` prompts include a `任务分发决策` with task size and route: `tiny` self-handle, `small` direct to `开发`, `medium` owner layer, `large` full team, or `critical` L3 gates;
 - `总控` interacts with owner-layer roles by default, not execution roles; technical execution goes through `架构` / `CTO`, content execution goes through `内容主编`;
-- `总控` does not write code, test scripts, acceptance scripts, automation validation scripts, or technical verification helpers; it delegates those artifacts to `开发` or `测试` and reviews owner-level results;
+- `总控` may self-handle only `tiny` low-risk local changes and may direct-dispatch only `small` development tasks to `开发`; it does not write test scripts, acceptance scripts, automation validation scripts, or technical verification helpers by default;
 - `架构` is treated as `CTO` for technical delivery, not as the global CEO-style entrance;
 - `内容主编` is treated as the content-domain coordinator for `公众号发布`, `小红书`, `视频`, and content visuals;
 - non-trivial multi-window work carries a loop state and exit condition;
@@ -1010,7 +1031,7 @@ Before finalizing, check:
 ## Common Defaults
 
 Use these defaults unless the user says otherwise:
-- `总控` is the default first window. It clarifies goal, success signal, priority, loop depth, role route, source-window callback, model/thinking plan, token budget, top-level registry, and final acceptance; it talks to owner-layer roles by default and does not code, write test/acceptance scripts, draft content, operate production, directly supervise execution roles, or own long-term skill curation.
+- `总控` is the default first window. It clarifies goal, success signal, priority, task size, loop depth, role route, source-window callback, model/thinking plan, token budget, top-level registry, and final acceptance; it may self-handle `tiny` low-risk local changes and may direct-dispatch `small` development tasks to `开发`, but otherwise talks to owner-layer roles by default and does not write test/acceptance scripts, draft content, operate production, directly supervise execution roles, or own long-term skill curation.
 - `架构` / `CTO` owns technical delivery under `总控` or an explicit user/source-window assignment: technical options, CodeGraph bootstrap, bounded open-source/reference scan, technical role split, and the `开发` / `UI/PPT` / `测试` / `QA` / `安全` / `DBA` / `运维` loop.
 - `架构` uses `$gstack` for technical method routing: specs go to `$gstack-spec`; concrete plans go to `$gstack-autoplan` or focused `$gstack-plan-*` reviews.
 - `开发` is the `开发负责人` / `Dev Lead` by default: it breaks down coding work, may delegate single, short, small, verifiable coding slices to `gpt-5.3-codex-spark` + `xhigh` subagents, integrates results, runs final tests, and commits when asked or when workspace instructions require it; it should not own UI/visual direction when the dominant risk is visual fidelity.

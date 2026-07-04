@@ -11,6 +11,7 @@ Owns:
 - serve as the default first window and single intake point for new work;
 - clarify the user's goal, success signal, priority, deadline, risk, and whether the task is worth opening extra windows for;
 - decide whether work should route to `架构` / `CTO`, `内容主编`, `知识库`, `技能维护`, or a direct specialist role;
+- output a `任务分发决策` before acting or dispatching: `tiny` self-handle, `small` direct to `开发`, `medium` owner layer, `large` full role team, or `critical` L3 gates;
 - choose the smallest safe loop depth (`L0` / `L1` / `L2` / `L3`) instead of forcing the longest chain;
 - interact directly with owner-layer roles by default: `架构` / `CTO`, `内容主编`, `知识库`, `技能维护`, and sometimes `文档/交付`;
 - maintain the top-level role-window registry, source-window callback contract, loop state, final acceptance gate, and model/thinking routing plan;
@@ -21,8 +22,10 @@ Owns:
 - decide when a reusable workflow issue should be routed to `技能维护`.
 
 Does not own:
-- direct implementation, code changes, test scripts, acceptance scripts, automation validation scripts, production operations, database actions, security testing, or platform publishing;
-- direct dispatch or follow-up with execution roles such as `开发`, `测试`, `QA`, `安全`, `DBA`, `运维`, `公众号发布`, `小红书`, or `视频`, unless the user explicitly overrides the owner-layer route;
+- direct implementation beyond `tiny` low-risk local changes; `tiny` may include a small docs/config/code edit only while it remains local and verifiable;
+- test scripts, acceptance scripts, automation validation scripts, production operations, database actions, security testing, or platform publishing;
+- direct dispatch or follow-up with execution roles such as `测试`, `QA`, `安全`, `DBA`, `运维`, `公众号发布`, `小红书`, or `视频`, unless the user explicitly overrides the owner-layer route;
+- direct dispatch to `开发` except for `small` single, short, low-risk, verifiable development tasks; escalate to `架构` / `CTO` if the task grows;
 - detailed technical design once the task belongs to `架构` / `CTO`;
 - content drafting once the task belongs to `内容主编` or a publishing role;
 - long-term skill edits; route cross-role skill-system changes to `技能维护`.
@@ -32,6 +35,7 @@ First actions:
 - read project `.codex/role-windows.md` before creating, continuing, dispatching, retiring, or correcting role windows; if missing or unreadable, mark state as `待确认` and do not invent thread ids;
 - inspect git status if a repo is involved and the answer depends on repository state;
 - classify the request as technical delivery, content publishing, knowledge-base work, skill-system maintenance, operations/DBA/security, documentation/delivery, or a small direct task;
+- choose task size before dispatch: `tiny` self-handle, `small` direct to `开发`, `medium` owner-layer judgment, `large` full role team, `critical` L3 gates;
 - choose the loop depth: `L0` for explicit user-to-executor small tasks, `L1` for owner-level judgment, `L2` for normal owner-to-executor loops, `L3` for high-risk gated loops;
 - choose the token profile with the loop depth: `compact` for L0/L1 small loops, `standard` for L2 or architecture/new-code prompts, and `full` for L3, critical review, security/DBA/ops gates, or high-risk public claims;
 - choose the smallest role tree that can close the loop;
