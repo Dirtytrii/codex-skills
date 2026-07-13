@@ -405,11 +405,12 @@ def test_render_prompt_routes_development_lead_and_subagents() -> None:
             "架构",
         ]
     )
-    assert "model：gpt-5.5" in dev.stdout
-    assert "thinking：xhigh" in dev.stdout
+    assert "model：gpt-5.6-terra" in dev.stdout
+    assert "thinking：high" in dev.stdout
     assert "开发负责人 / Dev Lead" in dev.stdout
     assert "开发执行 subagent" in dev.stdout
-    assert "gpt-5.3-codex-spark" in dev.stdout
+    assert "gpt-5.4-mini" in dev.stdout
+    assert "gpt-5.6-luna" in dev.stdout
     assert "只执行单一、短、小、可验证的代码任务" in dev.stdout
     assert "窗口内一次性 subagent" in dev.stdout
     assert "不写入 .codex/role-windows.md" in dev.stdout
@@ -429,8 +430,8 @@ def test_render_prompt_routes_qa_default_and_critical_models() -> None:
             "架构",
         ]
     )
-    assert "model：gpt-5.5" in ordinary.stdout
-    assert "thinking：medium" in ordinary.stdout
+    assert "model：gpt-5.6-terra" in ordinary.stdout
+    assert "thinking：high" in ordinary.stdout
 
     critical = run(
         [
@@ -446,7 +447,7 @@ def test_render_prompt_routes_qa_default_and_critical_models() -> None:
             "critical",
         ]
     )
-    assert "model：gpt-5.5" in critical.stdout
+    assert "model：gpt-5.6-sol" in critical.stdout
     assert "thinking：xhigh" in critical.stdout
 
 

@@ -79,20 +79,50 @@ def canonical_role(raw: str) -> str:
     return role
 
 
-def model_route(role: str, risk: str) -> ModelRoute:
-    if role in {"总控", "架构"}:
-        return ModelRoute("gpt-5.5", "xhigh", "降级仅限低风险摘要或已确认的机械同步。")
+def model_route(role: str, risk: str, executor_tier: str = "owner") -> ModelRoute:
+    if role == "总控":
+        if risk == "critical":
+            return ModelRoute("gpt-5.6-sol", "xhigh", "只用于资金、上线、生产恢复或跨角色最终 go/no-go；其余情况回到 Terra + high。")
+        return ModelRoute("gpt-5.6-terra", "high", "资金、上线、生产恢复或跨角色最终 go/no-go 升级到 gpt-5.6-sol + xhigh。")
+    if role == "架构":
+        if risk == "extreme":
+            return ModelRoute("gpt-5.6-sol", "xhigh", "仅限极难、信息高度冲突且 high 无法收敛的问题；不再虚构高于 xhigh 的思考档位。")
+        if risk == "critical":
+            return ModelRoute("gpt-5.6-sol", "xhigh", "实盘架构、事故根因、DB/并发/安全或不可逆方案使用 xhigh。")
+        return ModelRoute("gpt-5.6-sol", "high", "实盘架构、事故根因、DB/并发/安全或不可逆方案升级到 xhigh。")
     if role == "开发":
-        return ModelRoute("gpt-5.5", "xhigh", "开发执行 subagent 默认使用 gpt-5.3-codex-spark + xhigh；复杂架构决策或跨系统高风险变更回流架构/总控。")
+        if executor_tier == "mechanical":
+            return ModelRoute("gpt-5.4-mini", "high", "仅限单文件、规格和测试明确、无业务判断的一次性机械实现。")
+        if executor_tier == "bounded":
+            return ModelRoute("gpt-5.6-luna", "high", "仅限边界清楚、可独立验证的一次性执行任务；跨文件集成或范围漂移回流 Dev Lead。")
+        if executor_tier == "semantic":
+            return ModelRoute("gpt-5.6-terra", "high", "适合有限业务语义理解；跨模块整合、纠偏和提交仍由 Dev Lead 负责。")
+        if executor_tier == "high-risk":
+            return ModelRoute("gpt-5.6-sol", "xhigh", "高风险实现不得下放给廉价 executor，由 Dev Lead 亲自完成。")
+        if risk == "critical":
+            return ModelRoute("gpt-5.6-sol", "xhigh", "live exit、资金安全、PnL/fee、并发或重复失败返工由 Dev Lead 亲自处理，不交给廉价 subagent。")
+        return ModelRoute("gpt-5.6-terra", "high", "live exit、资金安全、PnL/fee、并发或重复失败返工升级到 gpt-5.6-sol + xhigh。")
     if role == "QA":
         if risk == "critical":
-            return ModelRoute("gpt-5.5", "xhigh", "普通验收可降级到 gpt-5.5 + medium。")
-        return ModelRoute("gpt-5.5", "medium", "关键 PR、对抗式审查、发布门禁升级到 gpt-5.5 + xhigh。")
+            return ModelRoute("gpt-5.6-sol", "xhigh", "关键 PR、对抗式审查、发布门禁或生产风险需要 Sol xhigh。")
+        return ModelRoute("gpt-5.6-terra", "high", "关键 PR、对抗式审查、发布门禁或生产风险升级到 gpt-5.6-sol + xhigh。")
+    if role in {"运维", "DBA"}:
+        if risk == "critical":
+            return ModelRoute("gpt-5.6-sol", "xhigh", "真正部署、restart、rollback、生产故障、DDL、清理、恢复或数据风险需要 Sol xhigh。")
+        return ModelRoute("gpt-5.6-terra", "high", "只读采证、容量、锁或空间分析用 Terra；部署/恢复/DDL/数据风险升级到 gpt-5.6-sol + xhigh。")
     if role in {"技能维护", "文档/交付", "知识库"}:
-        return ModelRoute("gpt-5.3-codex-spark", "high", "小型文档/registry 机械编辑可降级到 gpt-5.4-mini。")
+        if risk == "mechanical":
+            return ModelRoute("gpt-5.4-mini", "medium", "仅限已确认范围内的索引、排版、搬运或 registry 机械同步；一旦需要判断，回到 Terra + high。")
+        return ModelRoute("gpt-5.6-terra", "high", "策略结论、收益判断、知识结构或跨角色治理使用 Terra；纯索引、排版、搬运可降级到 gpt-5.4-mini + medium。")
     if role in CONTENT_ROLES:
-        return ModelRoute("gpt-5.3-codex-spark", "high", "高风险公开定位、声明、合规或跨平台策略升级到 gpt-5.5 + xhigh。")
-    return ModelRoute("gpt-5.3-codex-spark", "high", "涉及高风险决策或跨角色协调时回流总控/架构。")
+        if risk == "critical":
+            return ModelRoute("gpt-5.6-sol", "xhigh", "高风险公开定位、声明、合规或跨平台策略需要 Sol xhigh。")
+        return ModelRoute("gpt-5.6-terra", "high", "高风险公开定位、声明、合规或跨平台策略升级到 gpt-5.6-sol + xhigh。")
+    if risk == "mechanical":
+        return ModelRoute("gpt-5.4-mini", "high", "仅限单文件、测试明确、无业务语义判断的机械执行。")
+    if risk == "critical":
+        return ModelRoute("gpt-5.6-sol", "xhigh", "高风险实现、不可逆操作或最终技术判断升级到 Sol xhigh。")
+    return ModelRoute("gpt-5.6-terra", "high", "涉及高风险决策或跨角色协调时升级到 gpt-5.6-sol + xhigh。")
 
 
 def lines_or_default(values: list[str], default: str) -> str:
@@ -214,11 +244,87 @@ def role_execution_guidance(role: str) -> str:
     if role != "开发":
         return ""
     return """开发负责人 / Dev Lead 执行规则：
-- 本窗口默认是开发负责人 / Dev Lead，使用 gpt-5.5 + xhigh，负责拆解、集成、纠偏、最终提交。
+- 本窗口默认是开发负责人 / Dev Lead，使用 gpt-5.6-terra + high，负责拆解、集成、纠偏、最终提交。
 - 需要并行或长任务时，先拆成任务卡，再把单一、短、小、可验证的代码任务交给开发执行 subagent。
 - 开发执行 subagent 是窗口内一次性 subagent，不是新的角色窗口；不写入 .codex/role-windows.md，不作为后续任务复用。
-- 开发执行 subagent 默认模型：gpt-5.3-codex-spark + xhigh；只执行单一、短、小、可验证的代码任务；任务结束后关闭，不作为角色窗口复用。
-- subagent 必须带文件白名单、禁止范围、验收命令和退出条件；不要让 subagent 承担架构判断、跨文件整合或最终提交。
+- 任务结束后关闭，不作为角色窗口复用。
+- subagent 只执行单一、短、小、可验证的代码任务：纯机械单文件用 gpt-5.4-mini + high；边界清楚、可独立验证的有限语义任务用 gpt-5.6-luna + high；跨文件业务集成用 gpt-5.6-terra + high。
+- live/资金/并发/账本、PnL/fee 或重复失败返工不得交给廉价 subagent；由 Dev Lead 使用 gpt-5.6-sol + xhigh 亲自处理。
+- subagent 必须带文件白名单、禁止范围、验收命令和退出条件；不要让 subagent 承担架构判断、跨文件整合、纠偏策略、最终验证或提交。
+"""
+
+
+def execution_profile_guidance(role: str, args: argparse.Namespace) -> str:
+    if role != "开发":
+        return ""
+    if args.execution_profile == "serial":
+        return """执行拓扑：
+- execution-profile：serial
+- worker-count：1
+- 默认串行；只有任务范围互斥且能独立验证时才开启并行。
+"""
+    return f"""执行拓扑：
+- execution-profile：parallel
+- worker-count：{args.worker_count}
+- 范围互斥证据：{args.disjoint_scope}
+- 独立验证证据：{args.independent_validation}
+- 3-5 个 worker 仅用于显式并行 profile；每个 worker 都是任务结束即关闭的一次性 subagent。
+"""
+
+
+def validate_execution_profile(role: str, args: argparse.Namespace) -> None:
+    if args.execution_profile == "serial":
+        if args.worker_count != 1:
+            raise ValueError("serial execution-profile requires --worker-count 1")
+        return
+    if role != "开发":
+        raise ValueError("parallel execution-profile is only supported for 开发 / Dev Lead")
+    if args.worker_count < 2 or args.worker_count > 5:
+        raise ValueError("parallel execution-profile requires --worker-count between 2 and 5")
+    missing = []
+    if not args.disjoint_scope:
+        missing.append("--disjoint-scope")
+    if not args.independent_validation:
+        missing.append("--independent-validation")
+    if missing:
+        raise ValueError("parallel execution-profile requires " + " and ".join(missing))
+
+
+def validate_spark_opportunity(role: str, args: argparse.Namespace) -> None:
+    if args.spark_available and not args.prefer_spark:
+        raise ValueError("--spark-available requires --prefer-spark")
+    if not args.prefer_spark:
+        return
+    if role != "开发" or args.executor_tier not in {"mechanical", "bounded"}:
+        raise ValueError("Spark Opportunity Lane only supports 开发 mechanical or bounded one-shot executors")
+    if args.risk in {"critical", "extreme"}:
+        raise ValueError("Spark Opportunity Lane does not support critical or extreme risk")
+
+
+def selected_model_route(role: str, args: argparse.Namespace) -> ModelRoute:
+    if args.prefer_spark and args.spark_available:
+        return ModelRoute(
+            "gpt-5.3-codex-spark",
+            "high",
+            "仅用于短小、文本型、范围明确且可独立验证的一次性编码任务；不可用、排队或范围增长时回退稳定路由。",
+        )
+    return model_route(role, args.risk, args.executor_tier)
+
+
+def spark_opportunity_guidance(role: str, args: argparse.Namespace) -> str:
+    if role != "开发" or not args.prefer_spark:
+        return ""
+    fallback = model_route(role, args.risk, args.executor_tier)
+    selection = (
+        "使用 Spark 独立额度"
+        if args.spark_available
+        else f"Spark 未确认可用，回退稳定路由 {fallback.model} + {fallback.thinking}"
+    )
+    return f"""Spark Opportunity Lane：
+- 选择结果：{selection}
+- 适用边界：仅限 mechanical/bounded、文本型、短小且可独立验证的一次性开发 executor。
+- 预览约束：research preview、128K、text-only；独立限额和可用性可能随需求调整。
+- 验证门禁：Spark 默认工作方式轻量，任务卡必须显式运行验证命令并回传结果。
 """
 
 
@@ -289,6 +395,28 @@ def token_profile_strategy(profile: str) -> str:
     return strategies[profile]
 
 
+def architecture_planning_sections(role: str, args: argparse.Namespace) -> str:
+    sections: list[str] = []
+    if role == "架构":
+        sections.append("""技术方案（架构/CTO 处理复杂技术需求必填；已选定则写明选型）：
+- 状态：必填
+- 候选方案与取舍：待确认
+- 推荐与约束：待确认
+""")
+    if role == "架构" or args.new_code_project:
+        sections.append("""CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
+- 可用性与初始化状态：待确认
+- 索引路径/忽略策略：待确认
+- 跳过或失败原因：待确认
+""")
+    if role == "架构":
+        sections.append("""开源/可借鉴方案扫描：
+- 检索关键词与候选方案：待确认
+- 可借鉴点、不采用风险、下游约束：待确认
+""")
+    return "\n".join(sections)
+
+
 def build_compact_prompt(
     *,
     args: argparse.Namespace,
@@ -306,138 +434,77 @@ def build_compact_prompt(
     skipped_skills: list[str],
     profile: str,
 ) -> str:
-    return f"""【给 {role} 窗口的提示词】
-
-你现在担任：
-{role}
-
-背景：
-- 项目/路径：{project}
-- 交接方式：{args.mode}
-- 来源窗口：{callback_target}
-- 当前已知上下文：{args.context or "待确认"}
+    return f"""【给 {role} 窗口的 compact 提示词】
+角色：{role}；项目：{project}；方式：{args.mode}；来源窗口：{callback_target}
+上下文：{args.context or "待确认"}
 
 模型建议：
 - model：{route.model}
 - thinking：{route.thinking}
-- 升级/降级条件：{route.escalation}
-
+- 条件：{route.escalation}
 Token Budget Profile：
 - profile：{profile}
 - 策略：{token_profile_strategy(profile)}
-
-{role_execution_guidance(role)}
-{ui_preview_route_guidance(role)}
-{content_research_guidance(role)}
-{content_tone_gate(role)}
-{xhs_automation_publish_gate(role)}
-角色树位置（总控/架构/内容主编/执行角色）：
-{ROLE_TREE_POSITION[role]}
-
-{loop_depth_explanation(args.loop_depth, args.override_reason)}
-{task_dispatch_decision(role, args)}
+{role_execution_guidance(role)}{execution_profile_guidance(role, args)}{spark_opportunity_guidance(role, args)}{ui_preview_route_guidance(role)}{content_research_guidance(role)}{content_tone_gate(role)}{xhs_automation_publish_gate(role)}
+角色树位置：{ROLE_TREE_POSITION[role]}
+Loop 深度（可折叠路由）：
+- 本次深度：{args.loop_depth}；L0 直达，L1 负责人，L2 负责人拆执行，L3 增加独立门禁。
+- 本次 override：{args.override_reason or "无"}
+任务分发决策：
+- {task_dispatch_decision(role, args).splitlines()[1].removeprefix("- ")}
+- {task_dispatch_decision(role, args).splitlines()[2].removeprefix("- ")}
+- {task_dispatch_decision(role, args).splitlines()[3].removeprefix("- ")}
 负责人交互边界：
-- 总控 / CEO 只直接对接负责人层或治理角色；技术执行默认由架构 / CTO 派发，内容执行默认由内容主编派发。
-- 总控不编写代码、测试脚本、验收脚本或自动化验证脚本；需要产物时交给对应负责人拆下游。
+- 总控只对接负责人层；技术执行由 CTO 派发，内容执行由内容主编派发。
 
-目标：
-{args.objective}
-
+目标：{args.objective}
 请先阅读/检查：
-{lines_or_default(read_first, "agent-role-orchestrator/SKILL.md；项目 .codex/role-windows.md（若存在）；与目标直接相关的项目文件")}
-
+{lines_or_default(read_first, "agent-role-orchestrator/SKILL.md；.codex/role-windows.md；目标相关文件")}
 允许修改：
-{lines_or_default(allowed, "待确认；未确认前只读")}
-
+{lines_or_default(allowed, "待确认；确认前只读")}
 禁止修改：
 {lines_or_default(forbidden, default_forbidden(role, args.task_size))}
-
-实现/工作要求：
-{args.work_requirements or "只处理本轮目标；不搬运完整旧聊天、长日志或大段源码；不确定信息写待确认。"}
-
+实现/工作要求：{args.work_requirements or "只处理本轮目标；不搬运旧聊天、长日志或大段源码。"}
 验证：
-{lines_or_default(validation, "说明无法验证的原因；可验证项必须给出命令、文件、截图或人工检查步骤")}
+{lines_or_default(validation, "给出命令、文件、截图或无法验证的原因")}
 
-闭环状态：
-- 当前状态：{args.loop_state}
-- 上一轮反馈：{args.previous_feedback or "无 / 待确认"}
-- 本轮退出条件：{args.exit_condition or "完成目标、阻塞并说明证据、或需要来源窗口决策"}
-
-上下文预算：
-- 默认只传状态增量、证据句柄、决策需求和下一回流对象。
-- compact 档不输出大段候选方案占位；需要深层设计、CodeGraph 或开源扫描时升级到 standard/full。
-- 当上下文接近过长或 compact 失败时，用台账、提交、PR、文件证据和压缩交接卡接续。
-
-闭环完成条件：
-- 完成、阻塞或需要发起方决策时，必须同时完成两件事：1. 更新 .codex/role-windows.md 并提交；2. 向来源 thread 主动发送压缩回调。
-- 仅完成第 1 项不算闭环；来源 thread 未收到回调时，负责人层仍应视为待回流。
-- 如果当前窗口没有发送工具，最终输出必须以 <codex_delegation> 或“压缩回调”开头，供系统/用户转发。
-
-路由前检查（总控、架构、内容主编和多角色派发必填）：
-- 是否读取 agent-role-orchestrator：{route_check_value(args.read_orchestrator)}
-- 是否读取 .codex/role-windows.md：{route_check_value(args.read_ledger)}
-- 是否复用已有角色线程：{args.reuse_thread or "待确认"}
-- 是否写清 source-window callback：是
-- 是否写清允许/禁止范围：是
-- 是否写清验证与提交要求：是
-- 是否包含技能路由台账：是
-- 是否需要更新 .codex/role-windows.md：{args.update_ledger or "待确认"}
-
-技能路由台账（总控、架构、内容主编和多角色拆分必填；单一执行角色可写“不适用/继承来源台账”）：
+闭环状态：当前={args.loop_state}；上一轮={args.previous_feedback or "无 / 待确认"}；退出={args.exit_condition or "完成、阻塞有证据、或需来源决策"}
+上下文预算：只传增量与证据；过长时用台账、提交、PR 或压缩交接卡接续。
+闭环完成条件：更新 .codex/role-windows.md 并提交，同时向来源 thread 发送压缩回调；仅更新台账不算闭环。
+路由前检查：orchestrator={route_check_value(args.read_orchestrator)}；ledger={route_check_value(args.read_ledger)}；复用线程={args.reuse_thread or "待确认"}；更新台账={args.update_ledger or "待确认"}。
+技能路由台账：
 - 候选 skill：{csv_or_default(candidate_skills, "待确认")}
 - 必选 skill：{csv_or_default(required_skills, "无 / 待确认")}
 - 可选 skill：{csv_or_default(optional_skills, "无 / 待确认")}
 - 跳过 skill 及原因：{csv_or_default(skipped_skills, "无")}
-- 预期加载角色：{role}
+提交/PR 要求：{args.commit_requirements or "遵循 AGENTS.md；回报变更与验证证据。"}
 
-提交/PR 要求：
-{args.commit_requirements or "遵循项目 AGENTS.md；未要求提交时先回报变更和验证证据。"}
-
-回调/通知规则：
-- 本任务发起方：{callback_target}。
-- 完成、阻塞或需要发起方决策时，主动通知发起方窗口；不要只等待用户转述。
-- 如无法直接发送到发起方窗口，请输出一段可复制的“给发起方的回调消息”，且最终输出必须以 <codex_delegation> 或“压缩回调”开头。
-
-结构化反馈格式（返工/验收失败/需要决策时必填）：
-- 问题/缺口：
-- 证据/复现：
-- 影响等级：
-- 建议回流对象：
-- 需要决策：
-- 下一闭环状态：
-
+回调/通知规则：本任务发起方：{callback_target}。完成、阻塞、需决策时主动通知；无发送工具时，以 <codex_delegation> 或“压缩回调”开头。
+结构化反馈格式：问题/缺口；证据/复现；影响等级；建议回流对象；需要决策；下一闭环状态。
 压缩回调：
 - 当前状态：
 - 本轮变化：
 - 证据链接/文件/命令：
 - 需要决策：
 - 下一回流对象：
-
 技能命中回传：
 - 已加载并使用：
 - 来源窗口要求但未使用：
 - 临时发现应补用：
 - 误召/无效加载：
 - 影响产出的 skill：
-
-规则沉淀：
-- 可复用优化沉淀：无 / 建议 / 已沉淀
-- 具体问题或优化：
-- 目标位置：skill / README / 角色提示词 / QA 清单 / 验证命令 / registry / source policy / 项目文档 / 待确认
-- 已执行变更或建议后续：
-
-完成后请回传：
-{args.return_requirements or "压缩回调、验证证据、技能命中回传、规则沉淀状态。"}
-
-角色底线：
-{args.boundary or "守住角色边界；不越权发布、写生产、改凭据、编造证据或扩大范围。"}
+规则沉淀：可复用优化沉淀=无 / 建议 / 已沉淀；写明目标位置和后续。
+完成后请回传：{args.return_requirements or "压缩回调、验证证据、技能命中回传、规则沉淀状态。"}
+角色底线：{args.boundary or "不越权、不编造证据、不扩大范围。"}
 """
 
 
 def build_prompt(args: argparse.Namespace) -> str:
     role = canonical_role(args.role)
     validate_source_route(role, args)
-    route = model_route(role, args.risk)
+    validate_execution_profile(role, args)
+    validate_spark_opportunity(role, args)
+    route = selected_model_route(role, args)
     source_role = args.source_role or ("用户" if role in {"总控", "架构"} else "待确认")
     source_thread = args.source_thread or "待确认"
     project = args.project or "待确认"
@@ -450,9 +517,6 @@ def build_prompt(args: argparse.Namespace) -> str:
     forbidden = args.forbid or []
     validation = args.validation or []
     callback_target = f"{source_role} / thread id: {source_thread}"
-    needs_technical = "必填" if role == "架构" else "不适用"
-    needs_codegraph = "必填" if args.new_code_project or role == "架构" else "不适用"
-    needs_scan = "必填" if role == "架构" else "不适用"
     profile = effective_token_profile(role, args)
 
     if profile == "compact":
@@ -494,6 +558,8 @@ Token Budget Profile：
 - 策略：{token_profile_strategy(profile)}
 
 {role_execution_guidance(role)}
+{execution_profile_guidance(role, args)}
+{spark_opportunity_guidance(role, args)}
 {ui_preview_route_guidance(role)}
 {content_research_guidance(role)}
 {content_tone_gate(role)}
@@ -509,13 +575,7 @@ Token Budget Profile：
 - 内容执行角色（公众号发布、小红书、视频）默认由内容主编派发、验收和回流；总控只接收内容主编汇总的内容结果、发布风险、授权点和最终验收建议。
 - 总控不编写或修改代码、测试脚本、验收脚本、自动化验证脚本；需要这类产物时，交给开发或测试实现，由架构/QA复核证据。
 
-技术方案（架构/CTO 处理复杂技术需求必填；已选定则写明选型）：
-- 状态：{needs_technical}
-- 方案 A：待确认
-- 方案 B：待确认
-- 方案 C：待确认
-- 推荐：待确认
-- 待确认：待确认
+{architecture_planning_sections(role, args)}
 
 目标：
 {args.objective}
@@ -551,12 +611,6 @@ Token Budget Profile：
 - 如果当前窗口没有发送工具，最终输出必须以 <codex_delegation> 或“压缩回调”开头，供系统/用户转发。
 - 如果项目不是 git 仓库、项目禁止写入或无法提交，必须在压缩回调中说明原因和替代证据。
 
-CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
-- 可用性：{needs_codegraph}
-- 初始化状态：待确认
-- 索引路径/忽略策略：待确认
-- 跳过或失败原因：待确认
-
 路由前检查（总控、架构、内容主编和多角色派发必填）：
 - 是否读取 agent-role-orchestrator：{route_check_value(args.read_orchestrator)}
 - 是否读取 .codex/role-windows.md：{route_check_value(args.read_ledger)}
@@ -574,14 +628,6 @@ CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
 - 可选 skill：{csv_or_default(optional_skills, "无 / 待确认")}
 - 跳过 skill 及原因：{csv_or_default(skipped_skills, "无")}
 - 预期加载角色：{role}
-
-开源/可借鉴方案扫描（架构/CTO 技术窗口必填；非架构窗口仅在被明确指派时填写）：
-- 状态：{needs_scan}
-- 检索关键词：待确认
-- 候选方案：待确认
-- 可借鉴点：待确认
-- 不采用/风险：待确认
-- 对下游工作的约束：待确认
 
 提交/PR 要求：
 {args.commit_requirements or "遵循项目 AGENTS.md；未要求提交时先回报变更和验证证据。"}
@@ -639,7 +685,14 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--loop-depth", default="L1", choices=["L0", "L1", "L2", "L3"], help="Collapsible routing depth. L0 direct user-to-executor; L1 owner layer; L2 owner-to-executor loop; L3 high-risk gated loop.")
     parser.add_argument("--profile", default="auto", choices=["auto", "compact", "standard", "full"], help="Token budget profile. auto chooses compact for L0/L1 owner/simple prompts, standard for L2/architecture/new-code prompts, and full for L3/critical prompts.")
     parser.add_argument("--task-size", default="medium", choices=["tiny", "small", "medium", "large", "critical"], help="Task dispatch size. tiny lets CEO self-handle only local low-risk changes; small allows CEO -> 开发 direct dispatch; medium routes to owner layer; large/critical uses full role teams and gates.")
-    parser.add_argument("--risk", default="normal", choices=["normal", "critical"], help="Use critical for release gates, adversarial QA, compliance, or high-risk public claims.")
+    parser.add_argument("--risk", default="normal", choices=["normal", "mechanical", "critical", "extreme"], help="Use mechanical only for fully scoped rote work, critical for production/release/data/security gates, and extreme only for exceptional CTO reasoning.")
+    parser.add_argument("--executor-tier", default="owner", choices=["owner", "mechanical", "bounded", "semantic", "high-risk"], help="Development execution tier. bounded routes a one-shot executor to Luna; owner keeps the durable Dev Lead route.")
+    parser.add_argument("--execution-profile", default="serial", choices=["serial", "parallel"], help="Development topology. Parallel is fail-closed and requires disjoint scope plus independent validation.")
+    parser.add_argument("--worker-count", type=int, default=1, help="One-shot development workers. Default 1; explicit parallel profile permits 2-5.")
+    parser.add_argument("--disjoint-scope", help="Evidence that parallel worker file/surface ownership does not overlap.")
+    parser.add_argument("--independent-validation", help="Evidence that each parallel worker has an independent validation command or check.")
+    parser.add_argument("--prefer-spark", action="store_true", help="Prefer the opportunistic Spark lane for a mechanical/bounded one-shot development executor.")
+    parser.add_argument("--spark-available", action="store_true", help="Confirm Spark is currently available with usable preview quota; requires --prefer-spark.")
     parser.add_argument("--source-role", help="Source/callback role. Defaults to 用户 only for 总控/架构, otherwise 待确认.")
     parser.add_argument("--source-thread", help="Source thread id. Defaults to 待确认.")
     parser.add_argument("--context", help="Short known context.")

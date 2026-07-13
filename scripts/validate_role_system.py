@@ -93,7 +93,7 @@ def validate_docs(errors: list[str]) -> None:
             "预览图实现路线选择",
             "仅完成台账更新不算闭环",
             "<codex_delegation>",
-            "gpt-5.5` + `medium",
+            "gpt-5.6-terra` + `high",
         ],
         errors,
     )
@@ -130,7 +130,7 @@ def validate_docs(errors: list[str]) -> None:
             "预览图实现路线选择",
             "仅完成第 1 项不算闭环",
             "<codex_delegation>",
-            "gpt-5.5` + `medium",
+            "gpt-5.6-terra` + `high",
         ],
         errors,
     )
@@ -177,7 +177,7 @@ def validate_orchestrator(errors: list[str]) -> None:
             "Completion is fail-closed",
             "仅完成第 1 项不算闭环",
             "<codex_delegation>",
-            "gpt-5.5` + `medium",
+            "gpt-5.6-terra` + `high",
         ],
         errors,
     )
