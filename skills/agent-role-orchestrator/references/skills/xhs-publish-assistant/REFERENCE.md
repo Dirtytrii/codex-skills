@@ -41,7 +41,7 @@ Use it after the XHS role has already produced or approved the title, body, tags
 4. Run the helper when available:
 
 ```powershell
-$skillRoot = if ($env:CODEX_HOME) { Join-Path $env:CODEX_HOME "skills\xhs-publish-assistant" } else { Join-Path $HOME ".codex\skills\xhs-publish-assistant" }
+$skillRoot = if ($env:CODEX_HOME) { Join-Path $env:CODEX_HOME "skills\agent-role-orchestrator\references\skills\xhs-publish-assistant" } else { Join-Path $HOME ".codex\skills\agent-role-orchestrator\references\skills\xhs-publish-assistant" }
 node (Join-Path $skillRoot "scripts\build_publish_format.cjs") "<article-or-reedit-directory>"
 ```
 
