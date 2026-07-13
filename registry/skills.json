@@ -24,7 +24,59 @@
       "知识库",
       "技能维护"
     ],
-    "summary": "总控/CEO 先行的多窗口角色编排，含可折叠 L0-L3 loop 深度、CEO 负责人层交互、CTO 技术闭环、开发负责人/Dev Lead 与窗口内一次性 Spark 开发执行 subagent 分层、QA gpt-5.5 模型路由、内容主编分流、小红书确认图/反模板视觉 gate、gzh-design/manifest 公众号 gate、content-model handoff、X MCP 只读内容研究源、反老登味/反AI味内容闸门、UI预览图实现路线选择、模型路由默认值、fail-closed 提示词/台账/回调校验脚本、AGENTS.md/role-windows bootstrap、CodeGraph 状态检查、开源参考扫描、多方案选型、项目台账入口守卫、开发第一性原理、QA 对抗式审查、源窗口回调、来源thread压缩回调闭环、技能命中聚合治理、Token 压缩交接卡、技能维护角色和可复用优化沉淀提示词"
+    "summary": "总控/CEO 先行的角色编排与按需方法路由，含 L0-L3 loop、CTO 技术闭环、Terra/Sol/Mini/Luna 模型分层、内容主编、微信/小红书、Hermes/部署诊断、31 个 gstack 叶子方法、内容模型交接、反老登味/反AI味内容闸门、UI预览图实现路线选择、fail-closed 台账回调、来源thread压缩回调闭环、CodeGraph 检查和技能命中治理",
+    "bundled_skills": [
+      "gstack-autoplan",
+      "gstack-canary",
+      "gstack-careful",
+      "gstack-cso",
+      "gstack-design-consultation",
+      "gstack-design-html",
+      "gstack-design-review",
+      "gstack-design-shotgun",
+      "gstack-devex-review",
+      "gstack-document-generate",
+      "gstack-document-release",
+      "gstack-freeze",
+      "gstack-guard",
+      "gstack-health",
+      "gstack-investigate",
+      "gstack-land-and-deploy",
+      "gstack-learn",
+      "gstack-office-hours",
+      "gstack-plan-ceo-review",
+      "gstack-plan-design-review",
+      "gstack-plan-devex-review",
+      "gstack-plan-eng-review",
+      "gstack-plan-tune",
+      "gstack-qa",
+      "gstack-qa-only",
+      "gstack-retro",
+      "gstack-review",
+      "gstack-setup-deploy",
+      "gstack-ship",
+      "gstack-spec",
+      "gstack-unfreeze",
+      "wechat-ai-app-ops",
+      "wechat-article-formatter",
+      "wechat-tech-writer",
+      "xhs-automation-publisher",
+      "xhs-comment-research",
+      "xhs-publish-assistant",
+      "xhs-short-video-workflow",
+      "xhs-visual-director",
+      "application-problem-diagnosis-workflow",
+      "package-update-check-and-plan",
+      "post-deployment-readonly-verification",
+      "pre-deployment-readonly-checklist",
+      "proxy-dependent-python-service-diagnosis",
+      "python-project-deployment-troubleshooting",
+      "hermes-cron-empty-output-diagnosis",
+      "hermes-python-script-wrapper-for-shell-cron",
+      "content-model-handoff",
+      "content-style-calibration-loop",
+      "social-text-websense-gate"
+    ]
   },
   {
     "name": "delivery-document-package",
@@ -66,19 +118,6 @@
     "summary": "授权黑盒 Web 安全测试和报告"
   },
   {
-    "name": "application-problem-diagnosis-workflow",
-    "path": "skills/application-problem-diagnosis-workflow",
-    "status": "active",
-    "origin_type": "hermes",
-    "upstream_url": null,
-    "maintenance": "hermes-owned",
-    "consumed_by_roles": [
-      "运维",
-      "QA"
-    ],
-    "summary": "应用故障先诊断后处理的只读证据收集流程"
-  },
-  {
     "name": "design-taste-frontend",
     "path": "skills/design-taste-frontend",
     "status": "active",
@@ -117,20 +156,6 @@
       "小红书"
     ],
     "summary": "小红书/Rednote 图文组图、社交卡和公众号封面对生成"
-  },
-  {
-    "name": "xhs-visual-director",
-    "path": "skills/xhs-visual-director",
-    "status": "active",
-    "origin_type": "local",
-    "upstream_url": null,
-    "maintenance": "local-owned",
-    "consumed_by_roles": [
-      "UI/PPT",
-      "内容主编",
-      "小红书"
-    ],
-    "summary": "小红书/Rednote 高级图文视觉导演、封面重做、统一视觉母版、确认图先行、反模板视觉 gate 和图像提示词"
   },
   {
     "name": "humanizer-zh",
@@ -179,132 +204,6 @@
     "summary": "社交内容选题打分、盲预测、发布复盘、rubric 迭代和内容实验工作流"
   },
   {
-    "name": "content-model-handoff",
-    "path": "skills/content-model-handoff",
-    "status": "active",
-    "origin_type": "local",
-    "upstream_url": null,
-    "maintenance": "local-owned",
-    "consumed_by_roles": [
-      "内容主编",
-      "公众号发布",
-      "小红书",
-      "视频",
-      "技能维护"
-    ],
-    "summary": "内容 raw 起草模型/长文本窗口、内容主编和用户终审之间的分工：少限制多上下文，raw 与正式发布稿分离，保留事实和平台 gate"
-  },
-  {
-    "name": "social-text-websense-gate",
-    "path": "skills/social-text-websense-gate",
-    "status": "active",
-    "origin_type": "local",
-    "upstream_url": null,
-    "maintenance": "local-owned",
-    "consumed_by_roles": [
-      "内容主编",
-      "小红书",
-      "视频"
-    ],
-    "summary": "小红书/抖音/社交平台中文文案的网感闸门：识别技术事故里的荒谬点，避免 README 腔、技术发布会腔和机械堆网词"
-  },
-  {
-    "name": "content-style-calibration-loop",
-    "path": "skills/content-style-calibration-loop",
-    "status": "active",
-    "origin_type": "local",
-    "upstream_url": null,
-    "maintenance": "local-owned",
-    "consumed_by_roles": [
-      "内容主编",
-      "小红书",
-      "视频",
-      "技能维护"
-    ],
-    "summary": "从用户手改文案和风格批评中提炼可复用写作规则，避免只记表层词汇，支持回流到 skill/reference"
-  },
-  {
-    "name": "xhs-publish-assistant",
-    "path": "skills/xhs-publish-assistant",
-    "status": "active",
-    "origin_type": "local",
-    "upstream_url": null,
-    "maintenance": "local-owned",
-    "consumed_by_roles": [
-      "内容主编",
-      "小红书"
-    ],
-    "summary": "小红书发布前复制包整理、标题长度检查、标签数量检查、配图目录、图片尺寸和视觉方向确认检查"
-  },
-  {
-    "name": "xhs-automation-publisher",
-    "path": "skills/xhs-automation-publisher",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/white0dew/XiaohongshuSkills",
-    "source_note": "Vendored from upstream HEAD 988fd2efac377cc6dab3a630ed157336b5ebfb03; SKILL.md adapted for this role system so preview/fill is default and publish, comment, engagement, account-switch, cookie-clear, and profile-delete actions require explicit user approval.",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "内容主编",
-      "小红书"
-    ],
-    "summary": "小红书/Rednote Chrome CDP 自动化登录检查、创作者中心预览填充、发布卡点排查、内容数据导出、搜索/详情读取和授权后的最终发布/互动门禁"
-  },
-  {
-    "name": "xhs-comment-research",
-    "path": "skills/xhs-comment-research",
-    "status": "active",
-    "origin_type": "local",
-    "upstream_url": null,
-    "maintenance": "local-owned",
-    "consumed_by_roles": [
-      "小红书",
-      "内容主编"
-    ],
-    "summary": "读取和分析小红书/Rednote 评论，用于内容选题、受众研究和回复策略"
-  },
-  {
-    "name": "wechat-ai-app-ops",
-    "path": "skills/wechat-ai-app-ops",
-    "status": "active",
-    "origin_type": "local",
-    "upstream_url": null,
-    "maintenance": "local-owned",
-    "consumed_by_roles": [
-      "公众号发布",
-      "内容主编",
-      "UI/PPT"
-    ],
-    "summary": "微信公众号 AI 应用文章、周刊连续性、gzh-design 排版交接、manifest 发布 gate、草稿箱 API 和发布面板提醒工作流"
-  },
-  {
-    "name": "wechat-article-formatter",
-    "path": "skills/wechat-article-formatter",
-    "status": "active",
-    "origin_type": "local",
-    "upstream_url": null,
-    "maintenance": "local-owned",
-    "consumed_by_roles": [
-      "公众号发布",
-      "内容主编",
-      "UI/PPT"
-    ],
-    "summary": "将 Markdown 文章转换为适配微信公众号编辑器的美化 HTML"
-  },
-  {
-    "name": "wechat-tech-writer",
-    "path": "skills/wechat-tech-writer",
-    "status": "active",
-    "origin_type": "local",
-    "upstream_url": null,
-    "maintenance": "local-owned",
-    "consumed_by_roles": [
-      "公众号发布",
-      "内容主编"
-    ],
-    "summary": "搜索、整理和改写技术内容，生成适合微信公众号的中文技术科普初稿"
-  },
-  {
     "name": "gstack",
     "path": "skills/gstack",
     "status": "active",
@@ -324,452 +223,6 @@
     "summary": "Codex 角色体系中的 gstack 完整方法论路由入口"
   },
   {
-    "name": "gstack-office-hours",
-    "path": "skills/gstack-office-hours",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/office-hours",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "总控",
-      "架构"
-    ],
-    "summary": "早期想法、需求现实性和最小切入口梳理"
-  },
-  {
-    "name": "gstack-spec",
-    "path": "skills/gstack-spec",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/spec",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "架构",
-      "开发"
-    ],
-    "summary": "把模糊意图整理成可执行规格"
-  },
-  {
-    "name": "gstack-autoplan",
-    "path": "skills/gstack-autoplan",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/autoplan",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "架构"
-    ],
-    "summary": "CEO/设计/工程/DX 综合计划审查"
-  },
-  {
-    "name": "gstack-plan-ceo-review",
-    "path": "skills/gstack-plan-ceo-review",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/plan-ceo-review",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "总控"
-    ],
-    "summary": "战略、范围、用户价值和业务风险审查"
-  },
-  {
-    "name": "gstack-plan-eng-review",
-    "path": "skills/gstack-plan-eng-review",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/plan-eng-review",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "架构",
-      "开发"
-    ],
-    "summary": "工程计划、数据流、边界、测试和发布风险审查"
-  },
-  {
-    "name": "gstack-plan-design-review",
-    "path": "skills/gstack-plan-design-review",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/plan-design-review",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "架构",
-      "UI/PPT"
-    ],
-    "summary": "UI/UX 计划、交互、响应式和审美风险审查"
-  },
-  {
-    "name": "gstack-plan-devex-review",
-    "path": "skills/gstack-plan-devex-review",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/plan-devex-review",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "架构",
-      "开发"
-    ],
-    "summary": "开发体验、命令、文档和反馈环路计划审查"
-  },
-  {
-    "name": "gstack-plan-tune",
-    "path": "skills/gstack-plan-tune",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/plan-tune",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "架构",
-      "开发",
-      "QA"
-    ],
-    "summary": "问题频率、自治程度和停止条件校准"
-  },
-  {
-    "name": "gstack-investigate",
-    "path": "skills/gstack-investigate",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/investigate",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "开发",
-      "QA",
-      "运维"
-    ],
-    "summary": "故障、失败测试和回归的证据优先根因调查"
-  },
-  {
-    "name": "gstack-review",
-    "path": "skills/gstack-review",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/review",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "开发",
-      "QA"
-    ],
-    "summary": "提交前代码/变更审查和风险发现"
-  },
-  {
-    "name": "gstack-ship",
-    "path": "skills/gstack-ship",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/ship",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "开发",
-      "QA",
-      "运维"
-    ],
-    "summary": "合并、PR、发布和部署前最终检查"
-  },
-  {
-    "name": "gstack-health",
-    "path": "skills/gstack-health",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/health",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "开发",
-      "QA",
-      "架构"
-    ],
-    "summary": "项目健康度、测试、文档、DX 和维护性巡检"
-  },
-  {
-    "name": "gstack-devex-review",
-    "path": "skills/gstack-devex-review",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/devex-review",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "开发",
-      "QA",
-      "架构"
-    ],
-    "summary": "已实现仓库/流程的开发体验审查"
-  },
-  {
-    "name": "gstack-careful",
-    "path": "skills/gstack-careful",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/careful",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "开发",
-      "运维",
-      "安全",
-      "QA"
-    ],
-    "summary": "高风险动作前的保守检查和确认点"
-  },
-  {
-    "name": "gstack-guard",
-    "path": "skills/gstack-guard",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/guard",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "架构",
-      "开发",
-      "运维",
-      "安全",
-      "QA"
-    ],
-    "summary": "工作流护栏、禁止动作和验证门禁强化"
-  },
-  {
-    "name": "gstack-freeze",
-    "path": "skills/gstack-freeze",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/freeze",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "开发",
-      "运维",
-      "安全",
-      "QA"
-    ],
-    "summary": "暂停写操作并切换到只读取证"
-  },
-  {
-    "name": "gstack-unfreeze",
-    "path": "skills/gstack-unfreeze",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/unfreeze",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "开发",
-      "运维",
-      "安全",
-      "QA"
-    ],
-    "summary": "从冻结状态恢复执行的条件和验证门"
-  },
-  {
-    "name": "gstack-design-consultation",
-    "path": "skills/gstack-design-consultation",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/design-consultation",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "UI/PPT",
-      "架构"
-    ],
-    "summary": "产品/UI/视觉方向咨询和方案选择"
-  },
-  {
-    "name": "gstack-design-shotgun",
-    "path": "skills/gstack-design-shotgun",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/design-shotgun",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "UI/PPT"
-    ],
-    "summary": "快速探索多套视觉方向并选型"
-  },
-  {
-    "name": "gstack-design-html",
-    "path": "skills/gstack-design-html",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/design-html",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "UI/PPT"
-    ],
-    "summary": "HTML 原型、设计板和渲染视觉探索"
-  },
-  {
-    "name": "gstack-design-review",
-    "path": "skills/gstack-design-review",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/design-review",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "UI/PPT",
-      "QA"
-    ],
-    "summary": "渲染后视觉层级、布局、可访问性和完成度审查"
-  },
-  {
-    "name": "gstack-qa-only",
-    "path": "skills/gstack-qa-only",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/qa-only",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "QA"
-    ],
-    "summary": "只报告不修改的 Web/UI QA 验证"
-  },
-  {
-    "name": "gstack-qa",
-    "path": "skills/gstack-qa",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/qa",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "QA",
-      "开发"
-    ],
-    "summary": "Web/UI QA 验证和授权后的窄范围修复闭环"
-  },
-  {
-    "name": "gstack-canary",
-    "path": "skills/gstack-canary",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/canary",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "QA",
-      "运维",
-      "架构"
-    ],
-    "summary": "灰度/冒烟门禁、发布信号和回滚条件"
-  },
-  {
-    "name": "gstack-cso",
-    "path": "skills/gstack-cso",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/cso",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "安全",
-      "架构"
-    ],
-    "summary": "基础设施优先的安全态势和威胁面审查"
-  },
-  {
-    "name": "gstack-setup-deploy",
-    "path": "skills/gstack-setup-deploy",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/setup-deploy",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "运维",
-      "架构"
-    ],
-    "summary": "部署环境、配置、密钥和验证门禁规划"
-  },
-  {
-    "name": "gstack-land-and-deploy",
-    "path": "skills/gstack-land-and-deploy",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/land-and-deploy",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "运维",
-      "QA",
-      "开发"
-    ],
-    "summary": "明确授权下的合并、发布和部署流程门禁"
-  },
-  {
-    "name": "gstack-document-generate",
-    "path": "skills/gstack-document-generate",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/document-generate",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "开发",
-      "架构",
-      "QA",
-      "测试"
-    ],
-    "summary": "把实现/产品/运维过程沉淀成可维护文档"
-  },
-  {
-    "name": "gstack-document-release",
-    "path": "skills/gstack-document-release",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/document-release",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "开发",
-      "QA",
-      "架构"
-    ],
-    "summary": "发布说明、变更日志和内外部发布沟通"
-  },
-  {
-    "name": "gstack-learn",
-    "path": "skills/gstack-learn",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/learn",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "架构",
-      "开发",
-      "QA",
-      "运维"
-    ],
-    "summary": "沉淀可复用经验、触发条件和未来检索线索"
-  },
-  {
-    "name": "gstack-retro",
-    "path": "skills/gstack-retro",
-    "status": "active",
-    "origin_type": "external-github",
-    "upstream_url": "https://github.com/garrytan/gstack/tree/e722c5bf89acdde034b5efa4c6b4bf612c48e610/retro",
-    "maintenance": "vendored-adapted",
-    "consumed_by_roles": [
-      "架构",
-      "开发",
-      "QA",
-      "测试",
-      "运维"
-    ],
-    "summary": "完工复盘、流程改进和角色/skill 优化"
-  },
-  {
-    "name": "hermes-cron-empty-output-diagnosis",
-    "path": "skills/hermes-cron-empty-output-diagnosis",
-    "status": "active",
-    "origin_type": "hermes",
-    "upstream_url": null,
-    "maintenance": "hermes-owned",
-    "consumed_by_roles": [
-      "运维"
-    ],
-    "summary": "Hermes cron 已运行但输出为空或不可用的只读诊断流程"
-  },
-  {
-    "name": "hermes-python-script-wrapper-for-shell-cron",
-    "path": "skills/hermes-python-script-wrapper-for-shell-cron",
-    "status": "active",
-    "origin_type": "hermes",
-    "upstream_url": null,
-    "maintenance": "hermes-owned",
-    "consumed_by_roles": [
-      "运维"
-    ],
-    "summary": "Hermes cron 脚本解释器不匹配和包装方案诊断"
-  },
-  {
     "name": "hatch-pet",
     "path": "skills/hatch-pet",
     "status": "active",
@@ -781,19 +234,6 @@
       "视频"
     ],
     "summary": "Codex pet 精灵图生成、修复、校验和打包"
-  },
-  {
-    "name": "package-update-check-and-plan",
-    "path": "skills/package-update-check-and-plan",
-    "status": "active",
-    "origin_type": "hermes",
-    "upstream_url": null,
-    "maintenance": "hermes-owned",
-    "consumed_by_roles": [
-      "运维",
-      "QA"
-    ],
-    "summary": "部署包发现、当前状态比对、更新和回滚计划的只读流程"
   },
   {
     "name": "pdf",
@@ -823,57 +263,6 @@
       "开发"
     ],
     "summary": "终端 Playwright CLI 浏览器自动化"
-  },
-  {
-    "name": "post-deployment-readonly-verification",
-    "path": "skills/post-deployment-readonly-verification",
-    "status": "active",
-    "origin_type": "hermes",
-    "upstream_url": null,
-    "maintenance": "hermes-owned",
-    "consumed_by_roles": [
-      "运维",
-      "QA"
-    ],
-    "summary": "部署后健康、版本、路由、日志和回滚信号的只读验证流程"
-  },
-  {
-    "name": "pre-deployment-readonly-checklist",
-    "path": "skills/pre-deployment-readonly-checklist",
-    "status": "active",
-    "origin_type": "hermes",
-    "upstream_url": null,
-    "maintenance": "hermes-owned",
-    "consumed_by_roles": [
-      "运维",
-      "QA"
-    ],
-    "summary": "部署前主机、包、备份、配置和回滚条件的只读检查清单"
-  },
-  {
-    "name": "proxy-dependent-python-service-diagnosis",
-    "path": "skills/proxy-dependent-python-service-diagnosis",
-    "status": "active",
-    "origin_type": "hermes",
-    "upstream_url": null,
-    "maintenance": "hermes-owned",
-    "consumed_by_roles": [
-      "运维"
-    ],
-    "summary": "代理依赖型 Python 服务 HTTP/WebSocket 就绪差异诊断"
-  },
-  {
-    "name": "python-project-deployment-troubleshooting",
-    "path": "skills/python-project-deployment-troubleshooting",
-    "status": "active",
-    "origin_type": "hermes",
-    "upstream_url": null,
-    "maintenance": "hermes-owned",
-    "consumed_by_roles": [
-      "运维",
-      "QA"
-    ],
-    "summary": "Python 项目部署启动、依赖、权限、代理和就绪问题诊断"
   },
   {
     "name": "startup-pressure-test",

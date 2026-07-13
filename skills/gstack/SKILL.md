@@ -17,23 +17,23 @@ This repository does not vendor the full upstream gstack runtime. It adapts the 
 
 ## How To Route
 
-Use the current role first, then choose the smallest gstack method:
+Use the current role first, then choose the smallest gstack method. Focused methods are bundled under `../agent-role-orchestrator/references/skills/<method>/REFERENCE.md`; read exactly one matching reference instead of invoking a standalone `$gstack-*` skill.
 
-- `总控`: `$gstack-office-hours`, `$gstack-plan-ceo-review`, `$startup-pressure-test` for early value, scope, priority, and model-budget pressure.
-- `架构`: `$gstack-spec`, `$gstack-autoplan`, `$gstack-plan-eng-review`, `$gstack-plan-design-review`, `$gstack-plan-devex-review`, `$gstack-plan-tune`.
-- `开发`: `$gstack-investigate`, `$gstack-review`, `$gstack-ship`, `$gstack-health`, `$gstack-devex-review`, `$gstack-careful`, `$gstack-guard`, `$gstack-freeze`, `$gstack-unfreeze`.
-- `UI/PPT`: `$gstack-design-consultation`, `$gstack-design-shotgun`, `$gstack-design-html`, `$gstack-design-review`, `$gstack-plan-design-review`.
-- `安全`: `$gstack-cso` when broad security posture or infrastructure-first review is needed; dedicated Codex Security skills still win for repo scans and diffs.
-- `QA`: `$gstack-qa-only`, `$gstack-qa`, `$gstack-review`, `$gstack-ship`, `$gstack-canary`.
+- `总控`: `gstack-office-hours`, `gstack-plan-ceo-review`, and standalone `$startup-pressure-test` for early value, scope, priority, and model-budget pressure.
+- `架构`: `gstack-spec`, `gstack-autoplan`, `gstack-plan-eng-review`, `gstack-plan-design-review`, `gstack-plan-devex-review`, `gstack-plan-tune`.
+- `开发`: `gstack-investigate`, `gstack-review`, `gstack-ship`, `gstack-health`, `gstack-devex-review`, `gstack-careful`, `gstack-guard`, `gstack-freeze`, `gstack-unfreeze`.
+- `UI/PPT`: `gstack-design-consultation`, `gstack-design-shotgun`, `gstack-design-html`, `gstack-design-review`, `gstack-plan-design-review`.
+- `安全`: `gstack-cso` when broad security posture or infrastructure-first review is needed; dedicated Codex Security skills still win for repo scans and diffs.
+- `QA`: `gstack-qa-only`, `gstack-qa`, `gstack-review`, `gstack-ship`, `gstack-canary`.
 - `测试`: keep formal test artifacts in `$test-case-report-builder`; use gstack only for planning or review support.
-- `运维`: Hermes-owned skills remain default for remote production facts; use `$gstack-setup-deploy`, `$gstack-land-and-deploy`, or `$gstack-canary` only as planning/release-gate support.
-- Docs/learning: `$gstack-document-generate`, `$gstack-document-release`, `$gstack-learn`, `$gstack-retro`.
+- `运维`: Hermes-owned bundles remain default for remote production facts; use `gstack-setup-deploy`, `gstack-land-and-deploy`, or `gstack-canary` only as planning/release-gate support.
+- Docs/learning: `gstack-document-generate`, `gstack-document-release`, `gstack-learn`, `gstack-retro`.
 
 ## Default CEO/CTO Use
 
 1. Read the user's requirement and local project context first.
-2. If the idea is fuzzy, `总控` uses `$gstack-office-hours` or `$gstack-plan-ceo-review` before opening technical roles.
-3. If the work is a technical plan, `架构` uses `$gstack-spec`, `$gstack-autoplan`, or the narrow technical plan review skill that matches the risk.
+2. If the idea is fuzzy, `总控` loads `gstack-office-hours` or `gstack-plan-ceo-review` before opening technical roles.
+3. If the work is a technical plan, `架构` loads `gstack-spec`, `gstack-autoplan`, or the narrow technical plan review reference that matches the risk.
 4. Convert the review result back into this user's role-window format: registry state, downstream roles, file boundaries, validation, commit/PR requirements, and copyable prompts.
 
 ## Boundaries

@@ -1,6 +1,6 @@
 ---
 name: agent-role-orchestrator
-description: Create concise role-specific Codex prompts and handoffs with a CEO-first gateway, CTO technical loop, content editor branch, model routing, fail-closed callbacks, and role-window registry. Use for 总控/CEO, 架构/CTO, development, UI/PPT, content, ops, DBA, security, testing, QA, document delivery, knowledge-base, skill maintenance, inherited windows, role reuse, skill-hit statistics, or multi-window loop engineering.
+description: Route role-specific Codex work through a CEO-first gateway, CTO/content owner loops, model routing, fail-closed callbacks, and on-demand method bundles. Use for 总控/CEO, 架构/CTO, development, UI/PPT, content, ops, DBA, security, testing, QA, delivery, knowledge-base, skill maintenance, gstack methods, WeChat, Xiaohongshu, Hermes, deployment diagnosis, content-model handoff, style calibration, or social-copy taste gates.
 ---
 
 # Agent Role Orchestrator
@@ -37,6 +37,16 @@ Do not load every reference by default:
 - current model tiers, executor tiers, and parallel policy: `references/model-routing.md`;
 - script and skill routing: `references/tool-routing.md`;
 - X MCP, public writing, Xiaohongshu, and content gates: `references/content-routing.md`.
+
+## On-Demand Bundle Loading Rule
+
+Broad leaf methods live under `references/skills/<name>/REFERENCE.md` so Codex does not enumerate them as standalone global skills.
+
+1. Read `references/tool-routing.md` only when a role needs a downstream method.
+2. Select the smallest single matching bundle and read its `REFERENCE.md`; load a second bundle only when the first explicitly hands off to it or the task has two distinct phases.
+3. Resolve that bundle's `scripts/`, `references/`, and `assets/` relative to its own directory.
+4. Never scan or preload every bundle. Keep `gstack` as the public method router, but load its 31 focused methods from this bundle directory.
+5. Track the selected bundle name in `技能命中回传` even though it is no longer an independently discoverable `$skill`.
 
 ## Fail-Closed Tool Layer Rule
 
@@ -163,7 +173,7 @@ Load `references/content-routing.md` only for public writing, platform research,
 
 - `X MCP Content Research Source`: use [official X MCP docs](https://docs.x.com/tools/mcp) for authorized read-only trend, topic, benchmark-account, and public-discussion research. Writes need separate authorization.
 - `Content Tone Gate`: 正式对外内容先过 `反老登味 / 反 AI 味内容闸门`, then use `$humanizer-zh` without changing facts.
-- `Xiaohongshu Automation Publisher Gate`: use `$xhs-automation-publisher`; preview/fill first, and require explicit confirmation for publish or interaction actions.
+- `Xiaohongshu Automation Publisher Gate`: load the bundled `xhs-automation-publisher` reference; preview/fill first, and require explicit confirmation for publish or interaction actions.
 
 ## Source-Window Callback Rule
 

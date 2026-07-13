@@ -49,7 +49,7 @@ Windows 没有 `rsync` 时，可以按目录复制 `skills/<skill-name>/` 到 `%
 | 层次 | 作用 | 代表内容 |
 | --- | --- | --- |
 | 角色编排 | 先判断需求、拆分窗口、维护回调和闭环状态 | `agent-role-orchestrator` |
-| 方法与工具 | 给不同角色装上合适的方法论或操作能力 | `gstack-*`、`wechat-*`、`cheat-on-content`、`test-case-report-builder` 等 |
+| 方法与工具 | 给不同角色装上合适的方法论或操作能力 | 编排器内按需 bundles、`gstack`、`cheat-on-content`、`test-case-report-builder` 等 |
 | 治理与继承 | 说明来源、边界、安装、公开同步和敏感信息规则 | `registry/skills.json`、`docs/*`、校验脚本 |
 
 核心默认行为：
@@ -193,20 +193,20 @@ python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py \
 
 ### 5. Skill as Capability Routing
 
-角色不会把所有能力塞进一个超级提示词，而是按任务加载对应 skill：
+角色不会把所有能力塞进一个超级提示词。`gstack-*` 叶子、微信/小红书、Hermes/部署诊断和内容 gate 存在 `agent-role-orchestrator/references/skills/`，只有路由命中后才读取对应 `REFERENCE.md`：
 
 | 任务类型 | 默认路由 |
 | --- | --- |
 | 入口分流、模型预算、最终验收 | `总控` + `agent-role-orchestrator` |
-| 技术架构/规格/计划审查 | `架构 / CTO` + `gstack-*` |
-| 代码实现、调查、评审 | 开发角色 + `gstack-investigate/review/ship/health` |
+| 技术架构/规格/计划审查 | `架构 / CTO` + `gstack` 路由器 + 一个按需 gstack bundle |
+| 代码实现、调查、评审 | 开发角色 + 按需 `gstack-investigate/review/ship/health` bundle |
 | UI、网页 PPT、社交卡、封面 | UI/PPT 角色 + 预览图实现路线选择 + `design-taste-frontend`、`guizang-*` |
 | 内容规划和跨平台分发 | `内容主编` + `content-model-handoff` 分离 raw 起草、主编 gate 和用户终审，再路由到内容角色工具 |
 | 爆款内容研究、热点扫描、对标账号 | `内容主编` + X MCP 内容研究源（只读、需授权，见 https://docs.x.com/tools/mcp） |
 | 公众号发布 | `wechat-ai-app-ops`、`wechat-tech-writer`、`wechat-article-formatter`；正式排版优先接 `gzh-design`（如已安装），草稿箱发布按 manifest gate 强确认 |
 | 小红书视觉、发布与内容实验 | `xhs-visual-director`（确认图先行、反模板视觉 gate）、`cheat-on-content`、`xhs-publish-assistant`、`xhs-automation-publisher`、`xhs-comment-research` |
 | 中文正式对外文案 | 社交平台先用 `social-text-websense-gate` 防 README 腔/发布会腔/机械堆网词；再用 `反老登味 / 反 AI 味内容闸门` + `humanizer-zh`，叙事类按需用 `story-deslop`；用户改稿复盘用 `content-style-calibration-loop` |
-| 运维只读诊断 | Hermes-owned 运维 skills |
+| 运维只读诊断 | 编排器内按需加载 Hermes-owned / 部署诊断 bundle |
 | 数据库实例风险 | DBA 角色卡，危险动作二次授权 |
 | 测试资产和压测验证 | `test-case-report-builder`、`playwright` |
 | 安全审计 | `authorized-blackbox-web-security` 或 Codex Security 系列 |
@@ -239,7 +239,7 @@ X MCP 可作为内容角色的只读研究源，用来研究爆款内容、热�
 - 默认只读：搜索 posts、用户、用户时间线、trends/news 和公开讨论。
 - 需要授权：真实访问需要 X Developer app、OAuth 和本机 `xurl mcp` 配置；不要把 `CLIENT_ID`、`CLIENT_SECRET`、token、cookie 或账号状态写进仓库。
 - 默认禁止：发帖、发布 Article、关注/取关、点赞、转发、私信、账号设置、书签变更和任何互动/写操作。
-- 平台化处理：X 数据只是趋势和对标信号，不能直接等同于小红书或公众号爆款规律；最终仍要结合 `$cheat-on-content`、`$xhs-comment-research`、`$humanizer-zh` 等平台技能加工。
+- 平台化处理：X 数据只是趋势和对标信号，不能直接等同于小红书或公众号爆款规律；最终仍要结合 `$cheat-on-content`、按需 `xhs-comment-research` bundle 和 `$humanizer-zh` 加工。
 
 ### 内容语气闸门
 
@@ -309,8 +309,9 @@ Token Budget Profile 负责把“少开窗口、少传上下文”变成可执�
 
 ```text
 .
-├── skills/                 # 可复制安装的 skill 目录，保持 skills/<name>/SKILL.md 扁平结构
-├── registry/skills.json    # active skills、来源、维护归属、角色消费关系
+├── skills/                 # 可独立发现的 skill；宽叶子方法由编排器按需加载
+│   └── agent-role-orchestrator/references/skills/<name>/REFERENCE.md
+├── registry/skills.json    # active skills、编排器 bundled_skills、来源和角色消费关系
 ├── docs/
 │   ├── add-skill.md        # 新增 skill 流程
 │   ├── publication-checklist.md
@@ -319,7 +320,8 @@ Token Budget Profile 负责把“少开窗口、少传上下文”变成可执�
 ├── scripts/
 │   ├── validate_public_skills.py
 │   ├── validate_role_system.py
-│   └── test_role_system_tools.py
+│   ├── test_role_system_tools.py
+│   └── bundle_on_demand_skills.py
 ├── skills/agent-role-orchestrator/scripts/
 │   ├── aggregate_skill_hits.py
 │   ├── check_codegraph.py

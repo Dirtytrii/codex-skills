@@ -18,6 +18,7 @@ VALIDATE_LOOP = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "valid
 CHECK_CODEGRAPH = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "check_codegraph.py"
 AGGREGATE_SKILL_HITS = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "aggregate_skill_hits.py"
 VALIDATE_ROLE_SYSTEM = ROOT / "scripts" / "validate_role_system.py"
+BUNDLE_SKILLS = ROOT / "scripts" / "bundle_on_demand_skills.py"
 
 
 def run(args: list[str], cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -505,7 +506,7 @@ def test_render_prompt_includes_xhs_automation_publish_gate() -> None:
             "critical",
         ]
     )
-    assert "$xhs-automation-publisher" in xhs.stdout
+    assert "xhs-automation-publisher/REFERENCE.md" in xhs.stdout
     assert "默认先用 --preview" in xhs.stdout
     assert "publish_pipeline.py 默认会自动点击发布" in xhs.stdout
     assert "click-publish、post-comment-to-feed、respond-comment、note-upvote、note-bookmark" in xhs.stdout
@@ -567,6 +568,18 @@ def test_role_system_validator() -> None:
     assert "Role system validation passed" in result.stdout
 
 
+def test_on_demand_skill_bundles() -> None:
+    result = run([PYTHON, str(BUNDLE_SKILLS)])
+    assert "Validated 50 on-demand skill bundles" in result.stdout
+    assert not (ROOT / "skills" / "gstack-investigate").exists()
+    bundled = ROOT / "skills" / "agent-role-orchestrator" / "references" / "skills"
+    assert (bundled / "gstack-investigate" / "REFERENCE.md").is_file()
+    assert (bundled / "wechat-ai-app-ops" / "REFERENCE.md").is_file()
+    assert (bundled / "hermes-cron-empty-output-diagnosis" / "REFERENCE.md").is_file()
+    assert (bundled / "content-model-handoff" / "REFERENCE.md").is_file()
+    assert not list(bundled.rglob("SKILL.md"))
+
+
 def main() -> int:
     tests = [
         test_project_role_file_bootstrap,
@@ -589,6 +602,7 @@ def main() -> int:
         test_render_prompt_includes_xhs_automation_publish_gate,
         test_render_prompt_includes_ui_preview_route_options,
         test_render_prompt_requires_fail_closed_source_callback,
+        test_on_demand_skill_bundles,
         test_role_system_validator,
     ]
     for test in tests:

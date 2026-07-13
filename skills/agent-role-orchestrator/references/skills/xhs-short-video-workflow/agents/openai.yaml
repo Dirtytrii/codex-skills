@@ -1,0 +1,4 @@
+interface:
+  display_name: "XHS Short Video Workflow"
+  short_description: "XHS script, TTS, HyperFrames video workflow"
+  default_prompt: "Use $xhs-short-video-workflow to turn this Xiaohongshu AI topic into a short video package for approval."

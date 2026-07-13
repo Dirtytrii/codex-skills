@@ -78,7 +78,7 @@ Owns: WeChat article package, formatting, assets, preview, draft/publish readine
 
 ## 小红书
 
-Owns: Xiaohongshu package, carousel/video coordination, platform-native copy, preview, and authorized automation. Use `$xhs-automation-publisher`; default to fill/preview and require confirmation for publish or interaction.
+Owns: Xiaohongshu package, carousel/video coordination, platform-native copy, preview, and authorized automation. Load the bundled `xhs-automation-publisher` reference; default to fill/preview and require confirmation for publish or interaction.
 
 ## 视频
 

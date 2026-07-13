@@ -24,6 +24,7 @@ VALIDATE_LOOP = ORCHESTRATOR / "scripts" / "validate_role_loop.py"
 ENSURE_FILES = ORCHESTRATOR / "scripts" / "ensure_project_role_files.py"
 CHECK_CODEGRAPH = ORCHESTRATOR / "scripts" / "check_codegraph.py"
 AGGREGATE_SKILL_HITS = ORCHESTRATOR / "scripts" / "aggregate_skill_hits.py"
+BUNDLE_SKILLS = ROOT / "scripts" / "bundle_on_demand_skills.py"
 ROLE_SCRIPTS = (RENDER_PROMPT, VALIDATE_LOOP, ENSURE_FILES, CHECK_CODEGRAPH, AGGREGATE_SKILL_HITS)
 
 
@@ -169,7 +170,7 @@ def validate_orchestrator(errors: list[str]) -> None:
             "X MCP Content Research Source",
             "https://docs.x.com/tools/mcp",
             "Xiaohongshu Automation Publisher Gate",
-            "$xhs-automation-publisher",
+            "bundled `xhs-automation-publisher` reference",
             "Content Tone Gate",
             "反老登味 / 反 AI 味内容闸门",
             "UI Preview Implementation Route Rule",
@@ -197,7 +198,7 @@ def validate_orchestrator(errors: list[str]) -> None:
             "反老登味 / 反 AI 味内容闸门",
             "预览图实现路线选择",
             "preview implementation route decision",
-            "$xhs-automation-publisher",
+            "bundled `xhs-automation-publisher` reference",
             "fail-closed callback status",
         ],
         errors,
@@ -246,7 +247,10 @@ def validate_scripts(errors: list[str]) -> None:
         ],
         errors,
     )
-    run([PYTHON, "-m", "py_compile", *(str(script) for script in ROLE_SCRIPTS), str(Path(__file__))], errors)
+    run([PYTHON, "-m", "py_compile", *(str(script) for script in ROLE_SCRIPTS), str(BUNDLE_SKILLS), str(Path(__file__))], errors)
+    bundle_check = run([PYTHON, str(BUNDLE_SKILLS)], errors)
+    if "Validated 50 on-demand skill bundles" not in bundle_check.stdout:
+        errors.append("bundle_on_demand_skills.py did not validate the expected 50 bundles")
 
     with tempfile.TemporaryDirectory() as temp:
         temp_path = Path(temp)

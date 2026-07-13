@@ -25,7 +25,7 @@ All formal public Chinese copy must pass the `反老登味 / 反 AI 味内容闸
 
 ## Xiaohongshu Automation Publisher Gate
 
-Use `$xhs-automation-publisher` for authorized login/browser automation, creator-center filling, publishing blockers, search/detail reads, or data export.
+Load `references/skills/xhs-automation-publisher/REFERENCE.md` for authorized login/browser automation, creator-center filling, publishing blockers, search/detail reads, or data export.
 
 Default to preview/fill. Clicking publish, posting/responding to comments, likes, bookmarks, account switching, or profile cleanup requires a fresh explicit confirmation. Never store cookies, QR codes, real account state, or local Chrome profile paths in the repository.
 

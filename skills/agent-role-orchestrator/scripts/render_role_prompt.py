@@ -369,7 +369,7 @@ def xhs_automation_publish_gate(role: str) -> str:
     if role != "小红书":
         return ""
     return """小红书自动化发布门禁：
-- 自动化登录、创作者中心填充、发布卡点排查、内容数据导出、搜索详情读取或授权发布时使用 $xhs-automation-publisher。
+- 自动化登录、创作者中心填充、发布卡点排查、内容数据导出、搜索详情读取或授权发布时，读取 agent-role-orchestrator 内置的 xhs-automation-publisher/REFERENCE.md。
 - 默认先用 --preview 或 cdp_publish.py fill，让用户在浏览器里复核；publish_pipeline.py 默认会自动点击发布，缺少 --preview 时视为高风险动作。
 - click-publish、post-comment-to-feed、respond-comment、note-upvote、note-bookmark 等发布/互动命令必须二次明确授权；不得把评论、点赞收藏、切号、清理账号 Profile 当作普通发布步骤。
 - 本地 cookie、登录二维码、账号配置、Chrome profile 路径和真实账号状态不得写入仓库或回调正文。
