@@ -20,6 +20,8 @@ RENDER_PROMPT = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "rende
 VALIDATE_LOOP = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "validate_role_loop.py"
 CHECK_CODEGRAPH = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "check_codegraph.py"
 AGGREGATE_SKILL_HITS = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "aggregate_skill_hits.py"
+EVALUATE_SKILL_ROUTING = ROOT / "scripts" / "evaluate_skill_routing.py"
+SKILL_ROUTING_CASES = ROOT / "evals" / "skill-routing-cases.jsonl"
 VALIDATE_ROLE_SYSTEM = ROOT / "scripts" / "validate_role_system.py"
 ORCHESTRATOR_SKILL = ROOT / "skills" / "agent-role-orchestrator" / "SKILL.md"
 ROLE_CARDS = ROOT / "skills" / "agent-role-orchestrator" / "references" / "role-cards.md"
@@ -174,6 +176,69 @@ def test_aggregate_skill_hits_quantifies_required_actual_and_misfires() -> None:
         assert payload["missing_required_skill_count"] == 0
         assert payload["misfire_skill_count"] == 1
         assert payload["hit_rate"] == 0.5
+        assert payload["routing_declaration_coverage"] == 1.0
+        assert payload["skill_callback_completeness"] == 1.0
+        assert payload["effective_use_rate"] == 1.0
+        assert payload["misfire_rate"] == 1.0
+
+
+def test_aggregate_skill_hits_does_not_claim_success_without_requirements() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        callback = Path(temp) / "callback.md"
+        callback.write_text(
+            """技能命中回传：
+- 已加载并使用：humanizer-zh
+- 来源窗口要求但未使用：无
+- 临时发现应补用：无
+- 误召/无效加载：无
+- 影响产出的 skill：humanizer-zh
+""",
+            encoding="utf-8",
+        )
+        result = run([PYTHON, str(AGGREGATE_SKILL_HITS), str(callback), "--json"])
+        payload = json.loads(result.stdout)
+        assert payload["hit_rate"] is None
+        assert payload["routing_declaration_coverage"] == 0.0
+        assert payload["skill_callback_completeness"] == 1.0
+
+
+def test_skill_routing_eval_scores_observed_decisions_independently() -> None:
+    validation = run(
+        [PYTHON, str(EVALUATE_SKILL_ROUTING), "--validate-only", "--strict"]
+    )
+    assert json.loads(validation.stdout)["case_count"] >= 15
+
+    with tempfile.TemporaryDirectory() as temp:
+        observed = Path(temp) / "observed.jsonl"
+        cases = [
+            json.loads(line)
+            for line in SKILL_ROUTING_CASES.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        observed.write_text(
+            "\n".join(
+                json.dumps(
+                    {"id": case["id"], "selected_skills": case["required_skills"]},
+                    ensure_ascii=False,
+                )
+                for case in cases
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        result = run(
+            [
+                PYTHON,
+                str(EVALUATE_SKILL_ROUTING),
+                "--observed",
+                str(observed),
+                "--strict",
+            ]
+        )
+        payload = json.loads(result.stdout)
+        assert payload["unevaluated_case_count"] == 0
+        assert payload["case_pass_rate"] == 1.0
+        assert payload["required_skill_recall"] == 1.0
 
 
 def test_callback_must_start_with_forwardable_prefix() -> None:
@@ -672,7 +737,7 @@ def test_native_browser_routing_prefers_plugins_and_keeps_deterministic_fallback
     assert "2026-06-11" in browser_doc
     assert "OpenAI does not publish a stable numeric" in router
     assert "existing Chrome profile" in router
-    assert "deterministic terminal or CI automation" in playwright
+    assert "deterministic terminal or CI browser automation" in playwright
     assert "Do not load repository-maintained JavaScript snippets" in comments
     assert not XHS_CHROME_SNIPPETS.exists()
     assert "native Chrome surface" in publisher
@@ -1018,6 +1083,8 @@ def main() -> int:
         test_role_ledger_rejects_duplicate_threads_and_bad_status,
         test_check_codegraph_reports_state_without_guessing,
         test_aggregate_skill_hits_quantifies_required_actual_and_misfires,
+        test_aggregate_skill_hits_does_not_claim_success_without_requirements,
+        test_skill_routing_eval_scores_observed_decisions_independently,
         test_callback_must_start_with_forwardable_prefix,
         test_render_prompt_rejects_ceo_direct_technical_execution_without_small_or_override,
         test_render_prompt_allows_ceo_direct_small_development_dispatch,

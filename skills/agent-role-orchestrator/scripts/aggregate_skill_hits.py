@@ -18,6 +18,13 @@ FIELD_UNUSED = "来源窗口要求但未使用"
 FIELD_DISCOVERED = "临时发现应补用"
 FIELD_MISFIRES = "误召/无效加载"
 FIELD_EFFECTIVE = "影响产出的 skill"
+CALLBACK_FIELDS = (
+    FIELD_LOADED,
+    FIELD_UNUSED,
+    FIELD_DISCOVERED,
+    FIELD_MISFIRES,
+    FIELD_EFFECTIVE,
+)
 
 
 def iter_input_files(paths: list[Path]) -> list[Path]:
@@ -102,6 +109,8 @@ def parse_file(path: Path) -> dict[str, object]:
     loaded_required = required & loaded
     unused_required = required & declared_unused
     missing_required = required - loaded - declared_unused
+    callback_fields_present = [field for field in CALLBACK_FIELDS if field_values(text, field)]
+    effective_loaded = effective & loaded
 
     return {
         "path": str(path),
@@ -117,6 +126,11 @@ def parse_file(path: Path) -> dict[str, object]:
         "declared_unused_required_skill_count": len(unused_required),
         "missing_required_skill_count": len(missing_required),
         "misfire_skill_count": len(misfires),
+        "loaded_skill_count": len(loaded),
+        "effective_loaded_skill_count": len(effective_loaded),
+        "has_routing_declaration": bool(field_values(text, FIELD_REQUIRED)),
+        "callback_fields_present": callback_fields_present,
+        "callback_complete": len(callback_fields_present) == len(CALLBACK_FIELDS),
     }
 
 
@@ -133,6 +147,10 @@ def aggregate(paths: list[Path]) -> dict[str, object]:
         "misfire_skill_count": 0,
         "discovered_should_use_skill_count": 0,
         "effective_skill_count": 0,
+        "loaded_skill_count": 0,
+        "effective_loaded_skill_count": 0,
+        "files_with_routing_declaration": 0,
+        "files_with_complete_skill_callback": 0,
     }
 
     for item in files:
@@ -143,6 +161,10 @@ def aggregate(paths: list[Path]) -> dict[str, object]:
         totals["misfire_skill_count"] += int(item["misfire_skill_count"])
         totals["discovered_should_use_skill_count"] += len(item["discovered_should_use_skills"])
         totals["effective_skill_count"] += len(item["effective_skills"])
+        totals["loaded_skill_count"] += int(item["loaded_skill_count"])
+        totals["effective_loaded_skill_count"] += int(item["effective_loaded_skill_count"])
+        totals["files_with_routing_declaration"] += int(bool(item["has_routing_declaration"]))
+        totals["files_with_complete_skill_callback"] += int(bool(item["callback_complete"]))
 
         for skill in item["required_skills"]:
             by_skill[skill]["required"] += 1
@@ -160,14 +182,41 @@ def aggregate(paths: list[Path]) -> dict[str, object]:
             by_skill[skill]["effective"] += 1
 
     required_count = totals["required_skill_count"]
-    hit_rate = 1.0 if required_count == 0 else round(totals["loaded_required_skill_count"] / required_count, 4)
-    totals["hit_rate"] = hit_rate
+    loaded_count = totals["loaded_skill_count"]
+    files_scanned = totals["files_scanned"]
+    totals["hit_rate"] = (
+        None
+        if required_count == 0
+        else round(totals["loaded_required_skill_count"] / required_count, 4)
+    )
+    totals["effective_use_rate"] = (
+        None
+        if loaded_count == 0
+        else round(totals["effective_loaded_skill_count"] / loaded_count, 4)
+    )
+    totals["misfire_rate"] = (
+        None
+        if loaded_count == 0
+        else round(totals["misfire_skill_count"] / loaded_count, 4)
+    )
+    totals["routing_declaration_coverage"] = (
+        None
+        if files_scanned == 0
+        else round(totals["files_with_routing_declaration"] / files_scanned, 4)
+    )
+    totals["skill_callback_completeness"] = (
+        None
+        if files_scanned == 0
+        else round(totals["files_with_complete_skill_callback"] / files_scanned, 4)
+    )
     totals["files"] = files
     totals["by_skill"] = {skill: dict(counts) for skill, counts in sorted(by_skill.items())}
     return totals
 
 
 def render_human(payload: dict[str, object]) -> str:
+    hit_rate = payload["hit_rate"]
+    hit_rate_text = "不可评估（未声明必选 skill）" if hit_rate is None else str(hit_rate)
     return "\n".join(
         [
             "【技能命中率统计】",
@@ -179,14 +228,18 @@ def render_human(payload: dict[str, object]) -> str:
             f"- 误召/无效加载 skill 数：{payload['misfire_skill_count']}",
             f"- 临时发现应补用 skill 数：{payload['discovered_should_use_skill_count']}",
             f"- 影响产出的 skill 数：{payload['effective_skill_count']}",
-            f"- 技能路由命中率：{payload['hit_rate']}",
+            f"- 路由声明覆盖率：{payload['routing_declaration_coverage']}",
+            f"- 技能回调完整率：{payload['skill_callback_completeness']}",
+            f"- 必选 skill 自报命中率：{hit_rate_text}",
+            f"- 已加载 skill 有效使用率：{payload['effective_use_rate']}",
+            f"- 已加载 skill 误召率：{payload['misfire_rate']}",
         ]
     )
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Aggregate required/actual/effective skill-hit metrics from markdown callbacks or ledgers.",
+        description="Aggregate self-reported required/actual/effective skill metrics from callbacks or ledgers.",
     )
     parser.add_argument("paths", type=Path, nargs="+", help="Callback/ledger files or directories to scan.")
     parser.add_argument("--json", action="store_true", help="Emit machine-readable JSON.")

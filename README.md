@@ -92,7 +92,9 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 | `render_role_prompt.py` | 按角色、风险、来源、范围、模型和 Token 档位生成 prompt |
 | `validate_role_loop.py` | 校验台账、prompt、回调和技能命中字段 |
 | `check_codegraph.py` | 检查新代码项目的 CodeGraph 可用性和初始化状态 |
-| `aggregate_skill_hits.py` | 聚合必选命中、漏召、误召和临时发现 skill |
+| `aggregate_skill_hits.py` | 聚合自报命中、声明覆盖、回调完整、漏召、误召和有效使用率 |
+| `evaluate_skill_routing.py` | 用代表性输入和实际选择独立评估 Skill 路由 |
+| `audit_skill_catalog.py` | 递归检查 Skill 目录、描述预算和隐式调用策略 |
 
 这些脚本位于 `skills/agent-role-orchestrator/scripts/`。典型用法：
 
@@ -100,6 +102,7 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 python skills/agent-role-orchestrator/scripts/ensure_project_role_files.py --project /path/to/project --write
 python skills/agent-role-orchestrator/scripts/render_role_prompt.py --role 开发 --objective "修复订单筛选" --source-role 架构 --profile auto --validation "pytest"
 python skills/agent-role-orchestrator/scripts/validate_role_loop.py --prompt /path/to/prompt.md --callback /path/to/callback.md
+python scripts/evaluate_skill_routing.py --validate-only --strict
 ```
 
 新本地代码项目由架构先运行 `check_codegraph.py`，技术方案确认后再做有边界的开源/可借鉴方案扫描。项目台账有 thread id 就复用，状态不明写 `待确认`，不能靠聊天记忆编造。

@@ -203,6 +203,13 @@ python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py \
   /path/to/callbacks-or-ledgers
 ```
 
+校验路由评估集，并用实际选择记录评分：
+
+```bash
+python scripts/evaluate_skill_routing.py --validate-only --strict
+python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --strict
+```
+
 校验失败时不要派发、继续或关闭 loop；先补齐缺失字段，或把不确定状态明确写成 `待确认` 并说明原因。
 
 `.codex/role-windows.md` 推荐使用固定表格：
@@ -227,7 +234,8 @@ python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py \
 - 当上下文接近过长、remote compact 失败、或同一任务跨多个 PR/闭环时，优先开新窗口或接续既有角色窗口；输入只用 `.codex/role-windows.md`、压缩交接卡、提交/PR、文件证据和必要短摘要。
 - 生成下游提示词时使用 Token Budget Profile：`compact` 给 L0/L1 小闭环，只保留闭环必需字段；`standard` 给 L2、架构或新代码项目；`full` 给 L3、关键 PR、对抗审查、高风险公开声明、生产/数据/安全闭环。`render_role_prompt.py --profile auto` 是默认入口，负责人只在证据表明 compact 不够时升级。
 - `agent-role-orchestrator/SKILL.md` 只加载稳定闭环契约；角色边界、模型分级、工具路由、内容平台规则按需读取 `references/role-cards.md`、`model-routing.md`、`tool-routing.md`、`content-routing.md`，避免无关角色说明进入每个窗口上下文。PR 校验会限制入口文件行数和字节数。
-- 有回调文件或台账快照时，用 `aggregate_skill_hits.py` 聚合命中率，不靠总控或架构凭记忆估算。
+- 有回调文件或台账快照时，用 `aggregate_skill_hits.py` 聚合自报命中、声明覆盖、回调完整和有效使用率；没有必选声明时命中率必须显示为不可评估。
+- 用 `evaluate_skill_routing.py` 对代表性输入和实际 `selected_skills` 做独立评估。回调统计回答“角色说自己用了什么”，路由评估回答“系统对这个输入选对了什么”，两者不能混为一个指标。
 - `总控` 负责本次任务的全局路由判断和聚合视图；`架构` 与 `内容主编` 负责各自子树。长期的漏召、误召、触发描述过期、registry 漂移、README 说明混乱或跨角色 token 过重，转给 `技能维护`。
 - `技能维护` 只沉淀可公开复用的 skill 体系改进，不接收项目私有 `.codex/role-windows.md`、本机 memory、账号登录态或生产细节。
 

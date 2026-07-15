@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILLS = ROOT / "skills"
 REGISTRY = ROOT / "registry" / "skills.json"
 ROLE_SYSTEM_VALIDATOR = ROOT / "scripts" / "validate_role_system.py"
+SKILL_ROUTING_EVALUATOR = ROOT / "scripts" / "evaluate_skill_routing.py"
 
 NAME_RE = re.compile(r"^[a-z0-9-]+$")
 ORIGIN_TYPES = {"local", "external-github", "hermes", "upstream-adapted"}
@@ -80,6 +81,25 @@ def validate_role_system(errors: list[str]) -> None:
     if result.returncode != 0:
         errors.append(
             "role-system validation failed:\n"
+            f"stdout:\n{result.stdout}\n"
+            f"stderr:\n{result.stderr}"
+        )
+
+
+def validate_skill_routing_cases(errors: list[str]) -> None:
+    if not SKILL_ROUTING_EVALUATOR.is_file():
+        errors.append("missing scripts/evaluate_skill_routing.py")
+        return
+    result = subprocess.run(
+        [sys.executable, str(SKILL_ROUTING_EVALUATOR), "--validate-only", "--strict"],
+        cwd=str(ROOT),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        errors.append(
+            "skill-routing eval validation failed:\n"
             f"stdout:\n{result.stdout}\n"
             f"stderr:\n{result.stderr}"
         )
@@ -155,6 +175,7 @@ def main() -> int:
     errors.extend(f"skill catalog: {error}" for error in catalog_errors)
 
     validate_role_system(errors)
+    validate_skill_routing_cases(errors)
 
     for path in iter_text_files():
         try:
