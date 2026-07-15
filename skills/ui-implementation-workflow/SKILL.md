@@ -30,6 +30,8 @@ Do not collect a mood-board pile. For every selected reference, record the exact
 
 Read [references/source-catalog.md](references/source-catalog.md) only when external reference research is needed.
 
+Keep a reference ledger for every candidate inspected. Record `candidate`, `active`, `rejected`, or `replaced`; its role; the exact borrowed rule; screenshot result; rejection reason; and successor. The catalog is complete inventory, not permission to load every site into context.
+
 ## 3. Produce The UI Implementation Plan
 
 Do not modify code until the plan is explicit. Include:
@@ -88,6 +90,19 @@ Check overflow, clipping, horizontal scroll, alignment, spacing rhythm, control 
 
 Fix visible defects and capture the affected widths again. Do not accept code inspection as visual evidence. Use `$playwright` when CI, deterministic traces, or repeatable screenshot tests are required.
 
+### Dynamic Reference Switching
+
+If the rendered result misses acceptance criteria, diagnose the failed dimension before changing references:
+
+- hierarchy, section order, density, or spacing: replace only the `layout` reference;
+- typography, color, imagery, or visual tone: replace only the `visual` reference;
+- component fidelity, accessibility, stack fit, or maintenance: replace only the `component` reference;
+- timing, motion clarity, or performance: replace the `motion` reference or remove motion.
+
+Keep at most three active references. Replace one role per iteration, update the reference ledger and implementation plan, then make the smallest corresponding code change and recapture affected widths. Do not silently blend the old and new direction.
+
+`tiny` does not switch to external sources. `small` allows one switch round. `medium+` allows two switch rounds by default; after that, return the remaining visual gap, attempted sources, and a decision request instead of browsing indefinitely. Do not revisit a rejected source unless the acceptance criteria changed.
+
 ## Completion Evidence
 
-Return the page type, selected references, design plan, token changes, implementation files, commands, screenshot paths for all required widths, defects fixed after the first render, residual differences, and skill-hit callback. A first-pass screenshot without a repair decision is not a closed visual loop.
+Return the page type, reference ledger and switch history, design plan, token changes, implementation files, commands, screenshot paths for all required widths, defects fixed after the first render, residual differences, and skill-hit callback. A first-pass screenshot without a repair decision is not a closed visual loop.
