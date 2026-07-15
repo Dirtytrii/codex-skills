@@ -342,7 +342,9 @@ def ui_preview_route_guidance(role: str, args: argparse.Namespace) -> str:
         reference_budget = "medium+：最多 3 份参考，且职责互斥：布局、配色/字体、组件/动效各 1 份。"
         switch_budget = "medium+ 默认最多换源 2 轮。"
     return f"""UI 工程闭环（先加载 $ui-implementation-workflow）：
-- 页面分类：先在 marketing、auth、dashboard、list、detail、form、settings、mobile 中选一个主类型；后台/表单/数据页禁止套营销 Hero 和炫技动效。
+- 页面分类：先在 marketing、brand、portfolio、content、auth、dashboard、list、detail、form、settings、mobile 中选一个主类型；后台/表单/数据页禁止套营销 Hero 和炫技动效。
+- 视觉方向：仅 marketing、brand、portfolio、content 且现有系统不足时读取 ui-implementation-workflow/references/visual-direction.md；design-taste-frontend 只作兼容入口，不再运行第二套 UI 流程。
+- 审核信号重置：不继承旧审美偏好；用户或指定审核者对实际截图的明确反馈写入 .codex/ui-visual-review-signals.md，先保留为 raw 证据，不自动形成长期或跨项目偏好。
 - 项目审计：先读现有技术栈、组件库、共享布局、Token、资产和相邻页面；{reference_budget}
 - 先分析后编码：代码修改前输出 UI implementation plan，包含布局层级、字体、语义色、间距/圆角/阴影、交互状态、动效、响应式、借鉴与拒绝项。
 - Token 与顺序：优先复用现有 Token；按结构 -> 数据/交互 -> 响应式 -> 字体/颜色 -> 装饰 -> 动效实现，禁止先做粒子背景再补业务流程。
