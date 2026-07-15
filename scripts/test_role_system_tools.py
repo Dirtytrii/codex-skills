@@ -30,6 +30,9 @@ XHS_CHROME_SNIPPETS = ROOT / "skills" / "xhs-comment-research" / "references" / 
 XHS_AUTOMATION_PUBLISHER = ROOT / "skills" / "xhs-automation-publisher" / "SKILL.md"
 UI_WORKFLOW = ROOT / "skills" / "ui-implementation-workflow" / "SKILL.md"
 UI_SOURCE_CATALOG = UI_WORKFLOW.parent / "references" / "source-catalog.md"
+UI_VISUAL_DIRECTION = UI_WORKFLOW.parent / "references" / "visual-direction.md"
+UI_VISUAL_REVIEW_SIGNALS = UI_WORKFLOW.parent / "references" / "visual-review-signals.md"
+DESIGN_TASTE_ADAPTER = ROOT / "skills" / "design-taste-frontend" / "SKILL.md"
 
 
 def run(args: list[str], cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -846,6 +849,11 @@ def test_render_prompt_includes_ui_preview_route_options() -> None:
     assert "动态换源" in ui.stdout
     assert "每轮只替换对应的一份参考" in ui.stdout
     assert "medium+ 默认最多换源 2 轮" in ui.stdout
+    assert "references/visual-direction.md" in ui.stdout
+    assert "design-taste-frontend 只作兼容入口" in ui.stdout
+    assert "不继承旧审美偏好" in ui.stdout
+    assert ".codex/ui-visual-review-signals.md" in ui.stdout
+    assert "raw 证据" in ui.stdout
     assert "预览图实现路线选择" in ui.stdout
     assert "不要默认拿 CSS 硬干" in ui.stdout
     assert "先给出 2-4 条实现路线" in ui.stdout
@@ -881,6 +889,9 @@ def test_render_prompt_keeps_tiny_ui_reference_budget_compact() -> None:
 def test_ui_implementation_workflow_is_bounded_and_visual() -> None:
     workflow = UI_WORKFLOW.read_text(encoding="utf-8")
     catalog = UI_SOURCE_CATALOG.read_text(encoding="utf-8")
+    visual_direction = UI_VISUAL_DIRECTION.read_text(encoding="utf-8")
+    review_signals = UI_VISUAL_REVIEW_SIGNALS.read_text(encoding="utf-8")
+    adapter = DESIGN_TASTE_ADAPTER.read_text(encoding="utf-8")
 
     for needle in (
         "marketing",
@@ -901,6 +912,11 @@ def test_ui_implementation_workflow_is_bounded_and_visual() -> None:
         "Replace one role per iteration",
         "small` allows one switch round",
         "medium+` allows two switch rounds",
+        "no inherited aesthetic preference",
+        "references/visual-direction.md",
+        "references/visual-review-signals.md",
+        ".codex/ui-visual-review-signals.md",
+        "raw review evidence only",
     ):
         assert needle in workflow
 
@@ -926,8 +942,42 @@ def test_ui_implementation_workflow_is_bounded_and_visual() -> None:
     ):
         assert needle in catalog
 
+    for needle in (
+        "Visual Direction Brief",
+        "design variance",
+        "motion intensity",
+        "visual density",
+        "Do not force image generation",
+        "Do not create a new blanket ban",
+        "no persistent aesthetic preference",
+        "visual-review-signals.md",
+    ):
+        assert needle in visual_direction
+
+    for needle in (
+        "no inherited aesthetic preference",
+        "workflow: ui-implementation-workflow-v2",
+        "status: raw",
+        ".codex/ui-visual-review-signals.md",
+        "Do not infer preference from silence",
+        "do not automatically convert them into global defaults",
+    ):
+        assert needle in review_signals
+
+    for needle in (
+        "$ui-implementation-workflow",
+        "references/visual-direction.md",
+        "no inherited aesthetic preference",
+        "Do not run a second audit",
+        "persistent preference automatically",
+    ):
+        assert needle in adapter
+
     assert len(workflow.splitlines()) <= 180
     assert len(catalog.splitlines()) <= 180
+    assert len(visual_direction.splitlines()) <= 220
+    assert len(review_signals.splitlines()) <= 100
+    assert len(adapter.splitlines()) <= 80
 
 
 def test_render_prompt_requires_fail_closed_source_callback() -> None:
