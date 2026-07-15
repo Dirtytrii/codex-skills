@@ -15,6 +15,12 @@ Read this file only when selecting, overriding, or auditing a role model. These 
 
 No route uses `max`; the highest supported recommendation is `xhigh`.
 
+## Reasoning Effort Eval Gate
+
+`high` is the current operational baseline, not proof that every task needs it. Before lowering a durable default, compare the current route with one lower supported reasoning level on the same representative tasks and prompt contract.
+
+Record completion correctness, required validation, tool calls, retries, correction loops, output tokens, and latency when available. Change the default only when the lower level preserves completion and safety across the representative set; keep `xhigh` for the explicit escalation conditions above. Do not raise or lower reasoning from intuition alone.
+
 ## One-Shot Development Executors
 
 | Tier | Model | Boundary |

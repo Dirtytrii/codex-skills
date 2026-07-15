@@ -232,7 +232,7 @@ python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --st
 - 多窗口 loop 默认用 `压缩回调`，只传当前状态、本轮变化、证据链接/文件/命令、需要决策、下一回流对象和可复用优化沉淀状态。
 - 负责人层关闭技术或内容子树前，必须确认 `.codex/role-windows.md` 已更新并提交，且来源 thread 已收到压缩回调；如果没有发送工具，回调输出必须以 `<codex_delegation>` 或 `压缩回调` 开头。
 - 当上下文接近过长、remote compact 失败、或同一任务跨多个 PR/闭环时，优先开新窗口或接续既有角色窗口；输入只用 `.codex/role-windows.md`、压缩交接卡、提交/PR、文件证据和必要短摘要。
-- 生成下游提示词时使用 Token Budget Profile：`compact` 给 L0/L1 小闭环，只保留闭环必需字段；`standard` 给 L2、架构或新代码项目；`full` 给 L3、关键 PR、对抗审查、高风险公开声明、生产/数据/安全闭环。`render_role_prompt.py --profile auto` 是默认入口，负责人只在证据表明 compact 不够时升级。
+- 生成下游提示词时使用 Token Budget Profile：`compact` 给 tiny/small 和普通 medium 小闭环；`standard` 给 large、L2、架构或新代码项目；`full` 给 critical、L3、关键 PR、对抗审查、高风险公开声明、生产/数据/安全闭环，并增加独立复核、失败回退和 go/no-go 字段。`render_role_prompt.py --profile auto` 是默认入口，显式 `--profile` 覆盖自动分级。
 - `agent-role-orchestrator/SKILL.md` 只加载稳定闭环契约；角色边界、模型分级、工具路由、内容平台规则按需读取 `references/role-cards.md`、`model-routing.md`、`tool-routing.md`、`content-routing.md`，避免无关角色说明进入每个窗口上下文。PR 校验会限制入口文件行数和字节数。
 - 有回调文件或台账快照时，用 `aggregate_skill_hits.py` 聚合自报命中、声明覆盖、回调完整和有效使用率；没有必选声明时命中率必须显示为不可评估。
 - 用 `evaluate_skill_routing.py` 对代表性输入和实际 `selected_skills` 做独立评估。回调统计回答“角色说自己用了什么”，路由评估回答“系统对这个输入选对了什么”，两者不能混为一个指标。

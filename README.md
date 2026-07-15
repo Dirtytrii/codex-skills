@@ -131,7 +131,7 @@ python scripts/evaluate_skill_routing.py --validate-only --strict
 
 默认串行。并行必须有互斥范围和独立验证；3-5 个 worker 只能显式使用 `--execution-profile parallel --worker-count N --disjoint-scope ... --independent-validation ...`，不会因为“任务很大”自动扩散。
 
-Token Budget Profile 控制 prompt 体积：`compact` 用于 L0/L1 小闭环，`standard` 用于 L2、架构或新项目，`full` 用于 L3 与高风险门禁。上下文预算只传状态增量、证据句柄、决策和下一回流对象；长任务依靠台账、提交、PR 和压缩交接卡接续。
+Token Budget Profile 控制 prompt 体积：`compact` 用于 tiny/small 和普通 medium 小闭环，`standard` 用于 large、L2、架构或新项目，`full` 用于 critical、L3 与高风险门禁，并额外要求独立复核、失败回退和 go/no-go 决策方。显式 `--profile` 优先于自动路由。上下文预算只传状态增量、证据句柄、决策和下一回流对象；长任务依靠台账、提交、PR 和压缩交接卡接续。
 
 ## 能力路由
 

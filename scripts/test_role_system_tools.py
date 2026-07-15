@@ -470,6 +470,45 @@ def test_render_prompt_full_profile_keeps_deep_sections() -> None:
     assert "技术方案（架构/CTO 处理复杂技术需求必填" in full.stdout
     assert "CodeGraph 状态（新本地代码项目必填" in full.stdout
     assert "开源/可借鉴方案扫描" in full.stdout
+    assert "独立门禁与失败回退（full 必填）" in full.stdout
+    assert "不得由实现者自证通过" in full.stdout
+    assert "失败/回滚条件与执行责任人" in full.stdout
+
+
+def test_render_prompt_auto_profile_uses_task_size_and_risk() -> None:
+    def render(task_size: str, *extra: str) -> str:
+        result = run(
+            [
+                PYTHON,
+                str(RENDER_PROMPT),
+                "--role",
+                "开发",
+                "--objective",
+                "按范围实现并验证",
+                "--source-role",
+                "架构",
+                "--task-size",
+                task_size,
+                *extra,
+            ]
+        )
+        return result.stdout
+
+    assert "profile：compact" in render("tiny")
+    assert "profile：compact" in render("small")
+    assert "profile：compact" in render("medium")
+    standard = render("large")
+    assert "profile：standard" in standard
+    assert "独立门禁与失败回退（full 必填）" not in standard
+    critical = render("critical")
+    assert "profile：full" in critical
+    assert "独立门禁与失败回退（full 必填）" in critical
+    extreme = render("medium", "--risk", "extreme")
+    assert "profile：full" in extreme
+
+    explicit = render("critical", "--profile", "compact")
+    assert "profile：compact" in explicit
+    assert "独立门禁与失败回退（full 必填）" not in explicit
 
 
 def test_render_prompt_routes_development_lead_and_subagents() -> None:
@@ -1093,6 +1132,7 @@ def main() -> int:
         test_render_prompt_allows_ceo_to_owner_layer_and_explicit_override,
         test_render_prompt_auto_compacts_l1_owner_prompt,
         test_render_prompt_full_profile_keeps_deep_sections,
+        test_render_prompt_auto_profile_uses_task_size_and_risk,
         test_render_prompt_routes_development_lead_and_subagents,
         test_render_prompt_rejects_unsafe_parallel_worker_fanout,
         test_render_prompt_uses_spark_only_for_confirmed_short_executor,

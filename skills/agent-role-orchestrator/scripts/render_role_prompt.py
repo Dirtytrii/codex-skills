@@ -409,9 +409,18 @@ def xhs_automation_publish_gate(role: str) -> str:
 def effective_token_profile(role: str, args: argparse.Namespace) -> str:
     if args.profile != "auto":
         return args.profile
-    if args.risk == "critical" or args.loop_depth == "L3":
+    if (
+        args.task_size == "critical"
+        or args.risk in {"critical", "extreme"}
+        or args.loop_depth == "L3"
+    ):
         return "full"
-    if role == "架构" or args.new_code_project or args.loop_depth == "L2":
+    if (
+        args.task_size == "large"
+        or role == "架构"
+        or args.new_code_project
+        or args.loop_depth == "L2"
+    ):
         return "standard"
     return "compact"
 
@@ -445,6 +454,17 @@ def architecture_planning_sections(role: str, args: argparse.Namespace) -> str:
 - 可借鉴点、不采用风险、下游约束：待确认
 """)
     return "\n".join(sections)
+
+
+def full_profile_gate(profile: str, callback_target: str) -> str:
+    if profile != "full":
+        return ""
+    return f"""独立门禁与失败回退（full 必填）：
+- 独立复核角色与证据：待确认；不得由实现者自证通过
+- 失败/回滚条件与执行责任人：待确认
+- 未解决风险、剩余不确定性与影响范围：待确认
+- 最终 go/no-go 决策方：{callback_target}
+"""
 
 
 def build_compact_prompt(
@@ -607,6 +627,7 @@ Token Budget Profile：
 - 总控不编写或修改代码、测试脚本、验收脚本、自动化验证脚本；需要这类产物时，交给开发或测试实现，由架构/QA复核证据。
 
 {architecture_planning_sections(role, args)}
+{full_profile_gate(profile, callback_target)}
 
 目标：
 {args.objective}
@@ -714,7 +735,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--project", help="Project path or scope.")
     parser.add_argument("--mode", default="新建", choices=["新建", "继承", "接续", "重置"])
     parser.add_argument("--loop-depth", default="L1", choices=["L0", "L1", "L2", "L3"], help="Collapsible routing depth. L0 direct user-to-executor; L1 owner layer; L2 owner-to-executor loop; L3 high-risk gated loop.")
-    parser.add_argument("--profile", default="auto", choices=["auto", "compact", "standard", "full"], help="Token budget profile. auto chooses compact for L0/L1 owner/simple prompts, standard for L2/architecture/new-code prompts, and full for L3/critical prompts.")
+    parser.add_argument("--profile", default="auto", choices=["auto", "compact", "standard", "full"], help="Token budget profile. auto chooses compact for tiny/small/ordinary medium work, standard for large/L2/architecture/new-code work, and full for critical/L3/high-risk gates.")
     parser.add_argument("--task-size", default="medium", choices=["tiny", "small", "medium", "large", "critical"], help="Task dispatch size. tiny lets CEO self-handle only local low-risk changes; small allows CEO -> 开发 direct dispatch; medium routes to owner layer; large/critical uses full role teams and gates.")
     parser.add_argument("--risk", default="normal", choices=["normal", "mechanical", "critical", "extreme"], help="Use mechanical only for fully scoped rote work, critical for production/release/data/security gates, and extreme only for exceptional CTO reasoning.")
     parser.add_argument("--executor-tier", default="owner", choices=["owner", "mechanical", "bounded", "semantic", "high-risk"], help="Development execution tier. bounded routes a one-shot executor to Luna; owner keeps the durable Dev Lead route.")
