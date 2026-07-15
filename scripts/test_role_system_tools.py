@@ -843,6 +843,9 @@ def test_render_prompt_includes_ui_preview_route_options() -> None:
     assert "UI implementation plan" in ui.stdout
     assert "1440/768/390" in ui.stdout
     assert "修复后重截" in ui.stdout
+    assert "动态换源" in ui.stdout
+    assert "每轮只替换对应的一份参考" in ui.stdout
+    assert "medium+ 默认最多换源 2 轮" in ui.stdout
     assert "预览图实现路线选择" in ui.stdout
     assert "不要默认拿 CSS 硬干" in ui.stdout
     assert "先给出 2-4 条实现路线" in ui.stdout
@@ -870,7 +873,9 @@ def test_render_prompt_keeps_tiny_ui_reference_budget_compact() -> None:
         ]
     )
     assert "tiny：不做外部灵感搜索" in ui.stdout
+    assert "tiny 不做外部换源" in ui.stdout
     assert "medium+：最多 3 份参考" not in ui.stdout
+    assert "medium+ 默认最多换源 2 轮" not in ui.stdout
 
 
 def test_ui_implementation_workflow_is_bounded_and_visual() -> None:
@@ -891,6 +896,11 @@ def test_ui_implementation_workflow_is_bounded_and_visual() -> None:
         "768px",
         "390px",
         "Fix visible defects and capture the affected widths again",
+        "Dynamic Reference Switching",
+        "reference ledger",
+        "Replace one role per iteration",
+        "small` allows one switch round",
+        "medium+` allows two switch rounds",
     ):
         assert needle in workflow
 
@@ -898,6 +908,7 @@ def test_ui_implementation_workflow_is_bounded_and_visual() -> None:
         "Lapa Ninja",
         "Landing.love",
         "Landbook",
+        "Recent.design",
         "Siteinspire",
         "shadcn/ui",
         "21st.dev",
@@ -906,6 +917,11 @@ def test_ui_implementation_workflow_is_bounded_and_visual() -> None:
         "React Bits",
         "Ant Design",
         "Element Plus",
+        "Framer free templates",
+        "Webflow free templates",
+        "HTMLrev",
+        "Dynamic Switch Matrix",
+        "status: candidate | active | rejected | replaced",
         "stack/license check",
     ):
         assert needle in catalog

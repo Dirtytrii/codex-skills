@@ -118,6 +118,7 @@ def validate_docs(errors: list[str]) -> None:
             "2026-06-11",
             "ui-implementation-workflow",
             "1440/768/390",
+            "动态换源",
         ],
         errors,
     )
@@ -197,6 +198,7 @@ def validate_docs(errors: list[str]) -> None:
             "ui-implementation-workflow",
             "UI implementation plan",
             "1440/768/390",
+            "换源台账",
         ],
         errors,
     )
@@ -254,6 +256,7 @@ def validate_orchestrator(errors: list[str]) -> None:
             "$browser-automation-router",
             "$ui-implementation-workflow",
             "1440/768/390",
+            "reference ledger",
         ],
         errors,
     )
@@ -316,7 +319,7 @@ def validate_registry(errors: list[str]) -> None:
     if not ui_item:
         errors.append("registry missing ui-implementation-workflow")
     else:
-        for needle in ("页面分类", "最多三份", "UI implementation plan", "语义 Token", "1440/768/390"):
+        for needle in ("页面分类", "完整参考源库存", "最多三份", "动态换源", "换源台账", "UI implementation plan", "语义 Token", "1440/768/390"):
             if needle not in ui_item.get("summary", ""):
                 errors.append(f"ui-implementation-workflow summary missing: {needle}")
 
@@ -358,6 +361,10 @@ def validate_scripts(errors: list[str]) -> None:
             "UI implementation plan",
             "medium+：最多 3 份参考",
             "1440/768/390",
+            "动态换源",
+            "每轮只替换对应的一份参考",
+            "tiny 不做外部换源",
+            "medium+ 默认最多换源 2 轮",
         ],
         errors,
     )
@@ -384,6 +391,11 @@ def validate_scripts(errors: list[str]) -> None:
             "768px",
             "390px",
             "first-pass screenshot",
+            "Dynamic Reference Switching",
+            "reference ledger",
+            "Replace one role per iteration",
+            "small` allows one switch round",
+            "medium+` allows two switch rounds",
         ],
         errors,
     )
@@ -393,6 +405,7 @@ def validate_scripts(errors: list[str]) -> None:
             "Lapa Ninja",
             "Landing.love",
             "Landbook",
+            "Recent.design",
             "Siteinspire",
             "shadcn/ui",
             "21st.dev",
@@ -401,6 +414,11 @@ def validate_scripts(errors: list[str]) -> None:
             "React Bits",
             "Ant Design",
             "Element Plus",
+            "Framer free templates",
+            "Webflow free templates",
+            "HTMLrev",
+            "Dynamic Switch Matrix",
+            "status: candidate | active | rejected | replaced",
             "license",
         ],
         errors,
