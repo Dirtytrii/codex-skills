@@ -155,6 +155,8 @@ QA uses adversarial review: try to falsify readiness, inspect negative paths, bo
 
 ### UI Preview Implementation Route Rule
 
+`UI/PPT` loads `$ui-implementation-workflow`. Classify one page type, audit the existing system, use at most three active role-specific references, extract an implementation plan before code, reuse semantic tokens, build skeleton-first, and close with repaired screenshots at 1440/768/390. Keep the complete source inventory and a reference ledger, but do not load every site. When visual acceptance fails, replace only the failed layout, visual, component, or motion role within the switch-round budget. Operational dashboards/forms do not inherit marketing-page heroes or decorative motion.
+
 When a preview image exists, `UI/PPT` must not `不要默认拿 CSS 硬干`. First compare CSS/components, image assets, Canvas/SVG, Three.js/WebGL, Lottie/video, proven libraries, or generated/manual assets. Record the selected route and visual verification evidence before development.
 
 ### Native Browser Routing Rule

@@ -15,6 +15,7 @@ Read only the section relevant to the selected role. Script output provides stru
 ## Technical Routing
 
 - Architecture/product/engineering/design/release method selection: `$gstack` and its focused methods.
+- UI/Frontend implementation: load `$ui-implementation-workflow`; classify, bound active references, keep the complete source inventory and switch ledger, extract design rules, build skeleton-first, then repair 1440/768/390 screenshots and replace only the failed reference role when needed.
 - Browser interaction: load `$browser-automation-router`; use the in-app Browser for public/local visual work, Chrome for an approved existing login/profile, and `$playwright` only for deterministic CLI/CI runs or an explicit fallback.
 - Bug or incident diagnosis: systematic debugging or the installed diagnosis workflow before fixing.
 - Implementation: TDD where applicable, then verification before completion.
