@@ -1,6 +1,6 @@
 ---
 name: "playwright"
-description: "Use when browser work requires deterministic terminal or CI automation, repeatable regression runs, traces, snapshots, screenshots, or unattended batch execution via `playwright-cli`. For interactive pages or an existing Chrome login/profile, route through browser-automation-router and Codex's Browser/Chrome plugins first."
+description: "Use for deterministic terminal or CI browser automation, repeatable regressions, traces, snapshots, screenshots, and unattended playwright-cli batches. Route interactive or signed-in Chrome work through browser-automation-router first."
 ---
 
 

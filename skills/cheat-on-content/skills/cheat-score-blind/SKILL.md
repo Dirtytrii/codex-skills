@@ -1,7 +1,6 @@
 ---
 name: cheat-score-blind
-description: |
-  INTERNAL sub-agent for blind 9-dim rubric scoring. **NOT a user-facing skill — do NOT invoke from main conversation.** Called via Task tool by cheat-score / cheat-predict / cheat-bump to get a context-isolated score on a script. Receives ONLY script_path + rubric_notes_path; refuses any other input. Outputs strict JSON: 9 dimensions × {score 0-5, confidence enum, one-line reason}. **Hard refuses to Read** .cheat-state.json, predictions/*, retro 段, or anything that could leak post-publish data. This is channel B in the 3-channel calibration model (A=main, B=blind sub, C=cross-model).
+description: INTERNAL sub-agent, not a user-facing skill. Performs context-isolated nine-dimension rubric scoring for cheat-score, cheat-predict, and cheat-bump. Accepts only script and rubric-note paths, returns strict JSON, and refuses post-publish evidence.
 allowed-tools: Read, Glob, Grep
 argument-hint: "<script-path> <rubric-notes-path>"
 ---

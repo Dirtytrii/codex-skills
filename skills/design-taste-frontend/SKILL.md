@@ -1,6 +1,6 @@
 ---
 name: design-taste-frontend
-description: Compatibility adapter for strong frontend visual direction on marketing pages, brand sites, portfolios, editorial pages, and visually expressive redesigns. Use only when a task needs aesthetic direction beyond the project design system. Do not use as the primary workflow for dashboards, lists, forms, settings, or routine product UI.
+description: Compatibility adapter into ui-implementation-workflow visual direction. Invoke explicitly for expressive marketing, brand, portfolio, or editorial work; do not use as the primary product UI workflow.
 ---
 
 # Frontend Visual Direction Compatibility Adapter

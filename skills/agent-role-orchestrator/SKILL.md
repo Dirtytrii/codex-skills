@@ -1,6 +1,6 @@
 ---
 name: agent-role-orchestrator
-description: Create concise role-specific Codex prompts and handoffs with a CEO-first gateway, CTO technical loop, content editor branch, model routing, fail-closed callbacks, and role-window registry. Use for 总控/CEO, 架构/CTO, development, UI/PPT, content, ops, DBA, security, testing, QA, document delivery, knowledge-base, skill maintenance, inherited windows, role reuse, skill-hit statistics, or multi-window loop engineering.
+description: Route CEO-first multi-window work into owner-led role loops. Use for 总控/CEO、架构/CTO、内容主编、角色派发与复用、模型路由、来源窗口回调、role-windows 台账、skill 命中统计或 multi-window loop engineering。
 ---
 
 # Agent Role Orchestrator

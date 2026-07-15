@@ -9,6 +9,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+from audit_skill_catalog import audit as audit_catalog
+from skill_catalog import discover_skills, parse_frontmatter
+
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILLS = ROOT / "skills"
@@ -46,42 +49,6 @@ ALLOWED_SENSITIVE_EXAMPLES = (
     'r"/Users/cloudjiang|',
     'r"/root/|',
 )
-
-
-def parse_frontmatter(path: Path) -> dict[str, str]:
-    text = path.read_text(encoding="utf-8")
-    if not text.startswith("---\n"):
-        raise ValueError("missing YAML frontmatter")
-    end = text.find("\n---\n", 4)
-    if end == -1:
-        raise ValueError("unterminated YAML frontmatter")
-    body = text[4:end]
-    data: dict[str, str] = {}
-    current_key: str | None = None
-    current_lines: list[str] = []
-    for raw in body.splitlines():
-        if not raw.strip():
-            continue
-        if raw.startswith((" ", "\t")) and current_key:
-            current_lines.append(raw.strip())
-            continue
-        if current_key and current_lines:
-            data[current_key] = "\n".join(current_lines).strip()
-            current_lines = []
-        if ":" not in raw:
-            continue
-        key, value = raw.split(":", 1)
-        key = key.strip()
-        value = value.strip()
-        current_key = key
-        if value in {"|", ">"}:
-            current_lines = []
-        else:
-            data[key] = value.strip("\"'")
-            current_key = None
-    if current_key and current_lines:
-        data[current_key] = "\n".join(current_lines).strip()
-    return data
 
 
 def iter_text_files() -> list[Path]:
@@ -150,18 +117,18 @@ def main() -> int:
             if not item.get("source_note"):
                 errors.append(f"{name}: external-github skills with null upstream_url must include source_note")
 
-    for skill_dir in sorted(p for p in SKILLS.iterdir() if p.is_dir()):
-        skill_md = skill_dir / "SKILL.md"
-        if not skill_md.is_file():
-            errors.append(f"{skill_dir}: missing SKILL.md")
-            continue
-        try:
-            fm = parse_frontmatter(skill_md)
-        except Exception as exc:  # noqa: BLE001
-            errors.append(f"{skill_md}: {exc}")
-            continue
-        name = fm.get("name", "")
-        desc = fm.get("description", "")
+    try:
+        skill_records = discover_skills(SKILLS)
+    except Exception as exc:  # noqa: BLE001
+        errors.append(f"cannot discover skills recursively: {exc}")
+        skill_records = []
+
+    seen_names: dict[str, Path] = {}
+    for record in skill_records:
+        skill_md = record.skill_md
+        skill_dir = skill_md.parent
+        name = record.name
+        desc = record.description
         if not name:
             errors.append(f"{skill_md}: missing name")
         elif not NAME_RE.fullmatch(name):
@@ -170,13 +137,22 @@ def main() -> int:
             errors.append(f"{skill_md}: name {name!r} does not match directory {skill_dir.name!r}")
         if not desc:
             errors.append(f"{skill_md}: missing description")
-        if name and name not in registry_names:
+        if name in seen_names:
+            errors.append(
+                f"duplicate skill name {name!r}: {seen_names[name]} and {skill_md}"
+            )
+        elif name:
+            seen_names[name] = skill_md
+        if record.top_level and name and name not in registry_names:
             errors.append(f"{skill_dir.name}: missing from registry/skills.json")
 
-    skill_names = {p.name for p in SKILLS.iterdir() if p.is_dir()}
+    skill_names = {record.name for record in skill_records if record.top_level and record.name}
     for name in registry_names:
         if name and name not in skill_names:
             errors.append(f"registry references missing skill: {name}")
+
+    _, catalog_errors = audit_catalog(skill_records)
+    errors.extend(f"skill catalog: {error}" for error in catalog_errors)
 
     validate_role_system(errors)
 
@@ -198,7 +174,8 @@ def main() -> int:
             print(f"- {error}")
         return 1
 
-    print(f"Validated {len(skill_names)} skills.")
+    nested_count = sum(not record.top_level for record in skill_records)
+    print(f"Validated {len(skill_names)} public skills and {nested_count} nested skills.")
     return 0
 
 
