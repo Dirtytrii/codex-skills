@@ -31,6 +31,9 @@ XHS_CHROME_SNIPPETS = ROOT / "skills" / "xhs-comment-research" / "references" / 
 XHS_AUTOMATION_PUBLISHER = ROOT / "skills" / "xhs-automation-publisher" / "SKILL.md"
 UI_WORKFLOW = ROOT / "skills" / "ui-implementation-workflow" / "SKILL.md"
 UI_SOURCE_CATALOG = UI_WORKFLOW.parent / "references" / "source-catalog.md"
+UI_VISUAL_DIRECTION = UI_WORKFLOW.parent / "references" / "visual-direction.md"
+UI_VISUAL_REVIEW_SIGNALS = UI_WORKFLOW.parent / "references" / "visual-review-signals.md"
+DESIGN_TASTE_ADAPTER = ROOT / "skills" / "design-taste-frontend" / "SKILL.md"
 RENDER_PROMPT = ORCHESTRATOR / "scripts" / "render_role_prompt.py"
 VALIDATE_LOOP = ORCHESTRATOR / "scripts" / "validate_role_loop.py"
 ENSURE_FILES = ORCHESTRATOR / "scripts" / "ensure_project_role_files.py"
@@ -199,6 +202,8 @@ def validate_docs(errors: list[str]) -> None:
             "UI implementation plan",
             "1440/768/390",
             "换源台账",
+            "旧审美偏好停用",
+            ".codex/ui-visual-review-signals.md",
         ],
         errors,
     )
@@ -257,6 +262,8 @@ def validate_orchestrator(errors: list[str]) -> None:
             "$ui-implementation-workflow",
             "1440/768/390",
             "reference ledger",
+            "no inherited aesthetic preference",
+            ".codex/ui-visual-review-signals.md",
         ],
         errors,
     )
@@ -280,6 +287,7 @@ def validate_orchestrator(errors: list[str]) -> None:
             "fail-closed callback status",
             "ui-implementation-workflow",
             "1440/768/390",
+            ".codex/ui-visual-review-signals.md",
         ],
         errors,
     )
@@ -319,9 +327,17 @@ def validate_registry(errors: list[str]) -> None:
     if not ui_item:
         errors.append("registry missing ui-implementation-workflow")
     else:
-        for needle in ("页面分类", "完整参考源库存", "最多三份", "动态换源", "换源台账", "UI implementation plan", "语义 Token", "1440/768/390"):
+        for needle in ("页面分类", "按需视觉方向", "旧审美偏好重置", "原始审核信号记录", "完整参考源库存", "最多三份", "动态换源", "换源台账", "UI implementation plan", "语义 Token", "1440/768/390"):
             if needle not in ui_item.get("summary", ""):
                 errors.append(f"ui-implementation-workflow summary missing: {needle}")
+
+    design_taste_item = next((entry for entry in registry if entry.get("name") == "design-taste-frontend"), None)
+    if not design_taste_item:
+        errors.append("registry missing design-taste-frontend")
+    else:
+        for needle in ("旧名称兼容入口", "visual-direction.md", "不再运行第二套"):
+            if needle not in design_taste_item.get("summary", ""):
+                errors.append(f"design-taste-frontend summary missing: {needle}")
 
 
 def validate_scripts(errors: list[str]) -> None:
@@ -365,6 +381,10 @@ def validate_scripts(errors: list[str]) -> None:
             "每轮只替换对应的一份参考",
             "tiny 不做外部换源",
             "medium+ 默认最多换源 2 轮",
+            "references/visual-direction.md",
+            "design-taste-frontend 只作兼容入口",
+            "不继承旧审美偏好",
+            ".codex/ui-visual-review-signals.md",
         ],
         errors,
     )
@@ -373,7 +393,7 @@ def validate_scripts(errors: list[str]) -> None:
         ["gpt-5.6-luna", "gpt-5.3-codex-spark", "gpt-5.4-mini", "gpt-5.6-terra", "gpt-5.6-sol", "Spark Opportunity Lane", "--prefer-spark --spark-available", "--execution-profile parallel", "--disjoint-scope", "--independent-validation"],
         errors,
     )
-    require_contains(TOOL_ROUTING, ["Fail-Closed Scripts", "aggregate_skill_hits.py", "Skill Ledger", "$browser-automation-router", "$playwright", "$ui-implementation-workflow"], errors)
+    require_contains(TOOL_ROUTING, ["Fail-Closed Scripts", "aggregate_skill_hits.py", "Skill Ledger", "$browser-automation-router", "$playwright", "$ui-implementation-workflow", "visual-direction", ".codex/ui-visual-review-signals.md"], errors)
     require_contains(CONTENT_ROUTING, ["X MCP Content Research Source", "反老登味 / 反 AI 味内容闸门", "$browser-automation-router", "$xhs-automation-publisher"], errors)
     require_contains(BROWSER_ROUTER, ["Route Order", "2026-06-11", "existing Chrome profile", "Fail-Closed Capability Gate", "Write Gates"], errors)
     require_contains(PLAYWRIGHT_SKILL, ["deterministic CLI/CI lane", "$browser-automation-router", "Do not import cookies"], errors)
@@ -396,6 +416,10 @@ def validate_scripts(errors: list[str]) -> None:
             "Replace one role per iteration",
             "small` allows one switch round",
             "medium+` allows two switch rounds",
+            "no inherited aesthetic preference",
+            "references/visual-direction.md",
+            "references/visual-review-signals.md",
+            ".codex/ui-visual-review-signals.md",
         ],
         errors,
     )
@@ -423,6 +447,43 @@ def validate_scripts(errors: list[str]) -> None:
         ],
         errors,
     )
+    require_contains(
+        UI_VISUAL_DIRECTION,
+        [
+            "Visual Direction Brief",
+            "design variance",
+            "motion intensity",
+            "visual density",
+            "Do not force image generation",
+            "Do not create a new blanket ban",
+            "no persistent aesthetic preference",
+            "visual-review-signals.md",
+        ],
+        errors,
+    )
+    require_contains(
+        UI_VISUAL_REVIEW_SIGNALS,
+        [
+            "no inherited aesthetic preference",
+            "workflow: ui-implementation-workflow-v2",
+            "status: raw",
+            ".codex/ui-visual-review-signals.md",
+            "Do not infer preference from silence",
+            "do not automatically convert them into global defaults",
+        ],
+        errors,
+    )
+    require_contains(
+        DESIGN_TASTE_ADAPTER,
+        [
+            "$ui-implementation-workflow",
+            "references/visual-direction.md",
+            "no inherited aesthetic preference",
+            "Do not run a second audit",
+            "persistent preference automatically",
+        ],
+        errors,
+    )
     if XHS_CHROME_SNIPPETS.exists():
         errors.append("xhs-comment-research still contains repository-maintained chrome-snippets.md")
 
@@ -431,6 +492,9 @@ def validate_scripts(errors: list[str]) -> None:
         (ROLE_CARDS, 180, 18000),
         (UI_WORKFLOW, 180, 20000),
         (UI_SOURCE_CATALOG, 180, 20000),
+        (UI_VISUAL_DIRECTION, 220, 20000),
+        (UI_VISUAL_REVIEW_SIGNALS, 100, 10000),
+        (DESIGN_TASTE_ADAPTER, 80, 10000),
     ):
         text = read(path)
         if len(text.splitlines()) > max_lines:

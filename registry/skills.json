@@ -56,7 +56,7 @@
       "测试",
       "QA"
     ],
-    "summary": "UI/Frontend 页面分类、项目审计、完整参考源库存、最多三份激活参考、失败维度动态换源与换源台账、UI implementation plan、语义 Token、骨架优先实现和 1440/768/390 截图修复闭环"
+    "summary": "UI/Frontend 页面分类、项目审计、按需视觉方向、旧审美偏好重置、原始审核信号记录、完整参考源库存、最多三份激活参考、失败维度动态换源与换源台账、UI implementation plan、语义 Token、骨架优先实现和 1440/768/390 截图修复闭环"
   },
   {
     "name": "delivery-document-package",
@@ -121,7 +121,7 @@
     "consumed_by_roles": [
       "UI/PPT"
     ],
-    "summary": "Landing/作品集/重设计的前端审美防模板化规则"
+    "summary": "旧名称兼容入口：把 Landing、品牌页、作品集和内容页的强视觉方向需求转入 ui-implementation-workflow/references/visual-direction.md，不再运行第二套 UI 工作流，也不继承旧审美偏好"
   },
   {
     "name": "guizang-ppt-skill",
