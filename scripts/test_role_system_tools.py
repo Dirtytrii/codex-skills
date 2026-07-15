@@ -343,6 +343,31 @@ def test_non_visual_standard_and_full_prompts_stay_within_budget() -> None:
         assert "独立门禁与失败回退（full 必填）" in full.stdout
 
 
+def test_standard_generated_prompt_passes_fail_closed_validator() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        prompt = Path(temp) / "standard-prompt.md"
+        run(
+            [
+                PYTHON,
+                str(RENDER_PROMPT),
+                "--role",
+                "开发",
+                "--objective",
+                "验证标准档提示词",
+                "--source-role",
+                "架构",
+                "--source-thread",
+                "thread-cto",
+                "--profile",
+                "standard",
+                "--output",
+                str(prompt),
+            ]
+        )
+        result = run([PYTHON, str(VALIDATE_LOOP), "--prompt", str(prompt)])
+        assert "[PASS]" in result.stdout
+
+
 def test_render_prompt_rejects_ceo_direct_technical_execution_without_small_or_override() -> None:
     result = run(
         [
@@ -1199,6 +1224,7 @@ def main() -> int:
         test_callback_must_start_with_forwardable_prefix,
         test_callback_without_required_skills_is_not_reported_as_full_hit,
         test_non_visual_standard_and_full_prompts_stay_within_budget,
+        test_standard_generated_prompt_passes_fail_closed_validator,
         test_render_prompt_rejects_ceo_direct_technical_execution_without_small_or_override,
         test_render_prompt_allows_ceo_direct_small_development_dispatch,
         test_render_prompt_outputs_ceo_dispatch_decision_by_task_size,
