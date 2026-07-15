@@ -29,6 +29,8 @@ PLAYWRIGHT_SKILL = ROOT / "skills" / "playwright" / "SKILL.md"
 XHS_COMMENT_RESEARCH = ROOT / "skills" / "xhs-comment-research" / "SKILL.md"
 XHS_CHROME_SNIPPETS = ROOT / "skills" / "xhs-comment-research" / "references" / "chrome-snippets.md"
 XHS_AUTOMATION_PUBLISHER = ROOT / "skills" / "xhs-automation-publisher" / "SKILL.md"
+UI_WORKFLOW = ROOT / "skills" / "ui-implementation-workflow" / "SKILL.md"
+UI_SOURCE_CATALOG = UI_WORKFLOW.parent / "references" / "source-catalog.md"
 RENDER_PROMPT = ORCHESTRATOR / "scripts" / "render_role_prompt.py"
 VALIDATE_LOOP = ORCHESTRATOR / "scripts" / "validate_role_loop.py"
 ENSURE_FILES = ORCHESTRATOR / "scripts" / "ensure_project_role_files.py"
@@ -114,6 +116,8 @@ def validate_docs(errors: list[str]) -> None:
             "browser-automation-router",
             "docs/browser-automation.md",
             "2026-06-11",
+            "ui-implementation-workflow",
+            "1440/768/390",
         ],
         errors,
     )
@@ -190,6 +194,9 @@ def validate_docs(errors: list[str]) -> None:
             "--prefer-spark --spark-available",
             "browser-automation-router",
             "原生 Chrome",
+            "ui-implementation-workflow",
+            "UI implementation plan",
+            "1440/768/390",
         ],
         errors,
     )
@@ -245,6 +252,8 @@ def validate_orchestrator(errors: list[str]) -> None:
             "--prefer-spark --spark-available",
             "Native Browser Routing Rule",
             "$browser-automation-router",
+            "$ui-implementation-workflow",
+            "1440/768/390",
         ],
         errors,
     )
@@ -266,6 +275,8 @@ def validate_orchestrator(errors: list[str]) -> None:
             "preview implementation route decision",
             "$xhs-automation-publisher",
             "fail-closed callback status",
+            "ui-implementation-workflow",
+            "1440/768/390",
         ],
         errors,
     )
@@ -301,6 +312,14 @@ def validate_registry(errors: list[str]) -> None:
             if needle not in browser_item.get("summary", ""):
                 errors.append(f"browser-automation-router summary missing: {needle}")
 
+    ui_item = next((entry for entry in registry if entry.get("name") == "ui-implementation-workflow"), None)
+    if not ui_item:
+        errors.append("registry missing ui-implementation-workflow")
+    else:
+        for needle in ("页面分类", "最多三份", "UI implementation plan", "语义 Token", "1440/768/390"):
+            if needle not in ui_item.get("summary", ""):
+                errors.append(f"ui-implementation-workflow summary missing: {needle}")
+
 
 def validate_scripts(errors: list[str]) -> None:
     for script in ROLE_SCRIPTS:
@@ -334,6 +353,11 @@ def validate_scripts(errors: list[str]) -> None:
             "--independent-validation",
             "Token Budget Profile",
             "任务分发决策",
+            "ui_preview_route_guidance",
+            "$ui-implementation-workflow",
+            "UI implementation plan",
+            "medium+：最多 3 份参考",
+            "1440/768/390",
         ],
         errors,
     )
@@ -342,16 +366,54 @@ def validate_scripts(errors: list[str]) -> None:
         ["gpt-5.6-luna", "gpt-5.3-codex-spark", "gpt-5.4-mini", "gpt-5.6-terra", "gpt-5.6-sol", "Spark Opportunity Lane", "--prefer-spark --spark-available", "--execution-profile parallel", "--disjoint-scope", "--independent-validation"],
         errors,
     )
-    require_contains(TOOL_ROUTING, ["Fail-Closed Scripts", "aggregate_skill_hits.py", "Skill Ledger", "$browser-automation-router", "$playwright"], errors)
+    require_contains(TOOL_ROUTING, ["Fail-Closed Scripts", "aggregate_skill_hits.py", "Skill Ledger", "$browser-automation-router", "$playwright", "$ui-implementation-workflow"], errors)
     require_contains(CONTENT_ROUTING, ["X MCP Content Research Source", "反老登味 / 反 AI 味内容闸门", "$browser-automation-router", "$xhs-automation-publisher"], errors)
     require_contains(BROWSER_ROUTER, ["Route Order", "2026-06-11", "existing Chrome profile", "Fail-Closed Capability Gate", "Write Gates"], errors)
     require_contains(PLAYWRIGHT_SKILL, ["deterministic CLI/CI lane", "$browser-automation-router", "Do not import cookies"], errors)
     require_contains(XHS_COMMENT_RESEARCH, ["$browser-automation-router", "Do not load repository-maintained JavaScript snippets", "Chrome plugin"], errors)
     require_contains(XHS_AUTOMATION_PUBLISHER, ["$browser-automation-router", "native Chrome surface", "deterministic Xiaohongshu batch/export fallback"], errors)
+    require_contains(
+        UI_WORKFLOW,
+        [
+            "Classify And Audit",
+            "medium+",
+            "UI Implementation Plan",
+            "Semantic Tokens",
+            "$browser-automation-router",
+            "1440px",
+            "768px",
+            "390px",
+            "first-pass screenshot",
+        ],
+        errors,
+    )
+    require_contains(
+        UI_SOURCE_CATALOG,
+        [
+            "Lapa Ninja",
+            "Landing.love",
+            "Landbook",
+            "Siteinspire",
+            "shadcn/ui",
+            "21st.dev",
+            "Magic UI",
+            "Aceternity UI",
+            "React Bits",
+            "Ant Design",
+            "Element Plus",
+            "license",
+        ],
+        errors,
+    )
     if XHS_CHROME_SNIPPETS.exists():
         errors.append("xhs-comment-research still contains repository-maintained chrome-snippets.md")
 
-    for path, max_lines, max_bytes in ((SKILL_MD, 350, 30000), (ROLE_CARDS, 180, 18000)):
+    for path, max_lines, max_bytes in (
+        (SKILL_MD, 350, 30000),
+        (ROLE_CARDS, 180, 18000),
+        (UI_WORKFLOW, 180, 20000),
+        (UI_SOURCE_CATALOG, 180, 20000),
+    ):
         text = read(path)
         if len(text.splitlines()) > max_lines:
             errors.append(f"{path.relative_to(ROOT)} exceeds line budget: {len(text.splitlines())} > {max_lines}")
