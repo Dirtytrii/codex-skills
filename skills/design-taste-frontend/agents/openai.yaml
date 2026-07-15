@@ -1,0 +1,4 @@
+interface:
+  display_name: "Frontend Visual Direction"
+  short_description: "Compatibility route into the UI visual-direction reference"
+  default_prompt: "Use $design-taste-frontend only as a visual-direction adapter, then continue the main $ui-implementation-workflow."

@@ -1,6 +1,6 @@
 ---
 name: ui-implementation-workflow
-description: Turn UI references into an implementable, project-consistent interface through page classification, bounded reference research, design-rule extraction, semantic tokens, skeleton-first implementation, and screenshot-based responsive QA. Use for UI/Frontend redesigns, landing pages, dashboards, login pages, lists, detail views, forms, configuration screens, mobile pages, screenshot recreation, visual polish, or when generated UI looks generic, ugly, inconsistent, or overly AI-styled.
+description: Turn UI references and visual direction into an implementable, project-consistent interface through page classification, bounded research, semantic tokens, skeleton-first implementation, and screenshot-based responsive QA. Use for UI/Frontend redesigns, landing and brand pages, portfolios, dashboards, login pages, lists, detail views, forms, settings, mobile pages, screenshot recreation, visual polish, or when generated UI looks generic, ugly, inconsistent, or overly AI-styled.
 ---
 
 # UI Implementation Workflow
@@ -9,9 +9,11 @@ Use this workflow before substantial UI code. Preserve the existing project syst
 
 ## 1. Classify And Audit
 
-Choose one primary page type: `marketing`, `auth`, `dashboard`, `list`, `detail`, `form`, `settings`, or `mobile`.
+Choose one primary page type: `marketing`, `brand`, `portfolio`, `content`, `auth`, `dashboard`, `list`, `detail`, `form`, `settings`, or `mobile`.
 
 Inspect the current stack, component library, routes, shared layout, tokens, typography, assets, and neighboring pages. For a redesign, record what must stay consistent and what is allowed to change.
+
+Start with no inherited aesthetic preference. Do not use old `design-taste-frontend` defaults or earlier taste/review history as design authority. Existing brand rules, accessibility requirements, tokens, and current-task constraints still apply.
 
 Task-size shortcut:
 
@@ -30,6 +32,10 @@ Do not collect a mood-board pile. For every selected reference, record the exact
 
 Read [references/source-catalog.md](references/source-catalog.md) only when external reference research is needed.
 
+For `marketing`, `brand`, `portfolio`, or `content` pages that need a visual direction beyond the existing system, read [references/visual-direction.md](references/visual-direction.md). Do not read it for routine product UI or small corrections. The old `$design-taste-frontend` name is only a compatibility adapter into this reference; do not run it as a second workflow.
+
+When the user or a designated reviewer comments on rendered UI, read [references/visual-review-signals.md](references/visual-review-signals.md) and append the explicit result to the project-local `.codex/ui-visual-review-signals.md`. New entries are raw review evidence only; they must not become persistent or cross-project preferences automatically.
+
 Keep a reference ledger for every candidate inspected. Record `candidate`, `active`, `rejected`, or `replaced`; its role; the exact borrowed rule; screenshot result; rejection reason; and successor. The catalog is complete inventory, not permission to load every site into context.
 
 ## 3. Produce The UI Implementation Plan
@@ -37,7 +43,7 @@ Keep a reference ledger for every candidate inspected. Record `candidate`, `acti
 Do not modify code until the plan is explicit. Include:
 
 1. page type, purpose, audience, and primary workflow;
-2. existing project constraints and selected foundation;
+2. existing project constraints, selected foundation, and visual-direction brief when applicable;
 3. layout hierarchy and sections/components;
 4. typography levels;
 5. semantic colors, borders, radii, shadows, spacing, and container widths;
@@ -105,4 +111,4 @@ Keep at most three active references. Replace one role per iteration, update the
 
 ## Completion Evidence
 
-Return the page type, reference ledger and switch history, design plan, token changes, implementation files, commands, screenshot paths for all required widths, defects fixed after the first render, residual differences, and skill-hit callback. A first-pass screenshot without a repair decision is not a closed visual loop.
+Return the page type, visual-direction brief when used, reference ledger and switch history, fresh visual-review signal entries when feedback occurred, design plan, token changes, implementation files, commands, screenshot paths for all required widths, defects fixed after the first render, residual differences, and skill-hit callback. A first-pass screenshot without a repair decision is not a closed visual loop.
