@@ -24,7 +24,7 @@
       "知识库",
       "技能维护"
     ],
-    "summary": "总控/CEO 先行的多窗口角色编排，含可折叠 L0-L3 loop 深度、CEO 负责人层交互、CTO 技术闭环、开发负责人/Dev Lead 与窗口内一次性分级 subagent、Terra 默认/Sol 风险升级/Luna 有界执行/Mini 机械执行四级稳定路由、Spark 独立额度机会通道、显式并行 worker 门禁、QA 对抗式审查、内容主编分流、小红书确认图/反模板视觉 gate、gzh-design/manifest 公众号 gate、content-model handoff、X MCP 只读内容研究源、原生 Browser/Chrome fail-closed 路由、反老登味/反AI味内容闸门、UI预览图实现路线选择、fail-closed 提示词/台账/回调校验脚本、AGENTS.md/role-windows bootstrap、CodeGraph 状态检查、开源参考扫描、多方案选型、项目台账入口守卫、开发第一性原理、源窗口回调、来源thread压缩回调闭环、技能命中聚合治理、Token 压缩交接卡、技能维护角色和可复用优化沉淀提示词"
+    "summary": "总控/CEO 先行的多窗口角色编排，含可折叠 L0-L3 loop 深度、CEO 负责人层交互、CTO 技术闭环、开发负责人/Dev Lead 与窗口内一次性分级 subagent、Terra 默认/Sol 风险升级/Luna 有界执行/Mini 机械执行四级稳定路由、Spark 独立额度机会通道、显式并行 worker 门禁、QA 对抗式审查、内容主编分流、小红书确认图/反模板视觉 gate、gzh-design/manifest 公众号 gate、content-model handoff、X MCP 只读内容研究源、原生 Browser/Chrome fail-closed 路由、反老登味/反AI味内容闸门、UI 页面分类/参考预算/Token/三视口截图闭环、UI预览图实现路线选择、fail-closed 提示词/台账/回调校验脚本、AGENTS.md/role-windows bootstrap、CodeGraph 状态检查、开源参考扫描、多方案选型、项目台账入口守卫、开发第一性原理、源窗口回调、来源thread压缩回调闭环、技能命中聚合治理、Token 压缩交接卡、技能维护角色和可复用优化沉淀提示词"
   },
   {
     "name": "browser-automation-router",
@@ -42,6 +42,21 @@
       "QA"
     ],
     "summary": "Codex 应用内 Browser、Chrome 登录态复用、Playwright CLI 和平台脚本之间的 fail-closed 浏览器自动化路由，含 2026-06-11 最低能力门槛"
+  },
+  {
+    "name": "ui-implementation-workflow",
+    "path": "skills/ui-implementation-workflow",
+    "status": "active",
+    "origin_type": "local",
+    "upstream_url": null,
+    "maintenance": "local-owned",
+    "consumed_by_roles": [
+      "UI/PPT",
+      "开发",
+      "测试",
+      "QA"
+    ],
+    "summary": "UI/Frontend 页面分类、项目审计、最多三份职责互斥参考、UI implementation plan、语义 Token、骨架优先实现和 1440/768/390 截图修复闭环"
   },
   {
     "name": "delivery-document-package",

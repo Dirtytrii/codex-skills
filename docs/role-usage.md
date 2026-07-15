@@ -50,7 +50,7 @@
 | `总控` / `CEO` | Codex 本地窗口 | 默认入口、目标澄清、优先级、模型预算、角色路由、顶层台账、最终验收 | `agent-role-orchestrator`, `gstack-office-hours`, `gstack-plan-ceo-review`, `startup-pressure-test` |
 | `架构` / `CTO` | Codex 本地窗口 | 技术方案、多方案技术选型、新项目 CodeGraph 启动、开源/可借鉴方案扫描、管理开发/UI/测试/QA/安全/DBA/运维闭环 | `agent-role-orchestrator`, `gstack`, `gstack-spec`, `gstack-autoplan`, `gstack-plan-*` |
 | `开发负责人 / Dev Lead` | Codex 本地窗口 | 按第一性原理拆解任务、管理开发执行 subagent、整合代码、测试、提交 | 由项目技术栈决定，可辅助用 `gstack-investigate`, `gstack-review`, `gstack-ship`, `gstack-health`, `gstack-careful`, `gstack-guard`, `browser-automation-router`, `playwright`, `pdf` |
-| `UI/PPT` / `UI/Frontend` | Codex 本地窗口 | UI 体验、视觉改造、前端视觉保真、预览图实现路线选择、网页 PPT、社交卡、公众号封面、小红书图文视觉、演示材料、照片到玩具资产规划 | `gstack-design-*`, `design-taste-frontend`, `guizang-ppt-skill`, `xhs-visual-director`, `guizang-social-card-skill`, `photo-to-cute-3d-toy`, `browser-automation-router`；CI/回归按需用 `playwright` |
+| `UI/PPT` / `UI/Frontend` | Codex 本地窗口 | UI 体验、视觉改造、前端视觉保真、参考到实现闭环、预览图实现路线选择、网页 PPT、社交卡、公众号封面、小红书图文视觉、演示材料、照片到玩具资产规划 | `ui-implementation-workflow`, `gstack-design-*`, `design-taste-frontend`, `guizang-ppt-skill`, `xhs-visual-director`, `guizang-social-card-skill`, `photo-to-cute-3d-toy`, `browser-automation-router`；CI/回归按需用 `playwright` |
 | `视频` | Codex 本地窗口 | 宣传视频脚本、分镜、素材和渲染计划 | `hatch-pet` 或视频插件/工具链 |
 | `内容主编` | Codex 本地窗口 | 内容域上层协调，管理公众号发布、小红书、视频和 UI/PPT 视觉资产协作 | `agent-role-orchestrator`, `humanizer-zh`, `story-deslop`, 内容平台相关 skills |
 | `公众号发布` | Codex 本地窗口 | 公众号技术选题初稿、文章排版、草稿、预览、素材检查和授权发布自动化 | `wechat-ai-app-ops`, `wechat-tech-writer`, `wechat-article-formatter`, `humanizer-zh`；需要封面/社交卡时交给 `UI/PPT` 或 `guizang-social-card-skill` |
@@ -75,6 +75,7 @@
 | `gstack-investigate`, `gstack-review`, `gstack-ship`, `gstack-health`, `gstack-devex-review` | 开发 / QA | 根因、代码审查、发布前检查、项目健康 |
 | `gstack-careful`, `gstack-guard`, `gstack-freeze`, `gstack-unfreeze` | 开发 / 运维 / 安全 / QA | 高风险动作前的保守检查、护栏、冻结和恢复 |
 | `gstack-design-*` | UI/PPT | 视觉方向探索、HTML 原型、渲染后设计审查 |
+| `ui-implementation-workflow` | UI/PPT / UI/Frontend | 页面分类、项目审计、按任务规模限制参考、设计规则与语义 Token、骨架优先实现、1440/768/390 截图修复闭环；后台页不套营销站 Hero/炫技动效 |
 | `预览图实现路线选择` | UI/PPT / 架构 | 有预览图、参考图、截图或高保真目标时，先比较 CSS/组件、图片/生成资产、Canvas/SVG、Three.js/WebGL、Lottie/视频、现成库/组件等路线，再进入开发实现 |
 | `browser-automation-router` | 开发 / UI/PPT / 测试 / QA / 小红书 / 内容主编 | 原生 Browser、Chrome 登录态、Playwright 和平台脚本的 fail-closed 路由；最低能力门槛为 Codex Desktop `2026-06-11` 发布版本且当前任务可见对应插件 |
 | `photo-to-cute-3d-toy` | UI/PPT / 视频 / 架构 | 照片参考到可爱 3D 玩具/GLB 路线、提示词包和交付清单 |
@@ -258,7 +259,7 @@ python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py \
 - 长任务或容易 compact 的任务先由 Dev Lead 写任务卡，包含目标、文件白名单、禁止范围、验证命令、预期输出和回调对象，再派发给开发执行 subagent。
 - 默认串行；普通并行最多 2 个 worker，且必须声明互斥范围和独立验证。3-5 个 worker 只允许显式 `parallel` profile，并通过 `--worker-count`、`--disjoint-scope` 和 `--independent-validation` fail-closed 校验。
 - Spark 是独立额度机会通道，不是稳定第五级：仅在当前可用性已确认时，用 `--prefer-spark --spark-available` 把 mechanical/bounded 一次性 executor 路由到 Spark/high；否则回退 Mini/Luna。Spark 任务必须显式给出验证命令，不承担 owner、跨文件集成、最终 QA、critical/high-risk 或长上下文任务。
-- 前端/UI/PPT/社交卡/视频产物；纯前端或视觉保真任务默认先由 `UI/PPT` / `UI/Frontend` 定视觉路线，再让 `开发` 按范围实现。有预览图、参考图、截图或高保真目标时，UI/PPT 先输出 2-4 条实现路线，不要默认拿 CSS 硬干；复杂插画、纹理、3D、粒子或动效优先考虑资产化、Canvas/SVG、Three.js/WebGL、Lottie/视频或专用库，并用截图对比/视觉 QA 验收。
+- 前端/UI/PPT/社交卡/视频产物；纯前端或视觉保真任务默认先由 `UI/PPT` / `UI/Frontend` 加载 `ui-implementation-workflow`：选择单一页面类型，审计现有组件/Token/相邻页面，`tiny` 不搜索、`small` 最多 1 份、`medium+` 最多 3 份职责互斥参考，先输出 UI implementation plan，再按结构 -> 数据/交互 -> 响应式 -> 字体/颜色 -> 装饰 -> 动效实现，最后在 1440/768/390 截图、修复并重截。后台/表单/数据页不得套营销 Hero 或炫技动效。有预览图、参考图、截图或高保真目标时，再补 2-4 条实现路线，不要默认拿 CSS 硬干；复杂插画、纹理、3D、粒子或动效优先考虑资产化、Canvas/SVG、Three.js/WebGL、Lottie/视频或专用库。
 - 公众号文章和小红书笔记的草稿、预览、发布包和明确授权后的发布自动化。
 - 交付文档包和个人知识库整理。
 - 仓库测试、QA、Review 准备。
