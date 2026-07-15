@@ -329,10 +329,23 @@ def spark_opportunity_guidance(role: str, args: argparse.Namespace) -> str:
 """
 
 
-def ui_preview_route_guidance(role: str) -> str:
+def ui_preview_route_guidance(role: str, args: argparse.Namespace) -> str:
     if role != "UI/PPT":
         return ""
-    return """预览图实现路线选择：
+    if args.task_size == "tiny":
+        reference_budget = "tiny：不做外部灵感搜索，复用项目现有组件、Token 和相邻页面，只验证受影响视口。"
+    elif args.task_size == "small":
+        reference_budget = "small：项目内没有可用模式时最多补 1 份外部参考。"
+    else:
+        reference_budget = "medium+：最多 3 份参考，且职责互斥：布局、配色/字体、组件/动效各 1 份。"
+    return f"""UI 工程闭环（先加载 $ui-implementation-workflow）：
+- 页面分类：先在 marketing、auth、dashboard、list、detail、form、settings、mobile 中选一个主类型；后台/表单/数据页禁止套营销 Hero 和炫技动效。
+- 项目审计：先读现有技术栈、组件库、共享布局、Token、资产和相邻页面；{reference_budget}
+- 先分析后编码：代码修改前输出 UI implementation plan，包含布局层级、字体、语义色、间距/圆角/阴影、交互状态、动效、响应式、借鉴与拒绝项。
+- Token 与顺序：优先复用现有 Token；按结构 -> 数据/交互 -> 响应式 -> 字体/颜色 -> 装饰 -> 动效实现，禁止先做粒子背景再补业务流程。
+- 截图闭环：加载 $browser-automation-router，在 1440/768/390 三个宽度检查溢出、截断、对齐、间距、控件高度、横向滚动和动效可读性；修复后重截受影响宽度，不得只看代码推测。
+
+预览图实现路线选择：
 - 有预览图、参考图、截图或视觉保真目标时，不要默认拿 CSS 硬干；先给出 2-4 条实现路线并说明取舍。
 - 候选路线至少考虑：CSS/组件复刻、图片切片/生成资产、Canvas/SVG、Three.js/WebGL、Lottie/视频、现成库/组件、手工或生成式视觉资产。
 - 选择依据：交互需求、响应式要求、可维护性、加载性能、可访问性、动效复杂度、还原精度、后续内容替换成本。
@@ -456,7 +469,7 @@ def build_compact_prompt(
 Token Budget Profile：
 - profile：{profile}
 - 策略：{token_profile_strategy(profile)}
-{role_execution_guidance(role)}{execution_profile_guidance(role, args)}{spark_opportunity_guidance(role, args)}{ui_preview_route_guidance(role)}{browser_automation_guidance(role)}{content_research_guidance(role)}{content_tone_gate(role)}{xhs_automation_publish_gate(role)}
+{role_execution_guidance(role)}{execution_profile_guidance(role, args)}{spark_opportunity_guidance(role, args)}{ui_preview_route_guidance(role, args)}{browser_automation_guidance(role)}{content_research_guidance(role)}{content_tone_gate(role)}{xhs_automation_publish_gate(role)}
 角色树位置：{ROLE_TREE_POSITION[role]}
 Loop 深度（可折叠路由）：
 - 本次深度：{args.loop_depth}；L0 直达，L1 负责人，L2 负责人拆执行，L3 增加独立门禁。
@@ -571,7 +584,7 @@ Token Budget Profile：
 {role_execution_guidance(role)}
 {execution_profile_guidance(role, args)}
 {spark_opportunity_guidance(role, args)}
-{ui_preview_route_guidance(role)}
+{ui_preview_route_guidance(role, args)}
 {browser_automation_guidance(role)}
 {content_research_guidance(role)}
 {content_tone_gate(role)}

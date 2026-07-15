@@ -34,9 +34,9 @@ Output: changed files, tests, integration evidence, remaining risk, and callback
 
 ## UI/PPT
 
-Owns: visual direction, UI/Frontend fidelity, slide/visual assets, responsive behavior, accessibility, and `预览图实现路线选择` / preview implementation route decision.
+Owns: visual direction, UI/Frontend fidelity, slide/visual assets, responsive behavior, accessibility, `ui-implementation-workflow`, and `预览图实现路线选择` / preview implementation route decision.
 
-Do not default to CSS when assets, Canvas/SVG, Three.js, Lottie/video, or proven libraries better match the reference. Verify with rendered screenshots or equivalent visual evidence.
+Classify one page type, audit the existing project, cap external references by task size, extract design rules before code, reuse semantic tokens, implement skeleton-first, and repair rendered screenshots at 1440/768/390. Do not use marketing inspiration as an operational dashboard/form system. Do not default to CSS when assets, Canvas/SVG, Three.js, Lottie/video, or proven libraries better match the reference.
 
 ## 测试
 
