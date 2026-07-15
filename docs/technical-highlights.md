@@ -75,11 +75,17 @@
 
 | Profile | 用途 | 输出策略 |
 | --- | --- | --- |
-| `compact` | L0/L1、小型执行任务 | 只保留闭环必需字段 |
-| `standard` | L2、架构、新代码项目 | 加入必要方案与状态字段 |
-| `full` | L3、关键 PR、生产/安全/DB 风险 | 加入完整门禁和深层检查 |
+| `compact` | tiny/small、普通 medium | 只保留闭环必需字段 |
+| `standard` | large、L2、架构、新代码项目 | 加入必要方案与状态字段 |
+| `full` | critical、L3、生产/安全/DB 风险 | 加入独立复核、失败回退、剩余风险和 go/no-go |
 
 生成器对 compact 设置行数和字节预算，QA 不接收 CTO 专属方案占位，内容角色也不会污染技术执行 prompt。
+
+### GPT-5.6 Prompt Contract
+
+角色 prompt 按 [OpenAI GPT-5.6 提示词指南](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6) 收敛为同一契约：先写目标和完成标准，再写范围、证据、验证和退出条件。重复示例、工具说明和回调规则只保留一份；绝对措辞只用于权限、生产、发布、凭据和 fail-closed 等不可违反边界。
+
+缺信息时只询问阻塞执行的最小字段；工具只暴露当前任务需要的能力；进度更新保持稀疏。Prompt、模型或 reasoning 默认值变更后，必须用代表性任务做对照评估，不能只凭阅读感觉判断更省或更强。
 
 ### 压缩交接
 

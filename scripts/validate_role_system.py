@@ -250,13 +250,6 @@ def validate_orchestrator(errors: list[str]) -> None:
             "Completion is fail-closed",
             "仅完成第 1 项不算闭环",
             "<codex_delegation>",
-            "gpt-5.6-terra` + `high",
-            "gpt-5.6-sol` + `xhigh",
-            "gpt-5.6-luna` + `high",
-            "gpt-5.3-codex-spark",
-            "gpt-5.4-mini` + `high",
-            "Spark Opportunity Lane",
-            "--prefer-spark --spark-available",
             "Native Browser Routing Rule",
             "$browser-automation-router",
             "$ui-implementation-workflow",
@@ -390,7 +383,7 @@ def validate_scripts(errors: list[str]) -> None:
     )
     require_contains(
         MODEL_ROUTING,
-        ["gpt-5.6-luna", "gpt-5.3-codex-spark", "gpt-5.4-mini", "gpt-5.6-terra", "gpt-5.6-sol", "Spark Opportunity Lane", "--prefer-spark --spark-available", "--execution-profile parallel", "--disjoint-scope", "--independent-validation"],
+        ["gpt-5.6-luna", "gpt-5.3-codex-spark", "gpt-5.4-mini", "gpt-5.6-terra", "gpt-5.6-sol", "Spark Opportunity Lane", "--prefer-spark --spark-available", "--execution-profile parallel", "--disjoint-scope", "--independent-validation", "Reasoning Effort Eval Gate"],
         errors,
     )
     require_contains(TOOL_ROUTING, ["Fail-Closed Scripts", "aggregate_skill_hits.py", "Skill Ledger", "$browser-automation-router", "$playwright", "$ui-implementation-workflow", "visual-direction", ".codex/ui-visual-review-signals.md"], errors)

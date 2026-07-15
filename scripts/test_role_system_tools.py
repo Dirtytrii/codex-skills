@@ -271,6 +271,78 @@ def test_callback_must_start_with_forwardable_prefix() -> None:
         assert "callback must start with <codex_delegation> or 压缩回调" in result.stdout
 
 
+def test_callback_without_required_skills_is_not_reported_as_full_hit() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        callback = Path(temp) / "callback.md"
+        callback.write_text(
+            """压缩回调：
+- 当前状态：完成
+- 本轮变化：完成只读检查
+- 证据链接/文件/命令：git status
+- 需要决策：无
+- 下一回流对象：总控
+技能命中回传：
+- 已加载并使用：无
+- 来源窗口要求但未使用：无
+- 临时发现应补用：无
+- 误召/无效加载：无
+- 影响产出的 skill：无
+规则沉淀：
+- 可复用优化沉淀：无
+""",
+            encoding="utf-8",
+        )
+        result = run([PYTHON, str(VALIDATE_LOOP), "--callback", str(callback), "--json"])
+        payload = json.loads(result.stdout)
+        assert payload[0]["metrics"]["required_skill_count"] == 0
+        assert payload[0]["metrics"]["skill_hit_rate"] is None
+
+
+def test_non_visual_standard_and_full_prompts_stay_within_budget() -> None:
+    sources = {
+        "总控": "用户",
+        "架构": "总控",
+        "开发": "架构",
+        "QA": "架构",
+        "内容主编": "总控",
+        "技能维护": "总控",
+    }
+    for role, source in sources.items():
+        standard = run(
+            [
+                PYTHON,
+                str(RENDER_PROMPT),
+                "--role",
+                role,
+                "--objective",
+                "验证提示词体积",
+                "--source-role",
+                source,
+                "--profile",
+                "standard",
+            ]
+        )
+        full = run(
+            [
+                PYTHON,
+                str(RENDER_PROMPT),
+                "--role",
+                role,
+                "--objective",
+                "验证提示词体积",
+                "--source-role",
+                source,
+                "--profile",
+                "full",
+            ]
+        )
+        assert len(standard.stdout) <= 3200
+        assert len(full.stdout) <= 3400
+        assert len(standard.stdout) < len(full.stdout)
+        assert "独立门禁与失败回退（full 必填）" not in standard.stdout
+        assert "独立门禁与失败回退（full 必填）" in full.stdout
+
+
 def test_render_prompt_rejects_ceo_direct_technical_execution_without_small_or_override() -> None:
     result = run(
         [
@@ -382,7 +454,7 @@ def test_render_prompt_allows_ceo_to_owner_layer_and_explicit_override() -> None
     )
     assert "Loop 深度（可折叠路由）：" in owner.stdout
     assert "本次深度：L1" in owner.stdout
-    assert "总控 / CEO 只直接对接负责人层" in owner.stdout
+    assert "总控只对接负责人/治理层" in owner.stdout
 
     override = run(
         [
@@ -1125,6 +1197,8 @@ def main() -> int:
         test_aggregate_skill_hits_does_not_claim_success_without_requirements,
         test_skill_routing_eval_scores_observed_decisions_independently,
         test_callback_must_start_with_forwardable_prefix,
+        test_callback_without_required_skills_is_not_reported_as_full_hit,
+        test_non_visual_standard_and_full_prompts_stay_within_budget,
         test_render_prompt_rejects_ceo_direct_technical_execution_without_small_or_override,
         test_render_prompt_allows_ceo_direct_small_development_dispatch,
         test_render_prompt_outputs_ceo_dispatch_decision_by_task_size,

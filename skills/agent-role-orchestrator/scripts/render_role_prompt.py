@@ -621,10 +621,8 @@ Token Budget Profile：
 {loop_depth_explanation(args.loop_depth, args.override_reason)}
 {task_dispatch_decision(role, args)}
 负责人交互边界：
-- 总控 / CEO 只直接对接负责人层或治理角色：架构 / CTO、内容主编、知识库、技能维护、文档/交付，或用户明确指定的例外。
-- 技术执行角色（开发、UI/PPT、测试、QA、安全、DBA、运维）默认由架构 / CTO 派发、验收和回流；总控只接收架构汇总的项目结果、风险、决策点和最终验收建议。
-- 内容执行角色（公众号发布、小红书、视频）默认由内容主编派发、验收和回流；总控只接收内容主编汇总的内容结果、发布风险、授权点和最终验收建议。
-- 总控不编写或修改代码、测试脚本、验收脚本、自动化验证脚本；需要这类产物时，交给开发或测试实现，由架构/QA复核证据。
+- 总控只对接负责人/治理层；技术执行由 CTO 负责，内容执行由内容主编负责。只有用户明确 override 时越级。
+- 总控不编写代码、测试或验收脚本；由开发/测试实现，架构/QA 复核，总控只验收结果、风险和决策点。
 
 {architecture_planning_sections(role, args)}
 {full_profile_gate(profile, callback_target)}
@@ -653,9 +651,8 @@ Token Budget Profile：
 - 本轮退出条件：{args.exit_condition or "完成目标、阻塞并说明证据、或需要来源窗口决策"}
 
 上下文预算：
-- 不搬运完整聊天记录、长日志或大段源码；默认只传状态增量、证据句柄、决策需求和下一回流对象。
-- 每次派发、回调、阻塞、完成或纠偏后，更新 .codex/role-windows.md；长任务同时刷新“压缩交接卡”；项目允许写入且是 git 仓库时提交该台账更新。
-- 当上下文接近过长、compact 失败、或任务跨越多个闭环时，先用台账、提交、PR、文件证据和压缩交接卡接续，不要求新窗口读取完整旧线程。
+- 只传状态增量、证据句柄、决策和下一回流对象；不搬运完整聊天、长日志或大段源码。
+- 每次状态变化更新 .codex/role-windows.md；长任务用压缩交接卡、提交、PR 和文件证据接续。
 
 闭环完成条件：
 - 完成、阻塞或需要发起方决策时，必须同时完成两件事：1. 更新 .codex/role-windows.md 并提交；2. 向来源 thread 主动发送压缩回调。
@@ -664,15 +661,9 @@ Token Budget Profile：
 - 如果项目不是 git 仓库、项目禁止写入或无法提交，必须在压缩回调中说明原因和替代证据。
 
 路由前检查（总控、架构、内容主编和多角色派发必填）：
-- 是否读取 agent-role-orchestrator：{route_check_value(args.read_orchestrator)}
-- 是否读取 .codex/role-windows.md：{route_check_value(args.read_ledger)}
-- 是否复用已有角色线程：{args.reuse_thread or "待确认"}
-- 是否写清模型建议/覆盖：是
-- 是否写清 source-window callback：是
-- 是否写清允许/禁止范围：是
-- 是否写清验证与提交要求：是
-- 是否包含技能路由台账：是
-- 是否需要更新 .codex/role-windows.md：{args.update_ledger or "待确认"}
+- orchestrator：{route_check_value(args.read_orchestrator)}；role-windows：{route_check_value(args.read_ledger)}；复用线程：{args.reuse_thread or "待确认"}
+- 模型、来源回调、允许/禁止范围、验证/提交、技能台账：已写入本提示词
+- 是否更新 .codex/role-windows.md：{args.update_ledger or "待确认"}
 
 技能路由台账（总控、架构、内容主编和多角色拆分必填；单一执行角色可写“不适用/继承来源台账”）：
 - 候选 skill：{csv_or_default(candidate_skills, "待确认")}
@@ -685,18 +676,10 @@ Token Budget Profile：
 {args.commit_requirements or "遵循项目 AGENTS.md；未要求提交时先回报变更和验证证据。"}
 
 回调/通知规则：
-- 本任务发起方：{callback_target}。
-- 完成、阻塞或需要发起方决策时，主动通知发起方窗口；不要只等待用户转述。
-- 必须先更新 .codex/role-windows.md 并提交，再向来源 thread 主动发送压缩回调；仅完成台账更新不算闭环。
-- 如无法直接发送到发起方窗口，请输出一段可复制的“给发起方的回调消息”，且最终输出必须以 <codex_delegation> 或“压缩回调”开头。
+- 发起方：{callback_target}。完成、阻塞或需决策时执行上方闭环完成条件，不等待用户转述。
 
 结构化反馈格式（返工/验收失败/需要决策时必填）：
-- 问题/缺口：
-- 证据/复现：
-- 影响等级：
-- 建议回流对象：
-- 需要决策：
-- 下一闭环状态：
+- 问题/缺口；证据/复现；影响等级；建议回流对象；需要决策；下一闭环状态。
 
 压缩回调：
 - 当前状态：
@@ -714,9 +697,7 @@ Token Budget Profile：
 
 规则沉淀：
 - 可复用优化沉淀：无 / 建议 / 已沉淀
-- 具体问题或优化：
-- 目标位置：skill / README / 角色提示词 / QA 清单 / 验证命令 / registry / source policy / 项目文档 / 待确认
-- 已执行变更或建议后续：
+- 具体问题、目标位置、已执行变更或建议后续：
 
 完成后请回传：
 {args.return_requirements or "压缩回调、验证证据、技能命中回传、规则沉淀状态。"}

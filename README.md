@@ -96,7 +96,7 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 | `evaluate_skill_routing.py` | 用代表性输入和实际选择独立评估 Skill 路由 |
 | `audit_skill_catalog.py` | 递归检查 Skill 目录、描述预算和隐式调用策略 |
 
-这些脚本位于 `skills/agent-role-orchestrator/scripts/`。典型用法：
+角色运行脚本位于 `skills/agent-role-orchestrator/scripts/`；目录审计和路由评估属于仓库级 PR 工具，位于 `scripts/`。典型用法：
 
 ```bash
 python skills/agent-role-orchestrator/scripts/ensure_project_role_files.py --project /path/to/project --write

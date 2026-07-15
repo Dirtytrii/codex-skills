@@ -108,34 +108,17 @@ The ledger must track role, status, thread id, source window, responsibility, ne
 
 ## Model Routing Rule
 
-Load `references/model-routing.md` when selecting or overriding models. The stable defaults are:
+Load `references/model-routing.md` only when selecting, overriding, or auditing a model. `render_role_prompt.py` is the executable source for current defaults, executor tiers, the optional Spark lane, and escalation rules; do not copy that changing matrix into hand-written prompts.
 
-- `总控`: `gpt-5.6-terra` + `high`;
-- `架构`: `gpt-5.6-sol` + `high`;
-- `开发负责人`, ordinary `QA`, `运维`, `DBA`, content owners, and durable support owners: `gpt-5.6-terra` + `high`;
-- high-risk funds, ledger, concurrency, production, irreversible design, critical PR, or go/no-go: `gpt-5.6-sol` + `xhigh`;
-- deterministic mechanical executor: `gpt-5.4-mini` + `high`;
-- bounded one-shot executor: `gpt-5.6-luna` + `high`.
-
-`gpt-5.3-codex-spark` is an optional `Spark Opportunity Lane`, not a durable fifth tier. During its research preview it may have a separate usage limit, but availability and rates may change. Use it only for a mechanical/bounded, text-only, short, independently verifiable one-shot development executor when current availability is explicitly confirmed; otherwise fall back to Mini/Luna. Spark never owns architecture, integration, final QA, high-risk work, or long context.
-
-Never emit an unsupported `max` tier. User selection and actual model availability override these recommendations; record fallbacks explicitly.
-
-For development, durable owner and executor are different:
-
-- `开发负责人 / Dev Lead` owns decomposition, integration, correction, final validation, and commit.
-- `开发执行 subagent` is an in-window one-shot worker. It handles one short, narrow, independently verifiable task, is not added to `.codex/role-windows.md`, and is not reused after completion.
-- Default execution is serial. Two workers require disjoint scope and independent validation. Three to five workers require an explicit parallel profile and the same fail-closed evidence.
-- High-risk implementation stays with Dev Lead on Sol/xhigh; do not send it to a low-cost executor.
-- Spark tasks must include an explicit validation command because its lightweight default behavior may not run tests automatically.
+Keep the ownership invariant: `开发负责人 / Dev Lead` owns decomposition, integration, correction, final validation, and commit. `开发执行 subagent` is an in-window one-shot worker for one narrow, independently verifiable task; it is not a durable role or ledger entry. Parallel workers require disjoint scope and independent validation. User selection and actual availability override recommendations and must be recorded.
 
 ## Token Budget Profile Rule
 
 Generate with `--profile auto`; override only with evidence:
 
-- `compact`: L0/L1, one execution task, or simple owner decision;
-- `standard`: L2, architecture planning, or new-code setup;
-- `full`: L3, critical gates, security/DB/ops risk, or complex irreversible work.
+- `compact`: tiny/small and ordinary medium work;
+- `standard`: large, L2, architecture planning, or new-code setup;
+- `full`: critical, L3, security/DB/ops risk, or irreversible work; add independent review, failure/rollback, unresolved-risk, and go/no-go fields.
 
 `compact` must contain the closure contract but omit unrelated CTO, CodeGraph, content, and platform placeholders. Do not paste full chat history, large logs, or large source blocks into role prompts.
 
@@ -206,7 +189,7 @@ Required callback shape:
 
 ## Skill Routing Measurement Rule
 
-Owner layers declare candidate, required, optional, and skipped skills. Execution callbacks report actual use, omissions, misfires, and discovered should-use skills. Use `aggregate_skill_hits.py` for hit rate; do not count from memory.
+Owner layers declare candidate, required, optional, and skipped skills. Execution callbacks report actual use, omissions, misfires, and discovered should-use skills. `aggregate_skill_hits.py` reports self-declared execution data and returns not-evaluable when no required skill was declared; independent routing evaluation belongs in repository PR checks. Do not count from memory.
 
 Route a reusable cross-role improvement to `技能维护`. Project state stays in the project ledger; reusable trigger, prompt, validation, or routing behavior belongs in the shared skill repository and should be proposed through a PR.
 

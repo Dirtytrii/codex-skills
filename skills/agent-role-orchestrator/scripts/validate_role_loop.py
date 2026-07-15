@@ -318,7 +318,11 @@ def validate_callback(path: Path, required_skills: set[str]) -> CheckResult:
     metrics["declared_unused_required_skills"] = sorted(declared_unused)
     metrics["required_skill_count"] = len(required_skills)
     metrics["loaded_required_skill_count"] = len(required_skills & loaded)
-    metrics["skill_hit_rate"] = 1.0 if not required_skills else round(len(required_skills & loaded) / len(required_skills), 4)
+    metrics["skill_hit_rate"] = (
+        None
+        if not required_skills
+        else round(len(required_skills & loaded) / len(required_skills), 4)
+    )
     if declared_unused:
         warnings.append("some required skills were declared unused: " + "、".join(sorted(declared_unused)))
 
