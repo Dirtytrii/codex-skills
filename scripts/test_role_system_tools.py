@@ -14,12 +14,15 @@ ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 README = ROOT / "README.md"
 TECHNICAL_HIGHLIGHTS = ROOT / "docs" / "technical-highlights.md"
+ROUTING_GUIDE = ROOT / "docs" / "routing-token-and-evaluation.md"
 BROWSER_AUTOMATION_DOC = ROOT / "docs" / "browser-automation.md"
 ENSURE = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "ensure_project_role_files.py"
 RENDER_PROMPT = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "render_role_prompt.py"
 VALIDATE_LOOP = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "validate_role_loop.py"
 CHECK_CODEGRAPH = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "check_codegraph.py"
 AGGREGATE_SKILL_HITS = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "aggregate_skill_hits.py"
+EVALUATE_SKILL_ROUTING = ROOT / "scripts" / "evaluate_skill_routing.py"
+SKILL_ROUTING_CASES = ROOT / "evals" / "skill-routing-cases.jsonl"
 VALIDATE_ROLE_SYSTEM = ROOT / "scripts" / "validate_role_system.py"
 ORCHESTRATOR_SKILL = ROOT / "skills" / "agent-role-orchestrator" / "SKILL.md"
 ROLE_CARDS = ROOT / "skills" / "agent-role-orchestrator" / "references" / "role-cards.md"
@@ -157,7 +160,7 @@ def test_aggregate_skill_hits_quantifies_required_actual_and_misfires() -> None:
             """技能路由台账：
 - 必选 skill：humanizer-zh、xhs-publish-assistant
 技能命中回传：
-- 已加载并使用：humanizer-zh
+- 已加载并使用：humanizer-zh、story-deslop
 - 来源窗口要求但未使用：xhs-publish-assistant
 - 临时发现应补用：cheat-on-content
 - 误召/无效加载：story-deslop
@@ -173,7 +176,147 @@ def test_aggregate_skill_hits_quantifies_required_actual_and_misfires() -> None:
         assert payload["declared_unused_required_skill_count"] == 1
         assert payload["missing_required_skill_count"] == 0
         assert payload["misfire_skill_count"] == 1
+        assert payload["misfire_not_loaded_skill_count"] == 0
         assert payload["hit_rate"] == 0.5
+        assert payload["routing_declaration_coverage"] == 1.0
+        assert payload["skill_callback_completeness"] == 1.0
+        assert payload["effective_use_rate"] == 0.5
+        assert payload["misfire_rate"] == 0.5
+
+
+def test_aggregate_skill_hits_ignores_ordinary_notes_in_denominators() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        callbacks = Path(temp)
+        for index in range(9):
+            (callbacks / f"note-{index}.md").write_text(
+                f"# 普通记录 {index}\n\n这里没有技能路由或回调。\n",
+                encoding="utf-8",
+            )
+        (callbacks / "callback.md").write_text(
+            """技能路由台账：
+- 必选 skill：humanizer-zh
+技能命中回传：
+- 已加载并使用：humanizer-zh
+- 来源窗口要求但未使用：无
+- 临时发现应补用：无
+- 误召/无效加载：无
+- 影响产出的 skill：humanizer-zh
+""",
+            encoding="utf-8",
+        )
+
+        result = run([PYTHON, str(AGGREGATE_SKILL_HITS), str(callbacks), "--json"])
+        payload = json.loads(result.stdout)
+        assert payload["files_discovered"] == 10
+        assert payload["files_scanned"] == 1
+        assert payload["ignored_file_count"] == 9
+        assert payload["routing_declaration_coverage"] == 1.0
+        assert payload["skill_callback_completeness"] == 1.0
+
+
+def test_aggregate_skill_hits_separates_misfires_that_were_not_loaded() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        callback = Path(temp) / "callback.md"
+        callback.write_text(
+            """技能命中回传：
+- 已加载并使用：humanizer-zh
+- 来源窗口要求但未使用：无
+- 临时发现应补用：无
+- 误召/无效加载：story-deslop
+- 影响产出的 skill：humanizer-zh
+""",
+            encoding="utf-8",
+        )
+
+        result = run([PYTHON, str(AGGREGATE_SKILL_HITS), str(callback), "--json"])
+        payload = json.loads(result.stdout)
+        assert payload["misfire_skill_count"] == 0
+        assert payload["misfire_not_loaded_skill_count"] == 1
+        assert payload["misfire_rate"] == 0.0
+        assert payload["files"][0]["misfire_not_loaded_skills"] == ["story-deslop"]
+
+
+def test_aggregate_skill_hits_does_not_claim_success_without_requirements() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        callback = Path(temp) / "callback.md"
+        callback.write_text(
+            """技能命中回传：
+- 已加载并使用：humanizer-zh
+- 来源窗口要求但未使用：无
+- 临时发现应补用：无
+- 误召/无效加载：无
+- 影响产出的 skill：humanizer-zh
+""",
+            encoding="utf-8",
+        )
+        result = run([PYTHON, str(AGGREGATE_SKILL_HITS), str(callback), "--json"])
+        payload = json.loads(result.stdout)
+        assert payload["hit_rate"] is None
+        assert payload["routing_declaration_coverage"] == 0.0
+        assert payload["skill_callback_completeness"] == 1.0
+
+
+def test_skill_routing_eval_scores_observed_decisions_independently() -> None:
+    validation = run(
+        [PYTHON, str(EVALUATE_SKILL_ROUTING), "--validate-only", "--strict"]
+    )
+    assert json.loads(validation.stdout)["case_count"] >= 18
+
+    with tempfile.TemporaryDirectory() as temp:
+        observed = Path(temp) / "observed.jsonl"
+        cases = [
+            json.loads(line)
+            for line in SKILL_ROUTING_CASES.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        observed.write_text(
+            "\n".join(
+                json.dumps(
+                    {"id": case["id"], "selected_skills": case["required_skills"]},
+                    ensure_ascii=False,
+                )
+                for case in cases
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        result = run(
+            [
+                PYTHON,
+                str(EVALUATE_SKILL_ROUTING),
+                "--observed",
+                str(observed),
+                "--strict",
+            ]
+        )
+        payload = json.loads(result.stdout)
+        assert payload["unevaluated_case_count"] == 0
+        assert payload["case_pass_rate"] == 1.0
+        assert payload["required_skill_recall"] == 1.0
+        assert payload["negative_case_count"] >= 3
+        assert payload["evaluated_negative_case_count"] >= 3
+        assert payload["negative_case_pass_rate"] == 1.0
+
+        first_negative = next(
+            case
+            for case in cases
+            if not case["required_skills"] and not case["allowed_skills"]
+        )
+        observed.write_text(
+            json.dumps(
+                {"id": first_negative["id"], "selected_skills": ["humanizer-zh"]},
+                ensure_ascii=False,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        negative = run(
+            [PYTHON, str(EVALUATE_SKILL_ROUTING), "--observed", str(observed)]
+        )
+        negative_payload = json.loads(negative.stdout)
+        assert negative_payload["evaluated_negative_case_count"] == 1
+        assert negative_payload["negative_case_pass_rate"] == 0.0
+        assert negative_payload["results"][0]["unexpected_skills"] == ["humanizer-zh"]
 
 
 def test_callback_must_start_with_forwardable_prefix() -> None:
@@ -204,6 +347,103 @@ def test_callback_must_start_with_forwardable_prefix() -> None:
         result = run([PYTHON, str(VALIDATE_LOOP), "--callback", str(callback)], check=False)
         assert result.returncode != 0
         assert "callback must start with <codex_delegation> or 压缩回调" in result.stdout
+
+
+def test_callback_without_required_skills_is_not_reported_as_full_hit() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        callback = Path(temp) / "callback.md"
+        callback.write_text(
+            """压缩回调：
+- 当前状态：完成
+- 本轮变化：完成只读检查
+- 证据链接/文件/命令：git status
+- 需要决策：无
+- 下一回流对象：总控
+技能命中回传：
+- 已加载并使用：无
+- 来源窗口要求但未使用：无
+- 临时发现应补用：无
+- 误召/无效加载：无
+- 影响产出的 skill：无
+规则沉淀：
+- 可复用优化沉淀：无
+""",
+            encoding="utf-8",
+        )
+        result = run([PYTHON, str(VALIDATE_LOOP), "--callback", str(callback), "--json"])
+        payload = json.loads(result.stdout)
+        assert payload[0]["metrics"]["required_skill_count"] == 0
+        assert payload[0]["metrics"]["skill_hit_rate"] is None
+
+
+def test_non_visual_standard_and_full_prompts_stay_within_budget() -> None:
+    sources = {
+        "总控": "用户",
+        "架构": "总控",
+        "开发": "架构",
+        "QA": "架构",
+        "内容主编": "总控",
+        "技能维护": "总控",
+    }
+    for role, source in sources.items():
+        standard = run(
+            [
+                PYTHON,
+                str(RENDER_PROMPT),
+                "--role",
+                role,
+                "--objective",
+                "验证提示词体积",
+                "--source-role",
+                source,
+                "--profile",
+                "standard",
+            ]
+        )
+        full = run(
+            [
+                PYTHON,
+                str(RENDER_PROMPT),
+                "--role",
+                role,
+                "--objective",
+                "验证提示词体积",
+                "--source-role",
+                source,
+                "--profile",
+                "full",
+            ]
+        )
+        assert len(standard.stdout) <= 3200
+        assert len(full.stdout) <= 3400
+        assert len(standard.stdout) < len(full.stdout)
+        assert "独立门禁与失败回退（full 必填）" not in standard.stdout
+        assert "独立门禁与失败回退（full 必填）" in full.stdout
+
+
+def test_standard_generated_prompt_passes_fail_closed_validator() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        prompt = Path(temp) / "standard-prompt.md"
+        run(
+            [
+                PYTHON,
+                str(RENDER_PROMPT),
+                "--role",
+                "开发",
+                "--objective",
+                "验证标准档提示词",
+                "--source-role",
+                "架构",
+                "--source-thread",
+                "thread-cto",
+                "--profile",
+                "standard",
+                "--output",
+                str(prompt),
+            ]
+        )
+        result = run([PYTHON, str(VALIDATE_LOOP), "--prompt", str(prompt)])
+        assert "[PASS]" in result.stdout
 
 
 def test_render_prompt_rejects_ceo_direct_technical_execution_without_small_or_override() -> None:
@@ -317,7 +557,7 @@ def test_render_prompt_allows_ceo_to_owner_layer_and_explicit_override() -> None
     )
     assert "Loop 深度（可折叠路由）：" in owner.stdout
     assert "本次深度：L1" in owner.stdout
-    assert "总控 / CEO 只直接对接负责人层" in owner.stdout
+    assert "总控只对接负责人/治理层" in owner.stdout
 
     override = run(
         [
@@ -405,6 +645,60 @@ def test_render_prompt_full_profile_keeps_deep_sections() -> None:
     assert "技术方案（架构/CTO 处理复杂技术需求必填" in full.stdout
     assert "CodeGraph 状态（新本地代码项目必填" in full.stdout
     assert "开源/可借鉴方案扫描" in full.stdout
+    assert "独立门禁与失败回退（full 必填）" in full.stdout
+    assert "不得由实现者自证通过" in full.stdout
+    assert "失败/回滚条件与执行责任人" in full.stdout
+
+
+def test_render_prompt_auto_profile_uses_task_size_and_risk() -> None:
+    def render(task_size: str, *extra: str) -> str:
+        result = run(
+            [
+                PYTHON,
+                str(RENDER_PROMPT),
+                "--role",
+                "开发",
+                "--objective",
+                "按范围实现并验证",
+                "--source-role",
+                "架构",
+                "--task-size",
+                task_size,
+                *extra,
+            ]
+        )
+        return result.stdout
+
+    assert "profile：compact" in render("tiny")
+    assert "profile：compact" in render("small")
+    assert "profile：compact" in render("medium")
+    standard = render("large")
+    assert "profile：standard" in standard
+    assert "有效控制：risk=normal；loop=L2" in standard
+    assert "独立门禁与失败回退（full 必填）" not in standard
+    critical = render("critical")
+    assert "profile：full" in critical
+    assert "model：gpt-5.6-sol" in critical
+    assert "thinking：xhigh" in critical
+    assert "有效控制：risk=critical；loop=L3" in critical
+    assert "独立门禁与失败回退（full 必填）" in critical
+    extreme = render("medium", "--risk", "extreme")
+    assert "profile：full" in extreme
+    assert "model：gpt-5.6-sol" in extreme
+    assert "有效控制：risk=extreme；loop=L3" in extreme
+
+    critical_risk = render("medium", "--risk", "critical")
+    assert "profile：full" in critical_risk
+    assert "有效控制：risk=critical；loop=L3" in critical_risk
+
+    deep_loop = render("medium", "--loop-depth", "L3")
+    assert "profile：full" in deep_loop
+    assert "model：gpt-5.6-sol" in deep_loop
+    assert "有效控制：risk=critical；loop=L3" in deep_loop
+
+    explicit = render("critical", "--profile", "compact")
+    assert "profile：compact" in explicit
+    assert "独立门禁与失败回退（full 必填）" not in explicit
 
 
 def test_render_prompt_routes_development_lead_and_subagents() -> None:
@@ -557,6 +851,28 @@ def test_render_prompt_uses_spark_only_for_confirmed_short_executor() -> None:
     assert rejected.returncode != 0
     assert "mechanical or bounded" in rejected.stderr
 
+    critical_task = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "开发",
+            "--objective",
+            "处理资金账本",
+            "--source-role",
+            "架构",
+            "--task-size",
+            "critical",
+            "--executor-tier",
+            "bounded",
+            "--prefer-spark",
+            "--spark-available",
+        ],
+        check=False,
+    )
+    assert critical_task.returncode != 0
+    assert "does not support critical or extreme risk" in critical_task.stderr
+
 
 def test_render_prompt_compact_profile_stays_within_budget() -> None:
     compact = run(
@@ -645,6 +961,7 @@ def test_orchestrator_entry_files_stay_within_token_budget() -> None:
 
 def test_readme_stays_scannable_and_current() -> None:
     text = README.read_text(encoding="utf-8")
+    routing_guide = ROUTING_GUIDE.read_text(encoding="utf-8")
     assert len(text.splitlines()) <= 260
     assert len(text.encode("utf-8")) <= 20000
     for heading in (
@@ -657,6 +974,19 @@ def test_readme_stays_scannable_and_current() -> None:
     ):
         assert heading in text
     assert "docs/technical-highlights.md" in text
+    assert "docs/routing-token-and-evaluation.md" in text
+    assert len(routing_guide.splitlines()) <= 220
+    assert len(routing_guide.encode("utf-8")) <= 12000
+    for needle in (
+        "Effective Controls",
+        "effective risk",
+        "effective loop",
+        "三层 Skill 评估",
+        "negative_case_pass_rate",
+        "misfire_not_loaded_skill_count",
+        "runtime runner",
+    ):
+        assert needle in routing_guide
 
 
 def test_native_browser_routing_prefers_plugins_and_keeps_deterministic_fallbacks() -> None:
@@ -672,7 +1002,7 @@ def test_native_browser_routing_prefers_plugins_and_keeps_deterministic_fallback
     assert "2026-06-11" in browser_doc
     assert "OpenAI does not publish a stable numeric" in router
     assert "existing Chrome profile" in router
-    assert "deterministic terminal or CI automation" in playwright
+    assert "deterministic terminal or CI browser automation" in playwright
     assert "Do not load repository-maintained JavaScript snippets" in comments
     assert not XHS_CHROME_SNIPPETS.exists()
     assert "native Chrome surface" in publisher
@@ -1018,7 +1348,14 @@ def main() -> int:
         test_role_ledger_rejects_duplicate_threads_and_bad_status,
         test_check_codegraph_reports_state_without_guessing,
         test_aggregate_skill_hits_quantifies_required_actual_and_misfires,
+        test_aggregate_skill_hits_ignores_ordinary_notes_in_denominators,
+        test_aggregate_skill_hits_separates_misfires_that_were_not_loaded,
+        test_aggregate_skill_hits_does_not_claim_success_without_requirements,
+        test_skill_routing_eval_scores_observed_decisions_independently,
         test_callback_must_start_with_forwardable_prefix,
+        test_callback_without_required_skills_is_not_reported_as_full_hit,
+        test_non_visual_standard_and_full_prompts_stay_within_budget,
+        test_standard_generated_prompt_passes_fail_closed_validator,
         test_render_prompt_rejects_ceo_direct_technical_execution_without_small_or_override,
         test_render_prompt_allows_ceo_direct_small_development_dispatch,
         test_render_prompt_outputs_ceo_dispatch_decision_by_task_size,
@@ -1026,6 +1363,7 @@ def main() -> int:
         test_render_prompt_allows_ceo_to_owner_layer_and_explicit_override,
         test_render_prompt_auto_compacts_l1_owner_prompt,
         test_render_prompt_full_profile_keeps_deep_sections,
+        test_render_prompt_auto_profile_uses_task_size_and_risk,
         test_render_prompt_routes_development_lead_and_subagents,
         test_render_prompt_rejects_unsafe_parallel_worker_fanout,
         test_render_prompt_uses_spark_only_for_confirmed_short_executor,

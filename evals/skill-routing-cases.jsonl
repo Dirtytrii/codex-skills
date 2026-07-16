@@ -1,0 +1,20 @@
+{"id":"role-window-routing","prompt":"请让总控拆解任务，架构派开发和 QA，并维护来源窗口回调台账。","required_skills":["agent-role-orchestrator"],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"dashboard-ui","prompt":"重做这个 Vue 管理后台的列表、筛选和详情页，完成三档截图验收。","required_skills":["ui-implementation-workflow"],"allowed_skills":["browser-automation-router"],"forbidden_skills":["design-taste-frontend"]}
+{"id":"logged-in-browser","prompt":"用我当前 Chrome 登录态检查创作者后台的草稿页面，不要发布。","required_skills":["browser-automation-router"],"allowed_skills":[],"forbidden_skills":["playwright"]}
+{"id":"ci-browser-regression","prompt":"在 CI 里重复运行浏览器回归，保留 trace 和截图。","required_skills":["playwright"],"allowed_skills":["browser-automation-router"],"forbidden_skills":[]}
+{"id":"xhs-comment-research","prompt":"分析这个已打开的小红书笔记评论区，整理用户痛点和后续选题。","required_skills":["browser-automation-router","xhs-comment-research"],"allowed_skills":[],"forbidden_skills":["xhs-automation-publisher"]}
+{"id":"xhs-publish-preview","prompt":"排查小红书创作者中心自动发布卡点，先只填充预览，不点击发布。","required_skills":["browser-automation-router","xhs-automation-publisher"],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"wechat-ai-article","prompt":"整理本周 AI Agent 工具更新并生成公众号草稿交付包。","required_skills":["wechat-ai-app-ops"],"allowed_skills":["humanizer-zh"],"forbidden_skills":["xhs-automation-publisher"]}
+{"id":"generic-chinese-humanize","prompt":"把这份中文产品公告改得自然一些，去掉模板化 AI 腔，不改变事实。","required_skills":["humanizer-zh"],"allowed_skills":[],"forbidden_skills":["story-deslop"]}
+{"id":"fiction-deslop","prompt":"这章中文网文太像 AI 写的，保留情节但重做叙事节奏和人物声音。","required_skills":["story-deslop"],"allowed_skills":["humanizer-zh"],"forbidden_skills":[]}
+{"id":"startup-pressure-test","prompt":"别急着写代码，先判断这个创业想法是不是伪需求，给两周验证方案。","required_skills":["startup-pressure-test"],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"authorized-blackbox","prompt":"这是我方已授权的网站，请做低噪声黑盒安全测试并给证据报告。","required_skills":["authorized-blackbox-web-security"],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"content-calibration","prompt":"初始化内容校准流程，导入对标账号，之后做盲预测和发布后复盘。","required_skills":["cheat-on-content","cheat-init"],"allowed_skills":["cheat-learn-from"],"forbidden_skills":["cheat-score-blind"]}
+{"id":"blind-score-not-user-facing","prompt":"给这篇稿子做一次内容 rubric 打分。","required_skills":["cheat-score"],"allowed_skills":["cheat-on-content"],"forbidden_skills":["cheat-score-blind"]}
+{"id":"delivery-doc-package","prompt":"把项目验收材料整理成客户可交付的 Word 文档包。","required_skills":["delivery-document-package"],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"test-report","prompt":"根据现有需求和执行结果生成测试用例表与测试报告。","required_skills":["test-case-report-builder"],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"social-card","prompt":"根据文章生成一套小红书 3:4 图文卡和微信公众号双封面。","required_skills":["guizang-social-card-skill"],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"explicit-visual-compatibility","prompt":"明确使用 design-taste-frontend 为品牌首页提供视觉方向，再进入统一 UI 流程。","required_skills":["design-taste-frontend","ui-implementation-workflow"],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"no-skill-arithmetic","prompt":"计算 17 + 25，只返回结果。","required_skills":[],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"no-skill-translation","prompt":"把这句话翻译成英文：今天下雨了。","required_skills":[],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"no-skill-basic-explanation","prompt":"用一句话解释什么是变量。","required_skills":[],"allowed_skills":[],"forbidden_skills":[]}

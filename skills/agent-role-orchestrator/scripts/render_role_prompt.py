@@ -72,6 +72,13 @@ class ModelRoute:
     escalation: str
 
 
+@dataclass(frozen=True)
+class TaskControls:
+    risk: str
+    loop_depth: str
+    promotions: tuple[str, ...]
+
+
 def canonical_role(raw: str) -> str:
     role = CANONICAL_ROLES.get(raw, CANONICAL_ROLES.get(raw.lower()))
     if not role:
@@ -80,15 +87,45 @@ def canonical_role(raw: str) -> str:
     return role
 
 
+def effective_task_controls(args: argparse.Namespace) -> TaskControls:
+    risk = args.risk
+    loop_depth = args.loop_depth
+    promotions: list[str] = []
+
+    if (args.task_size == "critical" or loop_depth == "L3") and risk not in {
+        "critical",
+        "extreme",
+    }:
+        risk = "critical"
+        promotions.append("critical 任务或 L3 门禁将 risk 提升为 critical")
+
+    if risk in {"critical", "extreme"} and loop_depth != "L3":
+        loop_depth = "L3"
+        promotions.append("critical/extreme risk 至少使用 L3")
+    elif args.task_size == "large" and loop_depth in {"L0", "L1"}:
+        loop_depth = "L2"
+        promotions.append("large 任务至少使用 L2")
+
+    return TaskControls(risk=risk, loop_depth=loop_depth, promotions=tuple(promotions))
+
+
+def task_controls_guidance(args: argparse.Namespace, controls: TaskControls) -> str:
+    lines = [f"- 有效控制：risk={controls.risk}；loop={controls.loop_depth}"]
+    if controls.promotions:
+        lines.append(f"- 输入控制：risk={args.risk}；loop={args.loop_depth}")
+        lines.append(f"- 自动提升：{'；'.join(controls.promotions)}")
+    return "任务控制：\n" + "\n".join(lines) + "\n"
+
+
 def model_route(role: str, risk: str, executor_tier: str = "owner") -> ModelRoute:
     if role == "总控":
-        if risk == "critical":
+        if risk in {"critical", "extreme"}:
             return ModelRoute("gpt-5.6-sol", "xhigh", "只用于资金、上线、生产恢复或跨角色最终 go/no-go；其余情况回到 Terra + high。")
         return ModelRoute("gpt-5.6-terra", "high", "资金、上线、生产恢复或跨角色最终 go/no-go 升级到 gpt-5.6-sol + xhigh。")
     if role == "架构":
         if risk == "extreme":
             return ModelRoute("gpt-5.6-sol", "xhigh", "仅限极难、信息高度冲突且 high 无法收敛的问题；不再虚构高于 xhigh 的思考档位。")
-        if risk == "critical":
+        if risk in {"critical", "extreme"}:
             return ModelRoute("gpt-5.6-sol", "xhigh", "实盘架构、事故根因、DB/并发/安全或不可逆方案使用 xhigh。")
         return ModelRoute("gpt-5.6-sol", "high", "实盘架构、事故根因、DB/并发/安全或不可逆方案升级到 xhigh。")
     if role == "开发":
@@ -100,15 +137,15 @@ def model_route(role: str, risk: str, executor_tier: str = "owner") -> ModelRout
             return ModelRoute("gpt-5.6-terra", "high", "适合有限业务语义理解；跨模块整合、纠偏和提交仍由 Dev Lead 负责。")
         if executor_tier == "high-risk":
             return ModelRoute("gpt-5.6-sol", "xhigh", "高风险实现不得下放给廉价 executor，由 Dev Lead 亲自完成。")
-        if risk == "critical":
+        if risk in {"critical", "extreme"}:
             return ModelRoute("gpt-5.6-sol", "xhigh", "live exit、资金安全、PnL/fee、并发或重复失败返工由 Dev Lead 亲自处理，不交给廉价 subagent。")
         return ModelRoute("gpt-5.6-terra", "high", "live exit、资金安全、PnL/fee、并发或重复失败返工升级到 gpt-5.6-sol + xhigh。")
     if role == "QA":
-        if risk == "critical":
+        if risk in {"critical", "extreme"}:
             return ModelRoute("gpt-5.6-sol", "xhigh", "关键 PR、对抗式审查、发布门禁或生产风险需要 Sol xhigh。")
         return ModelRoute("gpt-5.6-terra", "high", "关键 PR、对抗式审查、发布门禁或生产风险升级到 gpt-5.6-sol + xhigh。")
     if role in {"运维", "DBA"}:
-        if risk == "critical":
+        if risk in {"critical", "extreme"}:
             return ModelRoute("gpt-5.6-sol", "xhigh", "真正部署、restart、rollback、生产故障、DDL、清理、恢复或数据风险需要 Sol xhigh。")
         return ModelRoute("gpt-5.6-terra", "high", "只读采证、容量、锁或空间分析用 Terra；部署/恢复/DDL/数据风险升级到 gpt-5.6-sol + xhigh。")
     if role in {"技能维护", "文档/交付", "知识库"}:
@@ -121,7 +158,7 @@ def model_route(role: str, risk: str, executor_tier: str = "owner") -> ModelRout
         return ModelRoute("gpt-5.6-terra", "high", "高风险公开定位、声明、合规或跨平台策略升级到 gpt-5.6-sol + xhigh。")
     if risk == "mechanical":
         return ModelRoute("gpt-5.4-mini", "high", "仅限单文件、测试明确、无业务语义判断的机械执行。")
-    if risk == "critical":
+    if risk in {"critical", "extreme"}:
         return ModelRoute("gpt-5.6-sol", "xhigh", "高风险实现、不可逆操作或最终技术判断升级到 Sol xhigh。")
     return ModelRoute("gpt-5.6-terra", "high", "涉及高风险决策或跨角色协调时升级到 gpt-5.6-sol + xhigh。")
 
@@ -291,31 +328,37 @@ def validate_execution_profile(role: str, args: argparse.Namespace) -> None:
         raise ValueError("parallel execution-profile requires " + " and ".join(missing))
 
 
-def validate_spark_opportunity(role: str, args: argparse.Namespace) -> None:
+def validate_spark_opportunity(
+    role: str, args: argparse.Namespace, controls: TaskControls
+) -> None:
     if args.spark_available and not args.prefer_spark:
         raise ValueError("--spark-available requires --prefer-spark")
     if not args.prefer_spark:
         return
     if role != "开发" or args.executor_tier not in {"mechanical", "bounded"}:
         raise ValueError("Spark Opportunity Lane only supports 开发 mechanical or bounded one-shot executors")
-    if args.risk in {"critical", "extreme"}:
+    if controls.risk in {"critical", "extreme"}:
         raise ValueError("Spark Opportunity Lane does not support critical or extreme risk")
 
 
-def selected_model_route(role: str, args: argparse.Namespace) -> ModelRoute:
+def selected_model_route(
+    role: str, args: argparse.Namespace, controls: TaskControls
+) -> ModelRoute:
     if args.prefer_spark and args.spark_available:
         return ModelRoute(
             "gpt-5.3-codex-spark",
             "high",
             "仅用于短小、文本型、范围明确且可独立验证的一次性编码任务；不可用、排队或范围增长时回退稳定路由。",
         )
-    return model_route(role, args.risk, args.executor_tier)
+    return model_route(role, controls.risk, args.executor_tier)
 
 
-def spark_opportunity_guidance(role: str, args: argparse.Namespace) -> str:
+def spark_opportunity_guidance(
+    role: str, args: argparse.Namespace, controls: TaskControls
+) -> str:
     if role != "开发" or not args.prefer_spark:
         return ""
-    fallback = model_route(role, args.risk, args.executor_tier)
+    fallback = model_route(role, controls.risk, args.executor_tier)
     selection = (
         "使用 Spark 独立额度"
         if args.spark_available
@@ -406,12 +449,23 @@ def xhs_automation_publish_gate(role: str) -> str:
 """
 
 
-def effective_token_profile(role: str, args: argparse.Namespace) -> str:
+def effective_token_profile(
+    role: str, args: argparse.Namespace, controls: TaskControls
+) -> str:
     if args.profile != "auto":
         return args.profile
-    if args.risk == "critical" or args.loop_depth == "L3":
+    if (
+        args.task_size == "critical"
+        or controls.risk in {"critical", "extreme"}
+        or controls.loop_depth == "L3"
+    ):
         return "full"
-    if role == "架构" or args.new_code_project or args.loop_depth == "L2":
+    if (
+        args.task_size == "large"
+        or role == "架构"
+        or args.new_code_project
+        or controls.loop_depth == "L2"
+    ):
         return "standard"
     return "compact"
 
@@ -447,11 +501,23 @@ def architecture_planning_sections(role: str, args: argparse.Namespace) -> str:
     return "\n".join(sections)
 
 
+def full_profile_gate(profile: str, callback_target: str) -> str:
+    if profile != "full":
+        return ""
+    return f"""独立门禁与失败回退（full 必填）：
+- 独立复核角色与证据：待确认；不得由实现者自证通过
+- 失败/回滚条件与执行责任人：待确认
+- 未解决风险、剩余不确定性与影响范围：待确认
+- 最终 go/no-go 决策方：{callback_target}
+"""
+
+
 def build_compact_prompt(
     *,
     args: argparse.Namespace,
     role: str,
     route: ModelRoute,
+    controls: TaskControls,
     callback_target: str,
     project: str,
     read_first: list[str],
@@ -475,10 +541,11 @@ def build_compact_prompt(
 Token Budget Profile：
 - profile：{profile}
 - 策略：{token_profile_strategy(profile)}
-{role_execution_guidance(role)}{execution_profile_guidance(role, args)}{spark_opportunity_guidance(role, args)}{ui_preview_route_guidance(role, args)}{browser_automation_guidance(role)}{content_research_guidance(role)}{content_tone_gate(role)}{xhs_automation_publish_gate(role)}
+{role_execution_guidance(role)}{execution_profile_guidance(role, args)}{spark_opportunity_guidance(role, args, controls)}{ui_preview_route_guidance(role, args)}{browser_automation_guidance(role)}{content_research_guidance(role)}{content_tone_gate(role)}{xhs_automation_publish_gate(role)}
 角色树位置：{ROLE_TREE_POSITION[role]}
+{task_controls_guidance(args, controls)}
 Loop 深度（可折叠路由）：
-- 本次深度：{args.loop_depth}；L0 直达，L1 负责人，L2 负责人拆执行，L3 增加独立门禁。
+- 本次深度：{controls.loop_depth}；L0 直达，L1 负责人，L2 负责人拆执行，L3 增加独立门禁。
 - 本次 override：{args.override_reason or "无"}
 任务分发决策：
 - {task_dispatch_decision(role, args).splitlines()[1].removeprefix("- ")}
@@ -531,10 +598,11 @@ Loop 深度（可折叠路由）：
 
 def build_prompt(args: argparse.Namespace) -> str:
     role = canonical_role(args.role)
+    controls = effective_task_controls(args)
     validate_source_route(role, args)
     validate_execution_profile(role, args)
-    validate_spark_opportunity(role, args)
-    route = selected_model_route(role, args)
+    validate_spark_opportunity(role, args, controls)
+    route = selected_model_route(role, args, controls)
     source_role = args.source_role or ("用户" if role in {"总控", "架构"} else "待确认")
     source_thread = args.source_thread or "待确认"
     project = args.project or "待确认"
@@ -547,13 +615,14 @@ def build_prompt(args: argparse.Namespace) -> str:
     forbidden = args.forbid or []
     validation = args.validation or []
     callback_target = f"{source_role} / thread id: {source_thread}"
-    profile = effective_token_profile(role, args)
+    profile = effective_token_profile(role, args, controls)
 
     if profile == "compact":
         return build_compact_prompt(
             args=args,
             role=role,
             route=route,
+            controls=controls,
             callback_target=callback_target,
             project=project,
             read_first=read_first,
@@ -589,7 +658,7 @@ Token Budget Profile：
 
 {role_execution_guidance(role)}
 {execution_profile_guidance(role, args)}
-{spark_opportunity_guidance(role, args)}
+{spark_opportunity_guidance(role, args, controls)}
 {ui_preview_route_guidance(role, args)}
 {browser_automation_guidance(role)}
 {content_research_guidance(role)}
@@ -598,15 +667,15 @@ Token Budget Profile：
 角色树位置（总控/架构/内容主编/执行角色）：
 {ROLE_TREE_POSITION[role]}
 
-{loop_depth_explanation(args.loop_depth, args.override_reason)}
+{task_controls_guidance(args, controls)}
+{loop_depth_explanation(controls.loop_depth, args.override_reason)}
 {task_dispatch_decision(role, args)}
 负责人交互边界：
-- 总控 / CEO 只直接对接负责人层或治理角色：架构 / CTO、内容主编、知识库、技能维护、文档/交付，或用户明确指定的例外。
-- 技术执行角色（开发、UI/PPT、测试、QA、安全、DBA、运维）默认由架构 / CTO 派发、验收和回流；总控只接收架构汇总的项目结果、风险、决策点和最终验收建议。
-- 内容执行角色（公众号发布、小红书、视频）默认由内容主编派发、验收和回流；总控只接收内容主编汇总的内容结果、发布风险、授权点和最终验收建议。
-- 总控不编写或修改代码、测试脚本、验收脚本、自动化验证脚本；需要这类产物时，交给开发或测试实现，由架构/QA复核证据。
+- 总控只对接负责人/治理层；技术执行由 CTO 负责，内容执行由内容主编负责。只有用户明确 override 时越级。
+- 总控不编写代码、测试或验收脚本；由开发/测试实现，架构/QA 复核，总控只验收结果、风险和决策点。
 
 {architecture_planning_sections(role, args)}
+{full_profile_gate(profile, callback_target)}
 
 目标：
 {args.objective}
@@ -632,9 +701,8 @@ Token Budget Profile：
 - 本轮退出条件：{args.exit_condition or "完成目标、阻塞并说明证据、或需要来源窗口决策"}
 
 上下文预算：
-- 不搬运完整聊天记录、长日志或大段源码；默认只传状态增量、证据句柄、决策需求和下一回流对象。
-- 每次派发、回调、阻塞、完成或纠偏后，更新 .codex/role-windows.md；长任务同时刷新“压缩交接卡”；项目允许写入且是 git 仓库时提交该台账更新。
-- 当上下文接近过长、compact 失败、或任务跨越多个闭环时，先用台账、提交、PR、文件证据和压缩交接卡接续，不要求新窗口读取完整旧线程。
+- 只传状态增量、证据句柄、决策和下一回流对象；不搬运完整聊天、长日志或大段源码。
+- 每次状态变化更新 .codex/role-windows.md；长任务用压缩交接卡、提交、PR 和文件证据接续。
 
 闭环完成条件：
 - 完成、阻塞或需要发起方决策时，必须同时完成两件事：1. 更新 .codex/role-windows.md 并提交；2. 向来源 thread 主动发送压缩回调。
@@ -643,15 +711,9 @@ Token Budget Profile：
 - 如果项目不是 git 仓库、项目禁止写入或无法提交，必须在压缩回调中说明原因和替代证据。
 
 路由前检查（总控、架构、内容主编和多角色派发必填）：
-- 是否读取 agent-role-orchestrator：{route_check_value(args.read_orchestrator)}
-- 是否读取 .codex/role-windows.md：{route_check_value(args.read_ledger)}
-- 是否复用已有角色线程：{args.reuse_thread or "待确认"}
-- 是否写清模型建议/覆盖：是
-- 是否写清 source-window callback：是
-- 是否写清允许/禁止范围：是
-- 是否写清验证与提交要求：是
-- 是否包含技能路由台账：是
-- 是否需要更新 .codex/role-windows.md：{args.update_ledger or "待确认"}
+- orchestrator：{route_check_value(args.read_orchestrator)}；role-windows：{route_check_value(args.read_ledger)}；复用线程：{args.reuse_thread or "待确认"}
+- 模型、来源回调、允许/禁止范围、验证/提交、技能台账：已写入本提示词
+- 是否更新 .codex/role-windows.md：{args.update_ledger or "待确认"}
 
 技能路由台账（总控、架构、内容主编和多角色拆分必填；单一执行角色可写“不适用/继承来源台账”）：
 - 候选 skill：{csv_or_default(candidate_skills, "待确认")}
@@ -664,18 +726,10 @@ Token Budget Profile：
 {args.commit_requirements or "遵循项目 AGENTS.md；未要求提交时先回报变更和验证证据。"}
 
 回调/通知规则：
-- 本任务发起方：{callback_target}。
-- 完成、阻塞或需要发起方决策时，主动通知发起方窗口；不要只等待用户转述。
-- 必须先更新 .codex/role-windows.md 并提交，再向来源 thread 主动发送压缩回调；仅完成台账更新不算闭环。
-- 如无法直接发送到发起方窗口，请输出一段可复制的“给发起方的回调消息”，且最终输出必须以 <codex_delegation> 或“压缩回调”开头。
+- 本任务发起方：{callback_target}。完成、阻塞或需决策时执行上方闭环完成条件，不等待用户转述。
 
 结构化反馈格式（返工/验收失败/需要决策时必填）：
-- 问题/缺口：
-- 证据/复现：
-- 影响等级：
-- 建议回流对象：
-- 需要决策：
-- 下一闭环状态：
+- 问题/缺口；证据/复现；影响等级；建议回流对象；需要决策；下一闭环状态。
 
 压缩回调：
 - 当前状态：
@@ -693,9 +747,7 @@ Token Budget Profile：
 
 规则沉淀：
 - 可复用优化沉淀：无 / 建议 / 已沉淀
-- 具体问题或优化：
-- 目标位置：skill / README / 角色提示词 / QA 清单 / 验证命令 / registry / source policy / 项目文档 / 待确认
-- 已执行变更或建议后续：
+- 具体问题、目标位置、已执行变更或建议后续：
 
 完成后请回传：
 {args.return_requirements or "压缩回调、验证证据、技能命中回传、规则沉淀状态。"}
@@ -713,10 +765,10 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--objective", required=True, help="Concrete task objective. Required to avoid blank prompts.")
     parser.add_argument("--project", help="Project path or scope.")
     parser.add_argument("--mode", default="新建", choices=["新建", "继承", "接续", "重置"])
-    parser.add_argument("--loop-depth", default="L1", choices=["L0", "L1", "L2", "L3"], help="Collapsible routing depth. L0 direct user-to-executor; L1 owner layer; L2 owner-to-executor loop; L3 high-risk gated loop.")
-    parser.add_argument("--profile", default="auto", choices=["auto", "compact", "standard", "full"], help="Token budget profile. auto chooses compact for L0/L1 owner/simple prompts, standard for L2/architecture/new-code prompts, and full for L3/critical prompts.")
-    parser.add_argument("--task-size", default="medium", choices=["tiny", "small", "medium", "large", "critical"], help="Task dispatch size. tiny lets CEO self-handle only local low-risk changes; small allows CEO -> 开发 direct dispatch; medium routes to owner layer; large/critical uses full role teams and gates.")
-    parser.add_argument("--risk", default="normal", choices=["normal", "mechanical", "critical", "extreme"], help="Use mechanical only for fully scoped rote work, critical for production/release/data/security gates, and extreme only for exceptional CTO reasoning.")
+    parser.add_argument("--loop-depth", default="L1", choices=["L0", "L1", "L2", "L3"], help="Collapsible routing depth. Effective controls promote large work to at least L2 and critical/extreme work to L3.")
+    parser.add_argument("--profile", default="auto", choices=["auto", "compact", "standard", "full"], help="Token budget profile. auto chooses compact for tiny/small/ordinary medium work, standard for large/L2/architecture/new-code work, and full for critical/L3/high-risk gates.")
+    parser.add_argument("--task-size", default="medium", choices=["tiny", "small", "medium", "large", "critical"], help="Task dispatch size. large promotes the effective loop to at least L2; critical promotes effective risk/loop to critical/L3.")
+    parser.add_argument("--risk", default="normal", choices=["normal", "mechanical", "critical", "extreme"], help="Use mechanical only for fully scoped rote work. Critical/extreme risk promotes the effective loop to L3 and controls model/profile routing.")
     parser.add_argument("--executor-tier", default="owner", choices=["owner", "mechanical", "bounded", "semantic", "high-risk"], help="Development execution tier. bounded routes a one-shot executor to Luna; owner keeps the durable Dev Lead route.")
     parser.add_argument("--execution-profile", default="serial", choices=["serial", "parallel"], help="Development topology. Parallel is fail-closed and requires disjoint scope plus independent validation.")
     parser.add_argument("--worker-count", type=int, default=1, help="One-shot development workers. Default 1; explicit parallel profile permits 2-5.")

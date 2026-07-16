@@ -1,6 +1,6 @@
 ---
 name: xhs-automation-publisher
-description: Use when the Xiaohongshu/Rednote role needs authorized browser automation for login checks, creator-center preview fill, publish-flow blockers, final posting, content search, content-data export, or comment/engagement actions after explicit user approval. Prefer Codex's native Browser/Chrome surface for interactive logged-in work and retain the vendored Python/CDP commands for deterministic batch/export fallback.
+description: Run authorized Xiaohongshu browser workflows for login checks, creator preview fill, publish blockers, final posting, search, export, or approved engagement. Prefer native signed-in Chrome; keep Python/CDP for deterministic batch fallback.
 ---
 
 # XHS Automation Publisher

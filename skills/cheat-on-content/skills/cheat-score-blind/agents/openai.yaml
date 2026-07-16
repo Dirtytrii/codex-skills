@@ -1,0 +1,6 @@
+interface:
+  display_name: "Cheat Blind Scorer"
+  short_description: "Internal context-isolated rubric scorer"
+  default_prompt: "Run the internal blind rubric scorer with only the supplied script and rubric-note paths."
+policy:
+  allow_implicit_invocation: false

@@ -4,7 +4,7 @@
 
 核心设计亮点：CEO-first 入口、可折叠多窗口 Loop、来源窗口主动回调、Fail-Closed Tool Layer、按需 skill 路由、模型与 Token 预算、可量化的技能命中率，以及可复用优化沉淀。
 
-详细资料：[技术亮点与设计取舍](docs/technical-highlights.md) · [角色与运行规则](docs/role-usage.md) · [机器可读 skill 清单](registry/skills.json) · [来源治理](docs/source-policy.md) · [新增 skill](docs/add-skill.md)
+详细资料：[技术亮点与设计取舍](docs/technical-highlights.md) · [路由、Token 与 Skill 评估](docs/routing-token-and-evaluation.md) · [角色与运行规则](docs/role-usage.md) · [机器可读 skill 清单](registry/skills.json) · [来源治理](docs/source-policy.md) · [新增 skill](docs/add-skill.md)
 
 ## 30 秒上手
 
@@ -80,6 +80,17 @@ Loop 深度按任务折叠，而不是默认走最长链路：
 
 总控在行动前输出 `任务分发决策`：`tiny` 可自办，`small` 可直派一个短小开发任务，`medium` 交负责人判断，`large` 启动完整团队，`critical` 进入 L3 门禁。
 
+生成器会先统一输入值，再选择模型与 Prompt：
+
+| 输入 | 负责决定 | 关键规则 |
+| --- | --- | --- |
+| `task-size` | 默认组织路径 | `large` 至少 L2；`critical` 进入 L3 |
+| `risk` | 风险和模型余量 | critical/extreme 进入 L3 与高风险路由 |
+| `loop-depth` | 角色链路深度 | 显式 L3 会把普通风险提升为 critical |
+| `profile` | Prompt 字段量 | 默认 `auto`；不应拿 compact 删减高风险门禁 |
+
+因此 large 默认得到 L2 + standard，critical 默认得到 critical risk + L3 + full。模型、Spark 资格、Loop 和 Profile 使用同一组 effective controls，不会各自猜测。完整推导、命令和指标解释见 [路由、Token 与 Skill 评估指南](docs/routing-token-and-evaluation.md)。
+
 多窗口闭环遵循来源窗口：A 派 B，B 回 A；B 再派 C，C 回 B。完成、阻塞或需要决策时必须同时更新并提交 `.codex/role-windows.md`，并向来源 thread 主动发送压缩回调；`仅完成台账更新不算闭环`。没有发送工具时，以 `<codex_delegation>` 或 `压缩回调` 开头供转发。
 
 ## Fail-Closed Tool Layer
@@ -92,15 +103,20 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 | `render_role_prompt.py` | 按角色、风险、来源、范围、模型和 Token 档位生成 prompt |
 | `validate_role_loop.py` | 校验台账、prompt、回调和技能命中字段 |
 | `check_codegraph.py` | 检查新代码项目的 CodeGraph 可用性和初始化状态 |
-| `aggregate_skill_hits.py` | 聚合必选命中、漏召、误召和临时发现 skill |
+| `aggregate_skill_hits.py` | 仅从含路由声明或技能回调的文件聚合自报命中、漏召、有效使用、真实误召和不一致回传 |
+| `evaluate_skill_routing.py` | 对实际选择做离线评分，覆盖应命中与无需 Skill 的负样本 |
+| `audit_skill_catalog.py` | 递归检查 Skill 目录、描述预算和隐式调用策略 |
 
-这些脚本位于 `skills/agent-role-orchestrator/scripts/`。典型用法：
+角色运行脚本位于 `skills/agent-role-orchestrator/scripts/`；目录审计和路由评估属于仓库级 PR 工具，位于 `scripts/`。典型用法：
 
 ```bash
 python skills/agent-role-orchestrator/scripts/ensure_project_role_files.py --project /path/to/project --write
 python skills/agent-role-orchestrator/scripts/render_role_prompt.py --role 开发 --objective "修复订单筛选" --source-role 架构 --profile auto --validation "pytest"
 python skills/agent-role-orchestrator/scripts/validate_role_loop.py --prompt /path/to/prompt.md --callback /path/to/callback.md
+python scripts/evaluate_skill_routing.py --validate-only --strict
 ```
+
+生成后先看 `任务控制`、`模型建议` 和 `Token Budget Profile` 是否一致。统计时区分三层：目录审计只证明 Skill 可发现；回调聚合只反映角色自报；路由评分需要外部提供实际 `selected_skills`，当前脚本不会自动运行 Codex。无需 Skill 的负样本也必须保持空选择，用来发现过度加载。
 
 新本地代码项目由架构先运行 `check_codegraph.py`，技术方案确认后再做有边界的开源/可借鉴方案扫描。项目台账有 thread id 就复用，状态不明写 `待确认`，不能靠聊天记忆编造。
 
@@ -128,7 +144,7 @@ python skills/agent-role-orchestrator/scripts/validate_role_loop.py --prompt /pa
 
 默认串行。并行必须有互斥范围和独立验证；3-5 个 worker 只能显式使用 `--execution-profile parallel --worker-count N --disjoint-scope ... --independent-validation ...`，不会因为“任务很大”自动扩散。
 
-Token Budget Profile 控制 prompt 体积：`compact` 用于 L0/L1 小闭环，`standard` 用于 L2、架构或新项目，`full` 用于 L3 与高风险门禁。上下文预算只传状态增量、证据句柄、决策和下一回流对象；长任务依靠台账、提交、PR 和压缩交接卡接续。
+Token Budget Profile 控制 prompt 体积：`compact` 用于 tiny/small 和普通 medium 小闭环，`standard` 用于 large、L2、架构或新项目，`full` 用于 critical、L3 与高风险门禁，并额外要求独立复核、失败回退和 go/no-go 决策方。显式 `--profile` 优先于自动路由。上下文预算只传状态增量、证据句柄、决策和下一回流对象；长任务依靠台账、提交、PR 和压缩交接卡接续。
 
 ## 能力路由
 
@@ -162,6 +178,7 @@ skill 命中通过回调量化：负责人声明候选/必选/可选/跳过，�
 skills/                         可安装 skill；每个目录包含 SKILL.md 及按需 references/scripts/assets
 registry/skills.json            active skill、来源、维护归属和角色消费关系
 docs/technical-highlights.md    角色编排、Loop、Token 和 Fail-Closed 的设计取舍
+docs/routing-token-and-evaluation.md  路由推导、模型/Profile、指标和评估输入格式
 docs/role-usage.md              完整角色边界、模型、回调和平台运行规则
 docs/source-policy.md           local / external-github / hermes 来源治理
 scripts/validate_public_skills.py 公开 skill 总校验入口

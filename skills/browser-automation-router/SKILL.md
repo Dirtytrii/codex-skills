@@ -1,6 +1,6 @@
 ---
 name: browser-automation-router
-description: Route browser interaction to Codex's in-app Browser, the Chrome extension with the user's existing signed-in profile, Playwright CLI, or a platform-specific automation script. Use for browser automation, logged-in web workflows, UI inspection, screenshots, form filling, publishing previews, frontend QA, and deciding whether repository-maintained browser code is still necessary.
+description: Choose the narrowest reliable browser surface across Codex Browser, signed-in Chrome, Playwright CLI, and platform scripts. Use for browser automation, logged-in workflows, UI inspection, screenshots, form filling, publish previews, or frontend QA.
 ---
 
 # Browser Automation Router

@@ -75,11 +75,31 @@
 
 | Profile | 用途 | 输出策略 |
 | --- | --- | --- |
-| `compact` | L0/L1、小型执行任务 | 只保留闭环必需字段 |
-| `standard` | L2、架构、新代码项目 | 加入必要方案与状态字段 |
-| `full` | L3、关键 PR、生产/安全/DB 风险 | 加入完整门禁和深层检查 |
+| `compact` | tiny/small、普通 medium | 只保留闭环必需字段 |
+| `standard` | large、L2、架构、新代码项目 | 加入必要方案与状态字段 |
+| `full` | critical、L3、生产/安全/DB 风险 | 加入独立复核、失败回退、剩余风险和 go/no-go |
+
+任务规模、风险、Loop 和 Profile 不再各自独立判断。生成器先推导 effective controls：`large -> L2+`，`critical/risk critical|extreme/显式 L3 -> L3`，然后用同一结果选择模型、Spark 资格和 Profile。
+
+```text
+task-size + risk + requested loop
+              ↓
+ effective risk + effective loop
+              ↓
+ role/executor model + Spark eligibility
+              ↓
+       auto Token Profile
+```
+
+这里的关键取舍是“安全控制先收敛，Prompt 体积后决定”。显式 Profile 只用于兼容或诊断，不应拿来删除 critical/L3 所需的独立门禁。可复制命令和完整提升矩阵见 [路由、Token 与 Skill 评估指南](routing-token-and-evaluation.md)。
 
 生成器对 compact 设置行数和字节预算，QA 不接收 CTO 专属方案占位，内容角色也不会污染技术执行 prompt。
+
+### GPT-5.6 Prompt Contract
+
+角色 prompt 按 [OpenAI GPT-5.6 提示词指南](https://developers.openai.com/api/docs/guides/prompt-guidance-gpt-5p6) 收敛为同一契约：先写目标和完成标准，再写范围、证据、验证和退出条件。重复示例、工具说明和回调规则只保留一份；绝对措辞只用于权限、生产、发布、凭据和 fail-closed 等不可违反边界。
+
+缺信息时只询问阻塞执行的最小字段；工具只暴露当前任务需要的能力；进度更新保持稀疏。Prompt、模型或 reasoning 默认值变更后，必须用代表性任务做对照评估，不能只凭阅读感觉判断更省或更强。
 
 ### 压缩交接
 
@@ -97,21 +117,36 @@
 
 Spark 不进入稳定层级。它是 research preview 的独立额度机会通道，仅在当前可用性明确时用于 mechanical/bounded 一次性开发 executor。未确认可用时回退 Mini/Luna；owner、跨文件集成、最终 QA、critical/high-risk 和长上下文工作禁止使用 Spark。
 
+自动模型策略有意止于 `xhigh`，这是本体系的成本与可预测性选择，不是声称产品不存在更高档位。Max/Ultra 仅在用户明确选择、当前界面可用且代表性评估证明收益时使用，不进入默认路由。
+
 并行默认关闭。普通并行需要互斥范围和独立验证；3-5 worker 必须显式开启。这样不会因为模型便宜或额度独立，就把一个耦合任务拆成多个相互覆盖的上下文。
 
 ## 可量化的 Skill Routing
 
 skill 多了以后，仅靠描述命中会产生“感觉都加载了”的错觉。系统要求负责人声明候选、必选、可选和跳过 skill，下游回调实际使用、要求但未用、临时发现、误召和真正影响产出的 skill。
 
-核心指标：
+回调聚合指标：
 
 ```text
-必选命中率 = 实际使用的必选 skill / 声明的必选 skill
-误召率 = 加载但未产生作用的 skill / 总加载 skill
+必选自报命中率 = 实际使用的必选 skill / 声明的必选 skill
+路由声明覆盖率 = 包含必选声明的文件 / 纳入统计的 eligible 文件
+回调完整率 = 五个技能回传字段齐全的文件 / 包含技能回调的文件
+有效使用率 = 真正影响产出的已加载 skill / 已加载 skill
+误召率 = 已加载且回传为误召的 skill / 总加载 skill
 漏召数 = 任务结束后确认本应使用但未使用的 skill 数
 ```
 
-统计交给 `aggregate_skill_hits.py`，不靠总控聊天记忆。单次异常只记录证据；持续漏召、误召、触发漂移或文档膨胀再交给 `技能维护` 修改 skill 和 registry。
+三层证据必须分开读取：
+
+| 层次 | 证据 | 能回答 | 不能回答 |
+| --- | --- | --- | --- |
+| 目录审计 | Skill 元数据与描述预算 | 能否发现、是否膨胀 | 某次任务是否选对 |
+| 回调聚合 | 角色产出的路由台账和回传 | 角色自报是否命中、漏召、误召 | 独立路由是否正确 |
+| 离线评分 | case + 实际 `selected_skills` | 必选 recall、负样本克制、unexpected | Codex 是否已被脚本自动执行 |
+
+`aggregate_skill_hits.py` 只统计含路由声明或技能回调的 eligible 文件；普通 Markdown 不进入分母。没有必选声明时返回 `null`，不会伪造 `100%`。回传为误召却未出现在已加载列表中的 skill 会作为不一致数据单列，不污染误召率。
+
+`evals/skill-routing-cases.jsonl` 与 `evaluate_skill_routing.py` 是离线评分器，覆盖必选漏召、禁止误召、意外加载和无需 Skill 的负样本；它还不是自动运行 Codex 的 runtime runner。负样本通过率和必选 recall 必须一起看，否则“什么都加载”也可能制造虚假的高命中。单次异常只记录证据；持续漏召、误召、触发漂移或文档膨胀再交给 `技能维护` 修改 Skill 和 registry。
 
 ## 能力路由与内容门禁
 

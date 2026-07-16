@@ -13,7 +13,13 @@ Read this file only when selecting, overriding, or auditing a role model. These 
 | 运维 / DBA | `gpt-5.6-terra` + `high` | Deploy/restart/rollback/incident, DDL/cleanup/recovery/data risk: Sol/xhigh. |
 | 内容主编 / 知识库 / 技能维护 / 文档 | `gpt-5.6-terra` + `high` | High-risk public claims or cross-role irreversible decisions: Sol/xhigh. |
 
-No route uses `max`; the highest supported recommendation is `xhigh`.
+Automatic routes intentionally stop at `xhigh`. Some current Codex surfaces may expose `Max` or `Ultra` for eligible models/accounts; never auto-select them. Use one only after explicit user choice, current-surface availability confirmation, and a representative eval showing that the added cost improves the target task.
+
+## Reasoning Effort Eval Gate
+
+`high` is the current operational baseline, not proof that every task needs it. Before lowering a durable default, compare the current route with one lower supported reasoning level on the same representative tasks and prompt contract.
+
+Record completion correctness, required validation, tool calls, retries, correction loops, output tokens, and latency when available. Change the default only when the lower level preserves completion and safety across the representative set; keep `xhigh` for the explicit escalation conditions above. Do not raise or lower reasoning from intuition alone.
 
 ## One-Shot Development Executors
 

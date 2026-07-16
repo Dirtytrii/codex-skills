@@ -1,6 +1,6 @@
 ---
 name: authorized-blackbox-web-security
-description: Use for user-authorized black-box web security testing, especially when asked to act like a hacker, test a public site for data leakage or unauthorized modification, review exposed JS/API surfaces, login brute-force protections, CORS/security headers, or produce a penetration-style report. Triggers include 黑盒安全测试, 渗透测试, 扮演黑客, 漏洞测试, 数据泄露, 未授权访问, 登录爆破防护, 公网网站安全报告.
+description: Run user-authorized black-box web security tests and evidence-based reports. Use for 黑盒安全测试、渗透测试、数据泄露、未授权访问、公开 JS/API、登录爆破防护、CORS 或安全响应头检查。
 ---
 
 # Authorized Black-Box Web Security

@@ -1,6 +1,6 @@
 ---
 name: wechat-ai-app-ops
-description: Operate the user's WeChat Official Account AI application content workflow. Use when working in an accounts/content repository on WeChat articles about AI applications, Agents, MCP, Skills, tool calling, workflows, open-source AI tooling updates, weekly AI application digests, image-rich WeChat article formatting, draft-box API updates, or local WeChat content handoff. Do not use for Xiaohongshu or Xianyu work.
+description: Operate the WeChat Official Account AI-application workflow for articles, weekly digests, rich formatting, draft-box updates, and local handoff. Use for Agents, MCP, Skills, tool calling, workflows, and open-source AI updates; exclude Xiaohongshu and Xianyu.
 ---
 
 # WeChat AI App Ops

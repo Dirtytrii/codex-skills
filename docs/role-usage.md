@@ -11,6 +11,7 @@
 ├── docs/
 │   ├── add-skill.md
 │   ├── publication-checklist.md
+│   ├── routing-token-and-evaluation.md
 │   ├── role-usage.md
 │   └── source-policy.md
 ├── scripts/
@@ -103,7 +104,7 @@
 ### 新需求
 
 1. 先开或继承 `总控` 窗口，除非用户明确要求直接进入某个专业角色。
-2. `总控` 读取项目上下文，判断需求类型、风险、模型预算、是否需要多角色，并先选择任务规模和 loop 深度：`tiny` 可自办，`small` 可直派 `开发`，`medium` 走负责人层，`large` 启动完整角色团队，`critical` 启动 L3 门禁。
+2. `总控` 读取项目上下文，判断需求类型、风险、模型预算、是否需要多角色，并先选择任务规模和 loop 深度：`tiny` 可自办，`small` 可直派 `开发`，`medium` 走负责人层，`large` 启动完整角色团队，`critical` 启动 L3 门禁。生成器随后统一计算有效控制值：`large` 至少为 L2，`critical`、critical/extreme risk 或显式 L3 统一进入 L3；模型、Spark 资格和 Token Profile 都使用这一结果。
 3. 一旦进入总控管理流，原则是总控只直接对接负责人层：`架构 / CTO`、`内容主编`、`知识库`、`技能维护`，必要时 `文档/交付`；只有 `tiny` 低风险局部小改动可以总控自办，只有 `small` 单一、短、小、可验证的低风险开发任务可以总控直派 `开发`。
 4. 总控/架构/多角色/派发/回调/台账类任务必须先读取已安装的 `agent-role-orchestrator/SKILL.md` 和项目 `.codex/role-windows.md`；若台账缺失或不可读，状态写 `待确认`，不要编造线程 ID。项目允许写入时，优先用 `ensure_project_role_files.py --write` 创建或刷新 `AGENTS.md` 托管规则块和初始台账模板。
 5. 技术复杂需求交给 `架构 / CTO` 输出 3-5 个可行技术路线的选型简报，再进入下游实施。
@@ -138,6 +139,17 @@ Loop 深度：
 | `critical` | L3 门禁团队 | 关键 PR、发布、生产、账号、安全、DBA、公开声明等高风险任务 |
 
 总控不默认写代码、测试脚本、验收脚本或自动化验证脚本；超过 `tiny` 自办和 `small` 直派开发边界的产物交给 `开发` 或 `测试`，由 `架构` / `QA` 复核证据。
+
+有效路由速查：
+
+| 输入示例 | effective controls | auto profile | 预期行为 |
+| --- | --- | --- | --- |
+| `medium + normal + L1` | `normal + L1` | `compact` | 负责人或普通开发小闭环 |
+| `large + normal + L1` | `normal + L2` | `standard` | 负责人拆执行并收敛 |
+| `critical + normal + L1` | `critical + L3` | `full` | 高风险模型与独立门禁 |
+| `medium + normal + L3` | `critical + L3` | `full` | 显式深链路同步提升风险 |
+
+`--profile` 只控制 Prompt 字段量，不负责降低风险、模型或 Loop。默认始终使用 `--profile auto`；critical/L3 不应用显式 compact/standard 删除门禁字段。完整推导和指标格式见 [路由、Token 与 Skill 评估指南](routing-token-and-evaluation.md)。
 
 ### 路由前检查
 
@@ -200,8 +212,25 @@ python skills/agent-role-orchestrator/scripts/check_codegraph.py \
 
 ```bash
 python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py \
-  /path/to/callbacks-or-ledgers
+  /path/to/callbacks-or-ledgers \
+  --json
 ```
+
+校验路由评估集，并用实际选择记录评分：
+
+```bash
+python scripts/evaluate_skill_routing.py --validate-only --strict
+python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --strict
+```
+
+`observed.jsonl` 每行只记录 case id 和这次实际选择的 Skill；无需 Skill 的 case 必须传空数组：
+
+```json
+{"id":"no-skill-arithmetic","selected_skills":[]}
+{"id":"role-window-routing","selected_skills":["agent-role-orchestrator"]}
+```
+
+`--strict` 会在 case 未观测、评分失败或观测格式错误时返回非零。它不会自动启动 Codex；应由真实任务、外部 runner 或人工审计先产出 `selected_skills`。
 
 校验失败时不要派发、继续或关闭 loop；先补齐缺失字段，或把不确定状态明确写成 `待确认` 并说明原因。
 
@@ -225,9 +254,10 @@ python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py \
 - 多窗口 loop 默认用 `压缩回调`，只传当前状态、本轮变化、证据链接/文件/命令、需要决策、下一回流对象和可复用优化沉淀状态。
 - 负责人层关闭技术或内容子树前，必须确认 `.codex/role-windows.md` 已更新并提交，且来源 thread 已收到压缩回调；如果没有发送工具，回调输出必须以 `<codex_delegation>` 或 `压缩回调` 开头。
 - 当上下文接近过长、remote compact 失败、或同一任务跨多个 PR/闭环时，优先开新窗口或接续既有角色窗口；输入只用 `.codex/role-windows.md`、压缩交接卡、提交/PR、文件证据和必要短摘要。
-- 生成下游提示词时使用 Token Budget Profile：`compact` 给 L0/L1 小闭环，只保留闭环必需字段；`standard` 给 L2、架构或新代码项目；`full` 给 L3、关键 PR、对抗审查、高风险公开声明、生产/数据/安全闭环。`render_role_prompt.py --profile auto` 是默认入口，负责人只在证据表明 compact 不够时升级。
+- 生成下游提示词时使用 Token Budget Profile：`compact` 给 tiny/small 和普通 medium 小闭环；`standard` 给 large、L2、架构或新代码项目；`full` 给 critical、L3、关键 PR、对抗审查、高风险公开声明、生产/数据/安全闭环，并增加独立复核、失败回退和 go/no-go 字段。`render_role_prompt.py --profile auto` 是默认入口，显式 `--profile` 覆盖自动分级。
 - `agent-role-orchestrator/SKILL.md` 只加载稳定闭环契约；角色边界、模型分级、工具路由、内容平台规则按需读取 `references/role-cards.md`、`model-routing.md`、`tool-routing.md`、`content-routing.md`，避免无关角色说明进入每个窗口上下文。PR 校验会限制入口文件行数和字节数。
-- 有回调文件或台账快照时，用 `aggregate_skill_hits.py` 聚合命中率，不靠总控或架构凭记忆估算。
+- 有回调文件或台账快照时，用 `aggregate_skill_hits.py` 聚合自报命中、声明覆盖、回调完整和有效使用率；只有含路由声明或技能回调的 eligible 文件进入分母，普通 Markdown 会被忽略。没有必选声明时命中率是 `null`，不是 0% 或 100%；回传为误召却未声明已加载的 skill 必须作为数据不一致单列。
+- 用 `evaluate_skill_routing.py` 对代表性输入和实际 `selected_skills` 做离线评分，并同时覆盖“应该命中”和“不应加载任何 skill”的负样本。重点同时看 `required_skill_recall`、`negative_case_pass_rate`、`unexpected_skills` 和 `unevaluated_case_count`，不要只追一个命中率。
 - `总控` 负责本次任务的全局路由判断和聚合视图；`架构` 与 `内容主编` 负责各自子树。长期的漏召、误召、触发描述过期、registry 漂移、README 说明混乱或跨角色 token 过重，转给 `技能维护`。
 - `技能维护` 只沉淀可公开复用的 skill 体系改进，不接收项目私有 `.codex/role-windows.md`、本机 memory、账号登录态或生产细节。
 
@@ -238,7 +268,7 @@ python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py \
 | 角色 | 默认模型 |
 | --- | --- |
 | `总控 / CEO` | `gpt-5.6-terra` + `high`；资金、上线、生产恢复、跨角色最终 go/no-go 升 `gpt-5.6-sol` + `xhigh` |
-| `架构 / CTO` | `gpt-5.6-sol` + `high`；实盘架构、事故根因、DB/并发/安全、不可逆方案升 `xhigh`；不生成不存在的 `max` 档位 |
+| `架构 / CTO` | `gpt-5.6-sol` + `high`；实盘架构、事故根因、DB/并发/安全、不可逆方案升 `xhigh`；自动路由不选 Max/Ultra |
 | `开发负责人 / Dev Lead` | `gpt-5.6-terra` + `high`；live exit、资金安全、PnL/fee、并发、重复失败返工升 `gpt-5.6-sol` + `xhigh` |
 | `开发执行 subagent` | 窗口内一次性 worker。纯机械单文件：`gpt-5.4-mini` + `high`；边界清楚、可独立验证的有限语义任务：`gpt-5.6-luna` + `high`；跨文件业务语义：`gpt-5.6-terra` + `high`；live/资金/并发/账本不下放，由 Dev Lead 用 Sol + xhigh 处理 |
 | `Spark Opportunity Lane` | Spark 当前可用且独立预览额度有剩余时，mechanical/bounded 一次性开发 executor 可用 `gpt-5.3-codex-spark` + `high`；未确认可用时回退 Mini/Luna，不承担 owner、集成、最终 QA 或高风险任务 |
@@ -246,6 +276,8 @@ python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py \
 | `运维` / `DBA` | 只读采证、容量、锁、空间分析：`gpt-5.6-terra` + `high`；部署、restart、rollback、生产故障、DDL、清理、恢复、数据风险：`gpt-5.6-sol` + `xhigh` |
 | `知识库` / `技能维护` / `文档/交付` | 默认 `gpt-5.6-terra` + `high`；纯索引、排版、搬运、registry 机械同步：`gpt-5.4-mini` + `medium` |
 | `UI/PPT` / `内容主编` / 内容执行角色 | 默认 `gpt-5.6-terra` + `high`；机械 HTML/资产整理：`gpt-5.4-mini` + `high`；公开高风险定位、声明或合规：`gpt-5.6-sol` + `xhigh` |
+
+部分 Codex 界面可能为符合条件的模型或账号提供 Max/Ultra。它们不进入本体系的自动默认值；只有用户明确选择、当前界面确认可用，并通过代表性 eval 证明额外成本有效时才使用。
 
 ### 开发团队
 

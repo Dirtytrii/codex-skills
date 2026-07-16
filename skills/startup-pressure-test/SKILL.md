@@ -1,6 +1,6 @@
 ---
 name: startup-pressure-test
-description: Brutally evaluate and refine startup ideas with practical early-stage startup frameworks. Use when Codex is asked to pressure-test a startup idea, validate whether the problem is real, map competitors and current customer behavior, find the first 10 customers, define an MVP, create a 2-week launch plan, assess founder-market fit, or give a direct strong/weak/pivot verdict.
+description: Pressure-test startup ideas against real user pain, current behavior, competitors, first-customer access, MVP scope, founder-market fit, and a two-week launch test. Produces a direct strong, weak, or pivot verdict.
 ---
 
 # Startup Pressure Test

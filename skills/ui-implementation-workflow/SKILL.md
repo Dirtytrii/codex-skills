@@ -1,6 +1,6 @@
 ---
 name: ui-implementation-workflow
-description: Turn UI references and visual direction into an implementable, project-consistent interface through page classification, bounded research, semantic tokens, skeleton-first implementation, and screenshot-based responsive QA. Use for UI/Frontend redesigns, landing and brand pages, portfolios, dashboards, login pages, lists, detail views, forms, settings, mobile pages, screenshot recreation, visual polish, or when generated UI looks generic, ugly, inconsistent, or overly AI-styled.
+description: Implement project-consistent UI through page classification, bounded references, semantic tokens, skeleton-first delivery, and responsive screenshot QA. Use for frontend redesigns, dashboards, forms, settings, mobile pages, screenshot recreation, visual polish, or generic-looking generated UI.
 ---
 
 # UI Implementation Workflow

@@ -1,6 +1,6 @@
 ---
 name: xhs-comment-research
-description: Read and analyze Xiaohongshu/Rednote comments from the user's logged-in Chrome session through Codex's native Chrome browser surface. Use when the user asks to collect, export, summarize, classify, or use 小红书评论区 / XHS comments for content planning, follow-up posts, audience research, reply strategy, or 引流文案. Works best for already-open note pages or creator-manager note links.
+description: Read and analyze Xiaohongshu comments from the user's signed-in Chrome session. Use to collect, export, summarize, or classify comments for content planning, follow-up posts, audience research, reply strategy, and 引流文案。
 ---
 
 # XHS Comment Research
