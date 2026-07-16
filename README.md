@@ -80,6 +80,8 @@ Loop 深度按任务折叠，而不是默认走最长链路：
 
 总控在行动前输出 `任务分发决策`：`tiny` 可自办，`small` 可直派一个短小开发任务，`medium` 交负责人判断，`large` 启动完整团队，`critical` 进入 L3 门禁。
 
+生成器会先统一输入控制值再做路由：`large` 至少提升为 `L2`；`critical`、`risk=critical|extreme` 或显式 `L3` 统一进入 L3 门禁，并共同约束模型、Spark 可用性和 Token Profile，避免同一提示词出现 full 预算、普通模型和 L1 的冲突组合。
+
 多窗口闭环遵循来源窗口：A 派 B，B 回 A；B 再派 C，C 回 B。完成、阻塞或需要决策时必须同时更新并提交 `.codex/role-windows.md`，并向来源 thread 主动发送压缩回调；`仅完成台账更新不算闭环`。没有发送工具时，以 `<codex_delegation>` 或 `压缩回调` 开头供转发。
 
 ## Fail-Closed Tool Layer

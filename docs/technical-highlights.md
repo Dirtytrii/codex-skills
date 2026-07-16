@@ -79,6 +79,8 @@
 | `standard` | large、L2、架构、新代码项目 | 加入必要方案与状态字段 |
 | `full` | critical、L3、生产/安全/DB 风险 | 加入独立复核、失败回退、剩余风险和 go/no-go |
 
+任务规模、风险、Loop 和 Profile 不再各自独立判断。生成器先推导 effective controls：`large -> L2+`，`critical/risk critical|extreme/显式 L3 -> L3`，然后用同一结果选择模型、Spark 资格和 Profile。
+
 生成器对 compact 设置行数和字节预算，QA 不接收 CTO 专属方案占位，内容角色也不会污染技术执行 prompt。
 
 ### GPT-5.6 Prompt Contract

@@ -649,12 +649,27 @@ def test_render_prompt_auto_profile_uses_task_size_and_risk() -> None:
     assert "profile：compact" in render("medium")
     standard = render("large")
     assert "profile：standard" in standard
+    assert "有效控制：risk=normal；loop=L2" in standard
     assert "独立门禁与失败回退（full 必填）" not in standard
     critical = render("critical")
     assert "profile：full" in critical
+    assert "model：gpt-5.6-sol" in critical
+    assert "thinking：xhigh" in critical
+    assert "有效控制：risk=critical；loop=L3" in critical
     assert "独立门禁与失败回退（full 必填）" in critical
     extreme = render("medium", "--risk", "extreme")
     assert "profile：full" in extreme
+    assert "model：gpt-5.6-sol" in extreme
+    assert "有效控制：risk=extreme；loop=L3" in extreme
+
+    critical_risk = render("medium", "--risk", "critical")
+    assert "profile：full" in critical_risk
+    assert "有效控制：risk=critical；loop=L3" in critical_risk
+
+    deep_loop = render("medium", "--loop-depth", "L3")
+    assert "profile：full" in deep_loop
+    assert "model：gpt-5.6-sol" in deep_loop
+    assert "有效控制：risk=critical；loop=L3" in deep_loop
 
     explicit = render("critical", "--profile", "compact")
     assert "profile：compact" in explicit
@@ -810,6 +825,28 @@ def test_render_prompt_uses_spark_only_for_confirmed_short_executor() -> None:
     )
     assert rejected.returncode != 0
     assert "mechanical or bounded" in rejected.stderr
+
+    critical_task = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "开发",
+            "--objective",
+            "处理资金账本",
+            "--source-role",
+            "架构",
+            "--task-size",
+            "critical",
+            "--executor-tier",
+            "bounded",
+            "--prefer-spark",
+            "--spark-available",
+        ],
+        check=False,
+    )
+    assert critical_task.returncode != 0
+    assert "does not support critical or extreme risk" in critical_task.stderr
 
 
 def test_render_prompt_compact_profile_stays_within_budget() -> None:

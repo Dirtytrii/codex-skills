@@ -95,6 +95,8 @@ Before acting or dispatching, output `任务分发决策：` with size, path, an
 
 Generate with `--task-size tiny|small|medium|large|critical`. Default unknown work to `medium`.
 
+The generator derives one effective control set before routing: `large` is at least `L2`; `critical`, `risk=critical|extreme`, or an explicit `L3` becomes an `L3` gated loop, and an explicit `L3` also promotes ordinary risk to `critical`. Model, loop depth, Spark eligibility, and Token Budget Profile must all consume these effective values.
+
 ## Entry Guard And Registry Rule
 
 For CEO, architecture, multi-role, dispatch, callback, or registry work:
