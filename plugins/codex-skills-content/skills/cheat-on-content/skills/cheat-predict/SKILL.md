@@ -139,7 +139,11 @@ Confidence 派生表见 [shared-references/state-management.md](../../shared-ref
 
 **BLIND_SCORING=on**（默认）—— 通过 Task/sub-agent tool spawn `cheat-score-blind`，让一个 context-isolated 的 sub-agent 只看 script + rubric_notes.md 给出 N 维分。
 
-默认评审模式是 `blind_subagent_plus_main_compare`：sub-agent 的盲打分是正式分数来源；主 Claude 仍要独立打一套主窗口自评分，只用于 Phase 2.5 的差异检测和解释校准，不替代 sub-agent。
+默认执行顺序固定为：
+
+1. `cheat-score-blind` 子 agent 盲打。这份分数是正式预测的基础。
+2. 主窗口独立打一套自评分，只用于对照，不替代盲打。
+3. Phase 2.5 记录每个维度的 `blind vs self` 差异；差异达到阈值时让用户裁定。
 
 只有用户明确说“跳过盲打 / 这次不用子 agent / 直接自评”，或运行环境确实没有可用 sub-agent，才允许 `--skip-blind`。一旦走 `--skip-blind`，必须写 `BlindScored By: main-claude-self`，并更新 `last_prediction_self_scored: true`。不要把“盲打 + 主窗口对照”误记成 `--skip-blind`。
 
