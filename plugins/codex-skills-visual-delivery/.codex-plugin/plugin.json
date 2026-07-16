@@ -1,0 +1,28 @@
+{
+  "name": "codex-skills-visual-delivery",
+  "version": "0.1.0",
+  "description": "UI implementation, visual assets, decks, social cards, PDFs, and delivery document workflows.",
+  "author": {
+    "name": "Dirtytrii",
+    "email": "springcloudjiang@foxmail.com",
+    "url": "https://github.com/Dirtytrii"
+  },
+  "homepage": "https://github.com/Dirtytrii/codex-skills",
+  "repository": "https://github.com/Dirtytrii/codex-skills",
+  "license": "MIT",
+  "keywords": ["codex", "ui", "design", "slides", "delivery"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Skills Visual Delivery",
+    "shortDescription": "UI, visual assets, decks, PDFs, and delivery packages.",
+    "longDescription": "Adds reference-driven UI implementation, screenshot validation, PPT and social-card production, PDF handling, visual asset planning, and client-facing delivery document workflows.",
+    "developerName": "Dirtytrii",
+    "category": "Design",
+    "capabilities": ["Design", "Create", "Validate"],
+    "websiteURL": "https://github.com/Dirtytrii/codex-skills",
+    "defaultPrompt": [
+      "Use the visual delivery plugin to implement and validate this UI from references.",
+      "Create a polished visual or document delivery package from these materials."
+    ]
+  }
+}

@@ -2,6 +2,8 @@
 
 这份文档回答三个容易混在一起的问题：任务应该走多深的角色 Loop、应该使用哪一档模型和 Prompt，以及 Skill 是否真的选对。角色边界仍以 `agent-role-orchestrator` 为准；这里解释脚本输入、有效值和指标口径。
 
+在角色路由之前，先做插件层路由：默认仅保留 core，当前任务需要哪个领域再启用哪个 domain。可用 `audit_plugin_context.py` 估算所选插件目录并发现旧平铺安装重复项；包边界见 [plugin-packaging.md](plugin-packaging.md)。
+
 ## 一条统一决策链
 
 `render_role_prompt.py` 不应分别猜测模型、Loop 和 Profile。推荐决策顺序是：

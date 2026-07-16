@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Guard"
+  short_description: "工作流护栏、禁止动作和验证门禁强化"
+  default_prompt: "Use $gstack-guard for this task and keep the current role boundary explicit."

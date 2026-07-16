@@ -4,41 +4,34 @@
 
 核心设计亮点：CEO-first 入口、可折叠多窗口 Loop、来源窗口主动回调、Fail-Closed Tool Layer、按需 skill 路由、模型与 Token 预算、可量化的技能命中率，以及可复用优化沉淀。
 
-详细资料：[技术亮点与设计取舍](docs/technical-highlights.md) · [路由、Token 与 Skill 评估](docs/routing-token-and-evaluation.md) · [角色与运行规则](docs/role-usage.md) · [机器可读 skill 清单](registry/skills.json) · [来源治理](docs/source-policy.md) · [新增 skill](docs/add-skill.md)
+详细资料：[技术亮点与设计取舍](docs/technical-highlights.md) · [插件拆包与安装](docs/plugin-packaging.md) · [路由、Token 与 Skill 评估](docs/routing-token-and-evaluation.md) · [角色与运行规则](docs/role-usage.md) · [机器可读 skill 清单](registry/skills.json) · [来源治理](docs/source-policy.md) · [新增 skill](docs/add-skill.md)
 
 ## 30 秒上手
 
-先克隆并验证仓库：
+推荐把仓库注册为插件 marketplace。`core` 是唯一默认包，其余领域包按当前任务启用：
 
 ```bash
-git clone https://github.com/Dirtytrii/codex-skills.git
-cd codex-skills
-python scripts/validate_public_skills.py
+codex plugin marketplace add Dirtytrii/codex-skills
+codex plugin add codex-skills-engineering@dirtytrii-codex-skills
 ```
 
-Linux/macOS 安装全部 skills：
+也可以在 Codex 桌面的 Plugins 面板添加该 marketplace，并按任务安装领域包。若只做总控分流、浏览器能力选择或项目压力测试，保持默认 `core` 即可。
+
+| 包 | 安装策略 | 适用任务 |
+| --- | --- | --- |
+| `codex-skills-core` | 默认 | 总控/角色路由、浏览器路由、项目压力测试 |
+| `codex-skills-engineering` | 按需 | 架构、开发、测试、QA、工程发布 |
+| `codex-skills-operations` | 按需 | 运维诊断、安全、部署前后门禁、恢复规划 |
+| `codex-skills-content` | 按需 | 内容研究、写作、公众号、小红书与发布准备 |
+| `codex-skills-visual-delivery` | 按需 | UI、视觉资产、PPT、PDF 与交付文档 |
+
+内容配图、UI 文案等跨域任务先审计组合；未超预算时可以同时启用多个 domain，超出时拆成带压缩交接的阶段任务。不要把所有包长期常驻；可同时检查预估目录开销和旧平铺安装重复项：
 
 ```bash
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-for d in skills/*; do
-  [ -d "$d" ] || continue
-  rsync -a --delete "$d/" "${CODEX_HOME:-$HOME/.codex}/skills/$(basename "$d")/"
-done
+python scripts/audit_plugin_context.py --plugin codex-skills-content --scan-user-roots --strict
 ```
 
-Windows PowerShell 安装全部 skills：
-
-```powershell
-$target = Join-Path $env:USERPROFILE ".codex\skills"
-New-Item -ItemType Directory -Force $target | Out-Null
-Get-ChildItem .\skills -Directory | ForEach-Object {
-  $dest = Join-Path $target $_.Name
-  New-Item -ItemType Directory -Force $dest | Out-Null
-  Copy-Item -Path (Join-Path $_.FullName "*") -Destination $dest -Recurse -Force
-}
-```
-
-目录必须整体复制，不能只拿 `SKILL.md`；`references/`、`scripts/`、`assets/` 也属于 skill。安装后在新任务中使用：
+插件机制不可用时，仍可从 canonical `skills/` 复制所需目录到 `$HOME/.agents/skills`；这是兼容路径，不再推荐一次安装全部。目录必须整体复制，不能只拿 `SKILL.md`。安装后在新任务中使用：
 
 ```text
 使用 $agent-role-orchestrator，先按总控角色梳理这个需求，并选择最小安全 Loop、负责人和模型预算。
@@ -177,7 +170,11 @@ skill 命中通过回调量化：负责人声明候选/必选/可选/跳过，�
 ```text
 skills/                         可安装 skill；每个目录包含 SKILL.md 及按需 references/scripts/assets
 registry/skills.json            active skill、来源、维护归属和角色消费关系
+registry/plugin-packages.json   core/domain 唯一归属、依赖和默认安装策略
+plugins/                        从 skills/ 生成的 Codex 插件 bundle；禁止直接维护
+.agents/plugins/marketplace.json 仓库级插件 marketplace
 docs/technical-highlights.md    角色编排、Loop、Token 和 Fail-Closed 的设计取舍
+docs/plugin-packaging.md        插件安装、拆包边界、迁移和上下文审计
 docs/routing-token-and-evaluation.md  路由推导、模型/Profile、指标和评估输入格式
 docs/role-usage.md              完整角色边界、模型、回调和平台运行规则
 docs/source-policy.md           local / external-github / hermes 来源治理
@@ -191,6 +188,9 @@ scripts/validate_role_system.py    角色体系、README 和工具契约校验
 
 ```bash
 python scripts/test_role_system_tools.py
+python scripts/test_plugin_packages.py
+python scripts/sync_plugin_bundles.py --check
+python scripts/validate_plugins.py
 python scripts/validate_role_system.py
 python scripts/validate_public_skills.py
 git diff --check

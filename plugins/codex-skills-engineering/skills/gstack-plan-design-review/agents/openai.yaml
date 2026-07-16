@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Plan Design Review"
+  short_description: "UI/UX 计划、交互、响应式和审美风险审查"
+  default_prompt: "Use $gstack-plan-design-review for this task and keep the current role boundary explicit."

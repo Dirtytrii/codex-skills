@@ -1,0 +1,28 @@
+{
+  "name": "codex-skills-operations",
+  "version": "0.1.0",
+  "description": "Read-only operations diagnosis, deployment gates, security review, and recovery planning workflows.",
+  "author": {
+    "name": "Dirtytrii",
+    "email": "springcloudjiang@foxmail.com",
+    "url": "https://github.com/Dirtytrii"
+  },
+  "homepage": "https://github.com/Dirtytrii/codex-skills",
+  "repository": "https://github.com/Dirtytrii/codex-skills",
+  "license": "MIT",
+  "keywords": ["codex", "operations", "security", "deployment", "diagnosis"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Skills Operations",
+    "shortDescription": "Operations, security, deployment, and recovery gates.",
+    "longDescription": "Adds authorized security review, read-only application and service diagnosis, deployment preflight and postflight verification, package update planning, and recovery-safe operations workflows.",
+    "developerName": "Dirtytrii",
+    "category": "Developer Tools",
+    "capabilities": ["Diagnose", "Review", "Plan Recovery"],
+    "websiteURL": "https://github.com/Dirtytrii/codex-skills",
+    "defaultPrompt": [
+      "Use the operations plugin for read-only diagnosis and a safe recovery plan.",
+      "Review this deployment or security change without performing unauthorized writes."
+    ]
+  }
+}

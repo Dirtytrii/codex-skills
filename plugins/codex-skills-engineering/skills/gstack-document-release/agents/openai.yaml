@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Document Release"
+  short_description: "发布说明、变更日志和内外部发布沟通"
+  default_prompt: "Use $gstack-document-release for this task and keep the current role boundary explicit."

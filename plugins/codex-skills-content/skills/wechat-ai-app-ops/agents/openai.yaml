@@ -1,0 +1,4 @@
+interface:
+  display_name: "WeChat AI App Ops"
+  short_description: "Operate WeChat AI articles, visuals, and draft-box workflows."
+  default_prompt: "Use this skill to plan, format, illustrate, and write WeChat Official Account AI application articles, including weekly continuity, image-rich layouts, and draft-box-only publishing."

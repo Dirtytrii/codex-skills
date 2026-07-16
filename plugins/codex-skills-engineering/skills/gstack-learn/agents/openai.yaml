@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Learn"
+  short_description: "沉淀可复用经验、触发条件和未来检索线索"
+  default_prompt: "Use $gstack-learn for this task and keep the current role boundary explicit."

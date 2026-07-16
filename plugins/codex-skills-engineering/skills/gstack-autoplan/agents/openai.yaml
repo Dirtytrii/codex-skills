@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Autoplan"
+  short_description: "CEO/设计/工程/DX 综合计划审查"
+  default_prompt: "Use $gstack-autoplan for this task and keep the current role boundary explicit."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Agent Role Orchestrator"
+  short_description: "Create concise role prompts with CEO-first routing"
+  default_prompt: "Use $agent-role-orchestrator，给我总控窗口。"

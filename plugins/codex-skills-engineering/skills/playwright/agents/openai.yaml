@@ -1,0 +1,6 @@
+interface:
+  display_name: "Playwright Deterministic Automation"
+  short_description: "Run repeatable browser automation from terminal or CI"
+  icon_small: "./assets/playwright-small.svg"
+  icon_large: "./assets/playwright.png"
+  default_prompt: "Use Playwright only when this browser workflow needs deterministic terminal or CI execution, and produce reproducible evidence."

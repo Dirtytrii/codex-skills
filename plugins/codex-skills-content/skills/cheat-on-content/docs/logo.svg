@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="745" height="285" viewBox="0 0 745 285" role="img" aria-label="$ fatesnail — cheat on content">
+  <!-- background -->
+  <rect width="745" height="285" rx="10" fill="#0e0f11"/>
+
+  <!-- title bar (just slightly distinguished) -->
+  <rect width="745" height="40" rx="10" fill="#0e0f11"/>
+  <rect y="32" width="745" height="8" fill="#0e0f11"/>
+
+  <!-- traffic lights -->
+  <circle cx="22" cy="20" r="6" fill="#ff5f56"/>
+  <circle cx="40" cy="20" r="6" fill="#ffbd2e"/>
+  <circle cx="58" cy="20" r="6" fill="#27c93f"/>
+
+  <!-- titlebar text -->
+  <text x="372" y="25"
+        font-family="ui-monospace, SF Mono, Menlo, Monaco, Consolas, monospace"
+        font-size="14"
+        fill="#9b9893"
+        text-anchor="middle"
+        letter-spacing="1">— fatesnail · zsh —</text>
+
+  <!-- main: $ fatesnail -->
+  <text x="40" y="120"
+        font-family="ui-monospace, SF Mono, Menlo, Monaco, Consolas, monospace"
+        font-size="58"
+        font-weight="700"
+        fill="#e8e2d3">$ fatesnail</text>
+
+  <!-- cursor block -->
+  <rect x="455" y="78" width="26" height="50" fill="#e8e2d3"/>
+
+  <!-- detail line 1 -->
+  <text x="40" y="172"
+        font-family="ui-monospace, SF Mono, Menlo, Monaco, Consolas, monospace"
+        font-size="17"
+        fill="#9b9893">› predict  ▸  post  ▸  recon  ▸  evolve</text>
+
+  <!-- detail line 2 -->
+  <text x="40" y="198"
+        font-family="ui-monospace, SF Mono, Menlo, Monaco, Consolas, monospace"
+        font-size="17"
+        fill="#9b9893">› rubric.v0.42 — calibrated for you</text>
+
+  <!-- comment line -->
+  <text x="40" y="248"
+        font-family="ui-monospace, SF Mono, Menlo, Monaco, Consolas, monospace"
+        font-size="22"
+        font-weight="700"
+        fill="#e8e2d3">// cheat on content</text>
+
+  <!-- bottom underline -->
+  <line x1="40" y1="265" x2="705" y2="265" stroke="#3a3935" stroke-width="2" stroke-linecap="square"/>
+</svg>

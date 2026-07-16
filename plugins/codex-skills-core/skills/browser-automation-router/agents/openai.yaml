@@ -1,0 +1,4 @@
+interface:
+  display_name: "Browser Automation Router"
+  short_description: "Route Browser, Chrome, Playwright, and scripted automation"
+  default_prompt: "Choose the safest browser automation surface, verify it is available, perform the requested workflow, and return evidence."

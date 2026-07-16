@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack CSO"
+  short_description: "基础设施优先的安全态势和威胁面审查"
+  default_prompt: "Use $gstack-cso for this task and keep the current role boundary explicit."

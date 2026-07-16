@@ -1,0 +1,109 @@
+{
+  "schema_version": 1,
+  "marketplace": "dirtytrii-codex-skills",
+  "source_root": "skills",
+  "packages": [
+    {
+      "name": "codex-skills-core",
+      "default_install": true,
+      "requires": [],
+      "skills": [
+        "agent-role-orchestrator",
+        "browser-automation-router",
+        "startup-pressure-test"
+      ]
+    },
+    {
+      "name": "codex-skills-engineering",
+      "default_install": false,
+      "requires": ["codex-skills-core"],
+      "skills": [
+        "gstack",
+        "gstack-autoplan",
+        "gstack-canary",
+        "gstack-careful",
+        "gstack-cso",
+        "gstack-design-consultation",
+        "gstack-design-html",
+        "gstack-design-review",
+        "gstack-design-shotgun",
+        "gstack-devex-review",
+        "gstack-document-generate",
+        "gstack-document-release",
+        "gstack-freeze",
+        "gstack-guard",
+        "gstack-health",
+        "gstack-investigate",
+        "gstack-land-and-deploy",
+        "gstack-learn",
+        "gstack-office-hours",
+        "gstack-plan-ceo-review",
+        "gstack-plan-design-review",
+        "gstack-plan-devex-review",
+        "gstack-plan-eng-review",
+        "gstack-plan-tune",
+        "gstack-qa",
+        "gstack-qa-only",
+        "gstack-retro",
+        "gstack-review",
+        "gstack-setup-deploy",
+        "gstack-ship",
+        "gstack-spec",
+        "gstack-unfreeze",
+        "playwright",
+        "test-case-report-builder"
+      ]
+    },
+    {
+      "name": "codex-skills-operations",
+      "default_install": false,
+      "requires": ["codex-skills-core"],
+      "skills": [
+        "application-problem-diagnosis-workflow",
+        "authorized-blackbox-web-security",
+        "hermes-cron-empty-output-diagnosis",
+        "hermes-python-script-wrapper-for-shell-cron",
+        "package-update-check-and-plan",
+        "post-deployment-readonly-verification",
+        "pre-deployment-readonly-checklist",
+        "proxy-dependent-python-service-diagnosis",
+        "python-project-deployment-troubleshooting"
+      ]
+    },
+    {
+      "name": "codex-skills-content",
+      "default_install": false,
+      "requires": ["codex-skills-core"],
+      "skills": [
+        "cheat-on-content",
+        "content-model-handoff",
+        "content-style-calibration-loop",
+        "humanizer-zh",
+        "social-text-websense-gate",
+        "story-deslop",
+        "wechat-ai-app-ops",
+        "wechat-article-formatter",
+        "wechat-tech-writer",
+        "xhs-automation-publisher",
+        "xhs-comment-research",
+        "xhs-publish-assistant"
+      ]
+    },
+    {
+      "name": "codex-skills-visual-delivery",
+      "default_install": false,
+      "requires": ["codex-skills-core"],
+      "skills": [
+        "delivery-document-package",
+        "design-taste-frontend",
+        "guizang-ppt-skill",
+        "guizang-social-card-skill",
+        "hatch-pet",
+        "pdf",
+        "photo-to-cute-3d-toy",
+        "ui-implementation-workflow",
+        "xhs-visual-director"
+      ]
+    }
+  ]
+}

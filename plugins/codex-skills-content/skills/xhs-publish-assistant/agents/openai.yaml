@@ -1,0 +1,4 @@
+interface:
+  display_name: "XHS Publish Assistant"
+  short_description: "Prepare copy-ready Xiaohongshu publish bundles"
+  default_prompt: "输出发布格式：整理标题、正文、标签、配图目录和发布前检查。"

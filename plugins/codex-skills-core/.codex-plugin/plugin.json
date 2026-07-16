@@ -1,0 +1,28 @@
+{
+  "name": "codex-skills-core",
+  "version": "0.1.0",
+  "description": "Core CEO-first role routing, browser capability routing, and product pressure testing.",
+  "author": {
+    "name": "Dirtytrii",
+    "email": "springcloudjiang@foxmail.com",
+    "url": "https://github.com/Dirtytrii"
+  },
+  "homepage": "https://github.com/Dirtytrii/codex-skills",
+  "repository": "https://github.com/Dirtytrii/codex-skills",
+  "license": "MIT",
+  "keywords": ["codex", "orchestration", "roles", "core"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Skills Core",
+    "shortDescription": "CEO-first routing and the smallest reliable role loop.",
+    "longDescription": "Default package for role ownership, source-window callbacks, model and token routing, browser capability selection, and early product pressure testing.",
+    "developerName": "Dirtytrii",
+    "category": "Productivity",
+    "capabilities": ["Plan", "Route", "Coordinate"],
+    "websiteURL": "https://github.com/Dirtytrii/codex-skills",
+    "defaultPrompt": [
+      "Use the CEO-first entry to route this task through the smallest reliable loop.",
+      "Audit this task's role, model, token, callback, and skill-routing decisions."
+    ]
+  }
+}

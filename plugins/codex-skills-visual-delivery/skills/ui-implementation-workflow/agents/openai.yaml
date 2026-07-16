@@ -1,0 +1,4 @@
+interface:
+  display_name: "UI Implementation Workflow"
+  short_description: "Turn references and visual direction into screenshot-verified UI"
+  default_prompt: "Use $ui-implementation-workflow to classify the page, load visual direction only when needed, build skeleton-first, and close the loop with responsive screenshots."

@@ -8,15 +8,21 @@
 .
 ├── skills/                 # 可复制安装的 skill 目录，公开仓库保持扁平结构
 ├── registry/skills.json    # skill 元数据：来源、维护归属、角色消费关系
+├── registry/plugin-packages.json # core/domain 包归属、依赖与安装策略
+├── plugins/                # 由 canonical skills/ 生成的插件 bundle
+├── .agents/plugins/marketplace.json # 仓库级插件 marketplace
 ├── docs/
 │   ├── add-skill.md
 │   ├── publication-checklist.md
+│   ├── plugin-packaging.md
 │   ├── routing-token-and-evaluation.md
 │   ├── role-usage.md
 │   └── source-policy.md
 ├── scripts/
 │   ├── validate_public_skills.py
+│   ├── validate_plugins.py
 │   ├── validate_role_system.py
+│   ├── test_plugin_packages.py
 │   └── test_role_system_tools.py
 ├── skills/agent-role-orchestrator/scripts/
 │   ├── aggregate_skill_hits.py
@@ -27,7 +33,7 @@
 └── README.md
 ```
 
-`skills/` 目录故意保持扁平：`skills/<skill-name>/SKILL.md`。Hermes 服务器上的 `devops/`、`system/`、`migration/` 等分类可以作为来源信息，但同步到公开仓库时不作为安装路径，避免破坏 Codex 的直接复制安装方式。
+`skills/` 目录故意保持扁平：`skills/<skill-name>/SKILL.md`，并且是唯一人工维护源。`plugins/*/skills/` 由 `sync_plugin_bundles.py` 生成，不得直接编辑。Hermes 服务器上的 `devops/`、`system/`、`migration/` 等分类可以作为来源信息，但同步到公开仓库时不作为 canonical 路径。
 
 ## 来源和维护归属
 
@@ -383,15 +389,9 @@ Hermes 默认只读。重启、清理、迁移、删除、回滚、配置修改�
 
 ## 安装建议
 
-Codex 本地开发机可以安装全部 active skills：
+Codex 本地开发机默认只安装 `codex-skills-core`。当前任务涉及哪个域，再启用对应插件；跨域任务可以组合启用，任务结束后无需让所有 domain 长期常驻。插件命令、包边界和旧平铺安装迁移见 [plugin-packaging.md](plugin-packaging.md)。
 
-```bash
-mkdir -p "${CODEX_HOME:-$HOME/.codex}/skills"
-for d in skills/*; do
-  [ -d "$d" ] || continue
-  rsync -a "$d/" "${CODEX_HOME:-$HOME/.codex}/skills/$(basename "$d")/"
-done
-```
+插件机制暂不可用时，只把当前任务需要的 canonical skill 整体复制到 `$HOME/.agents/skills`。不要默认复制全部，也不要同时保留同名插件 skill 和平铺 skill；先用 `audit_plugin_context.py --scan-user-roots` 检查重复项。
 
 服务器侧 Hermes agent 建议按需安装运维子集：
 
@@ -418,10 +418,11 @@ done
 2. 判断来源：`local`、`external-github`、`hermes`。
 3. 对 Hermes 内容先脱敏，移除真实路径、IP、域名、账号、日志原文、密钥和项目专属信息。
 4. 放入 `skills/<skill-name>/`。
-5. 更新 `registry/skills.json`、`README.md` 和必要 docs。
-6. 运行 `python3 scripts/validate_role_system.py`；`python3 scripts/validate_public_skills.py` 也会自动包含该校验。
-7. 做敏感信息扫描。
-8. 中文提交并推送。
+5. 更新 `registry/skills.json`、`registry/plugin-packages.json`、`README.md` 和必要 docs。
+6. 运行 `python3 scripts/sync_plugin_bundles.py --write` 生成插件副本。
+7. 运行 `python3 scripts/test_plugin_packages.py`、`python3 scripts/validate_plugins.py` 和 `python3 scripts/validate_public_skills.py`。
+8. 做敏感信息扫描。
+9. 中文提交并推送。
 
 ## 使用口诀
 

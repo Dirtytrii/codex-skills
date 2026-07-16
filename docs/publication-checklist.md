@@ -11,6 +11,10 @@
 - [ ] 第三方来源保留 LICENSE、README 或 provenance。
 - [ ] 外部 GitHub 来源已在 `registry/skills.json` 标注 `origin_type=external-github`。
 - [ ] 已记录 `consumed_by_roles`，说明哪些角色会默认调用该 skill。
+- [ ] 新增或移动 skill 时已更新 `registry/plugin-packages.json`，且只归属一个插件。
+- [ ] 已运行 `python3 scripts/sync_plugin_bundles.py --write`，随后 `--check` 通过；没有直接修改生成的 `plugins/*/skills/`。
+- [ ] `python3 scripts/test_plugin_packages.py` 通过。
+- [ ] `python3 scripts/validate_plugins.py` 通过，默认仍只有 core，且 core + 任一 domain 未超过目录预算。
 - [ ] `python3 scripts/validate_role_system.py` 通过。
 - [ ] `python3 scripts/validate_public_skills.py` 通过。
 - [ ] 若修改 `agent-role-orchestrator`，已运行 `ensure_project_role_files.py` dry-run/write 正例、`render_role_prompt.py` 正例、`validate_role_loop.py` 正/负例、`check_codegraph.py` 状态例和 `aggregate_skill_hits.py` 聚合例。

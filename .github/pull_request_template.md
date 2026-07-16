@@ -7,7 +7,9 @@
 ## 检查
 
 - [ ] 已更新 `registry/skills.json`
+- [ ] 已更新 `registry/plugin-packages.json` 并同步生成插件 bundle
 - [ ] 已按 `docs/source-policy.md` 标注来源和角色消费关系
+- [ ] 已运行 `python3 scripts/test_plugin_packages.py` 和 `python3 scripts/validate_plugins.py`
 - [ ] 已运行 `python3 scripts/validate_public_skills.py`
 - [ ] 已按 `docs/publication-checklist.md` 检查敏感信息
 - [ ] 第三方来源已保留 LICENSE / README / provenance

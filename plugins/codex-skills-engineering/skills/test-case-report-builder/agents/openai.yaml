@@ -1,0 +1,4 @@
+interface:
+  display_name: "Test Case Report Builder"
+  short_description: "Generate test case Excel and Word reports"
+  default_prompt: "Use $test-case-report-builder to create a test case workbook and Word test report for this project."

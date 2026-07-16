@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Design Shotgun"
+  short_description: "快速探索多套视觉方向并选型"
+  default_prompt: "Use $gstack-design-shotgun for this task and keep the current role boundary explicit."
