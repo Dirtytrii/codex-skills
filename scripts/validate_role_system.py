@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 README = ROOT / "README.md"
 TECHNICAL_HIGHLIGHTS = ROOT / "docs" / "technical-highlights.md"
+ROUTING_GUIDE = ROOT / "docs" / "routing-token-and-evaluation.md"
 BROWSER_AUTOMATION_DOC = ROOT / "docs" / "browser-automation.md"
 ROLE_USAGE = ROOT / "docs" / "role-usage.md"
 PUBLICATION_CHECKLIST = ROOT / "docs" / "publication-checklist.md"
@@ -116,6 +117,7 @@ def validate_docs(errors: list[str]) -> None:
             "--execution-profile parallel",
             "--prefer-spark --spark-available",
             "docs/technical-highlights.md",
+            "docs/routing-token-and-evaluation.md",
             "browser-automation-router",
             "docs/browser-automation.md",
             "2026-06-11",
@@ -139,6 +141,22 @@ def validate_docs(errors: list[str]) -> None:
         errors,
     )
     require_contains(
+        ROUTING_GUIDE,
+        [
+            "一条统一决策链",
+            "Effective Controls",
+            "effective risk",
+            "effective loop",
+            "Owner、Executor 与模型",
+            "三层 Skill 评估",
+            "misfire_not_loaded_skill_count",
+            "negative_case_pass_rate",
+            "runtime runner",
+            "推荐验收顺序",
+        ],
+        errors,
+    )
+    require_contains(
         BROWSER_AUTOMATION_DOC,
         [
             "Support Floor",
@@ -156,6 +174,17 @@ def validate_docs(errors: list[str]) -> None:
         errors.append(f"README.md exceeds line budget: {len(readme_text.splitlines())} > 260")
     if len(readme_text.encode("utf-8")) > 20000:
         errors.append(f"README.md exceeds byte budget: {len(readme_text.encode('utf-8'))} > 20000")
+    routing_guide_text = read(ROUTING_GUIDE)
+    if len(routing_guide_text.splitlines()) > 220:
+        errors.append(
+            "docs/routing-token-and-evaluation.md exceeds line budget: "
+            f"{len(routing_guide_text.splitlines())} > 220"
+        )
+    if len(routing_guide_text.encode("utf-8")) > 12000:
+        errors.append(
+            "docs/routing-token-and-evaluation.md exceeds byte budget: "
+            f"{len(routing_guide_text.encode('utf-8'))} > 12000"
+        )
     require_contains(
         ROLE_USAGE,
         [

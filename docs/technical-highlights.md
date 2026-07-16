@@ -81,6 +81,18 @@
 
 任务规模、风险、Loop 和 Profile 不再各自独立判断。生成器先推导 effective controls：`large -> L2+`，`critical/risk critical|extreme/显式 L3 -> L3`，然后用同一结果选择模型、Spark 资格和 Profile。
 
+```text
+task-size + risk + requested loop
+              ↓
+ effective risk + effective loop
+              ↓
+ role/executor model + Spark eligibility
+              ↓
+       auto Token Profile
+```
+
+这里的关键取舍是“安全控制先收敛，Prompt 体积后决定”。显式 Profile 只用于兼容或诊断，不应拿来删除 critical/L3 所需的独立门禁。可复制命令和完整提升矩阵见 [路由、Token 与 Skill 评估指南](routing-token-and-evaluation.md)。
+
 生成器对 compact 设置行数和字节预算，QA 不接收 CTO 专属方案占位，内容角色也不会污染技术执行 prompt。
 
 ### GPT-5.6 Prompt Contract
@@ -105,6 +117,8 @@
 
 Spark 不进入稳定层级。它是 research preview 的独立额度机会通道，仅在当前可用性明确时用于 mechanical/bounded 一次性开发 executor。未确认可用时回退 Mini/Luna；owner、跨文件集成、最终 QA、critical/high-risk 和长上下文工作禁止使用 Spark。
 
+自动模型策略有意止于 `xhigh`，这是本体系的成本与可预测性选择，不是声称产品不存在更高档位。Max/Ultra 仅在用户明确选择、当前界面可用且代表性评估证明收益时使用，不进入默认路由。
+
 并行默认关闭。普通并行需要互斥范围和独立验证；3-5 worker 必须显式开启。这样不会因为模型便宜或额度独立，就把一个耦合任务拆成多个相互覆盖的上下文。
 
 ## 可量化的 Skill Routing
@@ -122,7 +136,17 @@ skill 多了以后，仅靠描述命中会产生“感觉都加载了”的错�
 漏召数 = 任务结束后确认本应使用但未使用的 skill 数
 ```
 
-`aggregate_skill_hits.py` 只统计含路由声明或技能回调的 eligible 文件；普通 Markdown 不进入分母。没有必选声明时返回“不可评估”，不会伪造 `100%`。回传为误召却未出现在已加载列表中的 skill 会作为不一致数据单列，不污染误召率。`evals/skill-routing-cases.jsonl` 与 `evaluate_skill_routing.py` 是需要输入实际 `selected_skills` 的离线评分器，覆盖必选漏召、禁止误召、意外加载和无需 skill 的负样本；它还不是自动运行 Codex 的真实路由 runner。单次异常只记录证据；持续漏召、误召、触发漂移或文档膨胀再交给 `技能维护` 修改 skill 和 registry。
+三层证据必须分开读取：
+
+| 层次 | 证据 | 能回答 | 不能回答 |
+| --- | --- | --- | --- |
+| 目录审计 | Skill 元数据与描述预算 | 能否发现、是否膨胀 | 某次任务是否选对 |
+| 回调聚合 | 角色产出的路由台账和回传 | 角色自报是否命中、漏召、误召 | 独立路由是否正确 |
+| 离线评分 | case + 实际 `selected_skills` | 必选 recall、负样本克制、unexpected | Codex 是否已被脚本自动执行 |
+
+`aggregate_skill_hits.py` 只统计含路由声明或技能回调的 eligible 文件；普通 Markdown 不进入分母。没有必选声明时返回 `null`，不会伪造 `100%`。回传为误召却未出现在已加载列表中的 skill 会作为不一致数据单列，不污染误召率。
+
+`evals/skill-routing-cases.jsonl` 与 `evaluate_skill_routing.py` 是离线评分器，覆盖必选漏召、禁止误召、意外加载和无需 Skill 的负样本；它还不是自动运行 Codex 的 runtime runner。负样本通过率和必选 recall 必须一起看，否则“什么都加载”也可能制造虚假的高命中。单次异常只记录证据；持续漏召、误召、触发漂移或文档膨胀再交给 `技能维护` 修改 Skill 和 registry。
 
 ## 能力路由与内容门禁
 

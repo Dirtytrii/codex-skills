@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 README = ROOT / "README.md"
 TECHNICAL_HIGHLIGHTS = ROOT / "docs" / "technical-highlights.md"
+ROUTING_GUIDE = ROOT / "docs" / "routing-token-and-evaluation.md"
 BROWSER_AUTOMATION_DOC = ROOT / "docs" / "browser-automation.md"
 ENSURE = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "ensure_project_role_files.py"
 RENDER_PROMPT = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "render_role_prompt.py"
@@ -960,6 +961,7 @@ def test_orchestrator_entry_files_stay_within_token_budget() -> None:
 
 def test_readme_stays_scannable_and_current() -> None:
     text = README.read_text(encoding="utf-8")
+    routing_guide = ROUTING_GUIDE.read_text(encoding="utf-8")
     assert len(text.splitlines()) <= 260
     assert len(text.encode("utf-8")) <= 20000
     for heading in (
@@ -972,6 +974,19 @@ def test_readme_stays_scannable_and_current() -> None:
     ):
         assert heading in text
     assert "docs/technical-highlights.md" in text
+    assert "docs/routing-token-and-evaluation.md" in text
+    assert len(routing_guide.splitlines()) <= 220
+    assert len(routing_guide.encode("utf-8")) <= 12000
+    for needle in (
+        "Effective Controls",
+        "effective risk",
+        "effective loop",
+        "三层 Skill 评估",
+        "negative_case_pass_rate",
+        "misfire_not_loaded_skill_count",
+        "runtime runner",
+    ):
+        assert needle in routing_guide
 
 
 def test_native_browser_routing_prefers_plugins_and_keeps_deterministic_fallbacks() -> None:

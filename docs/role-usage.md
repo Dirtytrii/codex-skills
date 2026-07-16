@@ -11,6 +11,7 @@
 ├── docs/
 │   ├── add-skill.md
 │   ├── publication-checklist.md
+│   ├── routing-token-and-evaluation.md
 │   ├── role-usage.md
 │   └── source-policy.md
 ├── scripts/
@@ -139,6 +140,17 @@ Loop 深度：
 
 总控不默认写代码、测试脚本、验收脚本或自动化验证脚本；超过 `tiny` 自办和 `small` 直派开发边界的产物交给 `开发` 或 `测试`，由 `架构` / `QA` 复核证据。
 
+有效路由速查：
+
+| 输入示例 | effective controls | auto profile | 预期行为 |
+| --- | --- | --- | --- |
+| `medium + normal + L1` | `normal + L1` | `compact` | 负责人或普通开发小闭环 |
+| `large + normal + L1` | `normal + L2` | `standard` | 负责人拆执行并收敛 |
+| `critical + normal + L1` | `critical + L3` | `full` | 高风险模型与独立门禁 |
+| `medium + normal + L3` | `critical + L3` | `full` | 显式深链路同步提升风险 |
+
+`--profile` 只控制 Prompt 字段量，不负责降低风险、模型或 Loop。默认始终使用 `--profile auto`；critical/L3 不应用显式 compact/standard 删除门禁字段。完整推导和指标格式见 [路由、Token 与 Skill 评估指南](routing-token-and-evaluation.md)。
+
 ### 路由前检查
 
 `总控`、`架构`、`内容主编` 每次派发前必须自检：
@@ -200,7 +212,8 @@ python skills/agent-role-orchestrator/scripts/check_codegraph.py \
 
 ```bash
 python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py \
-  /path/to/callbacks-or-ledgers
+  /path/to/callbacks-or-ledgers \
+  --json
 ```
 
 校验路由评估集，并用实际选择记录评分：
@@ -209,6 +222,15 @@ python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py \
 python scripts/evaluate_skill_routing.py --validate-only --strict
 python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --strict
 ```
+
+`observed.jsonl` 每行只记录 case id 和这次实际选择的 Skill；无需 Skill 的 case 必须传空数组：
+
+```json
+{"id":"no-skill-arithmetic","selected_skills":[]}
+{"id":"role-window-routing","selected_skills":["agent-role-orchestrator"]}
+```
+
+`--strict` 会在 case 未观测、评分失败或观测格式错误时返回非零。它不会自动启动 Codex；应由真实任务、外部 runner 或人工审计先产出 `selected_skills`。
 
 校验失败时不要派发、继续或关闭 loop；先补齐缺失字段，或把不确定状态明确写成 `待确认` 并说明原因。
 
@@ -234,8 +256,8 @@ python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --st
 - 当上下文接近过长、remote compact 失败、或同一任务跨多个 PR/闭环时，优先开新窗口或接续既有角色窗口；输入只用 `.codex/role-windows.md`、压缩交接卡、提交/PR、文件证据和必要短摘要。
 - 生成下游提示词时使用 Token Budget Profile：`compact` 给 tiny/small 和普通 medium 小闭环；`standard` 给 large、L2、架构或新代码项目；`full` 给 critical、L3、关键 PR、对抗审查、高风险公开声明、生产/数据/安全闭环，并增加独立复核、失败回退和 go/no-go 字段。`render_role_prompt.py --profile auto` 是默认入口，显式 `--profile` 覆盖自动分级。
 - `agent-role-orchestrator/SKILL.md` 只加载稳定闭环契约；角色边界、模型分级、工具路由、内容平台规则按需读取 `references/role-cards.md`、`model-routing.md`、`tool-routing.md`、`content-routing.md`，避免无关角色说明进入每个窗口上下文。PR 校验会限制入口文件行数和字节数。
-- 有回调文件或台账快照时，用 `aggregate_skill_hits.py` 聚合自报命中、声明覆盖、回调完整和有效使用率；只有含路由声明或技能回调的 eligible 文件进入分母，普通 Markdown 会被忽略。没有必选声明时命中率必须显示为不可评估；回传为误召却未声明已加载的 skill 必须作为不一致数据单列。
-- 用 `evaluate_skill_routing.py` 对代表性输入和实际 `selected_skills` 做离线评分，并同时覆盖“应该命中”和“不应加载任何 skill”的负样本。该脚本不会自动运行 Codex 路由；回调统计回答“角色说自己用了什么”，离线评分回答“给定实际选择后是否符合预期”，两者不能混为一个指标。
+- 有回调文件或台账快照时，用 `aggregate_skill_hits.py` 聚合自报命中、声明覆盖、回调完整和有效使用率；只有含路由声明或技能回调的 eligible 文件进入分母，普通 Markdown 会被忽略。没有必选声明时命中率是 `null`，不是 0% 或 100%；回传为误召却未声明已加载的 skill 必须作为数据不一致单列。
+- 用 `evaluate_skill_routing.py` 对代表性输入和实际 `selected_skills` 做离线评分，并同时覆盖“应该命中”和“不应加载任何 skill”的负样本。重点同时看 `required_skill_recall`、`negative_case_pass_rate`、`unexpected_skills` 和 `unevaluated_case_count`，不要只追一个命中率。
 - `总控` 负责本次任务的全局路由判断和聚合视图；`架构` 与 `内容主编` 负责各自子树。长期的漏召、误召、触发描述过期、registry 漂移、README 说明混乱或跨角色 token 过重，转给 `技能维护`。
 - `技能维护` 只沉淀可公开复用的 skill 体系改进，不接收项目私有 `.codex/role-windows.md`、本机 memory、账号登录态或生产细节。
 

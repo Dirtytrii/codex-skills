@@ -4,7 +4,7 @@
 
 核心设计亮点：CEO-first 入口、可折叠多窗口 Loop、来源窗口主动回调、Fail-Closed Tool Layer、按需 skill 路由、模型与 Token 预算、可量化的技能命中率，以及可复用优化沉淀。
 
-详细资料：[技术亮点与设计取舍](docs/technical-highlights.md) · [角色与运行规则](docs/role-usage.md) · [机器可读 skill 清单](registry/skills.json) · [来源治理](docs/source-policy.md) · [新增 skill](docs/add-skill.md)
+详细资料：[技术亮点与设计取舍](docs/technical-highlights.md) · [路由、Token 与 Skill 评估](docs/routing-token-and-evaluation.md) · [角色与运行规则](docs/role-usage.md) · [机器可读 skill 清单](registry/skills.json) · [来源治理](docs/source-policy.md) · [新增 skill](docs/add-skill.md)
 
 ## 30 秒上手
 
@@ -80,7 +80,16 @@ Loop 深度按任务折叠，而不是默认走最长链路：
 
 总控在行动前输出 `任务分发决策`：`tiny` 可自办，`small` 可直派一个短小开发任务，`medium` 交负责人判断，`large` 启动完整团队，`critical` 进入 L3 门禁。
 
-生成器会先统一输入控制值再做路由：`large` 至少提升为 `L2`；`critical`、`risk=critical|extreme` 或显式 `L3` 统一进入 L3 门禁，并共同约束模型、Spark 可用性和 Token Profile，避免同一提示词出现 full 预算、普通模型和 L1 的冲突组合。
+生成器会先统一输入值，再选择模型与 Prompt：
+
+| 输入 | 负责决定 | 关键规则 |
+| --- | --- | --- |
+| `task-size` | 默认组织路径 | `large` 至少 L2；`critical` 进入 L3 |
+| `risk` | 风险和模型余量 | critical/extreme 进入 L3 与高风险路由 |
+| `loop-depth` | 角色链路深度 | 显式 L3 会把普通风险提升为 critical |
+| `profile` | Prompt 字段量 | 默认 `auto`；不应拿 compact 删减高风险门禁 |
+
+因此 large 默认得到 L2 + standard，critical 默认得到 critical risk + L3 + full。模型、Spark 资格、Loop 和 Profile 使用同一组 effective controls，不会各自猜测。完整推导、命令和指标解释见 [路由、Token 与 Skill 评估指南](docs/routing-token-and-evaluation.md)。
 
 多窗口闭环遵循来源窗口：A 派 B，B 回 A；B 再派 C，C 回 B。完成、阻塞或需要决策时必须同时更新并提交 `.codex/role-windows.md`，并向来源 thread 主动发送压缩回调；`仅完成台账更新不算闭环`。没有发送工具时，以 `<codex_delegation>` 或 `压缩回调` 开头供转发。
 
@@ -106,6 +115,8 @@ python skills/agent-role-orchestrator/scripts/render_role_prompt.py --role 开�
 python skills/agent-role-orchestrator/scripts/validate_role_loop.py --prompt /path/to/prompt.md --callback /path/to/callback.md
 python scripts/evaluate_skill_routing.py --validate-only --strict
 ```
+
+生成后先看 `任务控制`、`模型建议` 和 `Token Budget Profile` 是否一致。统计时区分三层：目录审计只证明 Skill 可发现；回调聚合只反映角色自报；路由评分需要外部提供实际 `selected_skills`，当前脚本不会自动运行 Codex。无需 Skill 的负样本也必须保持空选择，用来发现过度加载。
 
 新本地代码项目由架构先运行 `check_codegraph.py`，技术方案确认后再做有边界的开源/可借鉴方案扫描。项目台账有 thread id 就复用，状态不明写 `待确认`，不能靠聊天记忆编造。
 
@@ -167,6 +178,7 @@ skill 命中通过回调量化：负责人声明候选/必选/可选/跳过，�
 skills/                         可安装 skill；每个目录包含 SKILL.md 及按需 references/scripts/assets
 registry/skills.json            active skill、来源、维护归属和角色消费关系
 docs/technical-highlights.md    角色编排、Loop、Token 和 Fail-Closed 的设计取舍
+docs/routing-token-and-evaluation.md  路由推导、模型/Profile、指标和评估输入格式
 docs/role-usage.md              完整角色边界、模型、回调和平台运行规则
 docs/source-policy.md           local / external-github / hermes 来源治理
 scripts/validate_public_skills.py 公开 skill 总校验入口
