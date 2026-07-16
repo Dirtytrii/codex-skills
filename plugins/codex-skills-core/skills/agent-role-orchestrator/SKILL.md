@@ -45,7 +45,8 @@ Markdown owns principles and judgment. Scripts own enums, templates, ledgers, ca
 When `scripts/` is available:
 
 - bootstrap/check project files with `ensure_project_role_files.py`;
-- generate non-trivial prompts with `render_role_prompt.py` instead of hand-writing fixed fields;
+- preflight plugins and generate non-trivial prompts with `prepare_role_window.py`;
+- use `render_role_prompt.py` only as the lower-level generator after plugin readiness is established;
 - validate prompts, callbacks, and ledgers with `validate_role_loop.py`;
 - inspect CodeGraph with `check_codegraph.py` instead of guessing;
 - calculate hit rate with `aggregate_skill_hits.py` instead of chat memory.
@@ -54,7 +55,7 @@ If a required check fails, do not dispatch or close the loop. Fix it or record `
 
 ```bash
 python skills/agent-role-orchestrator/scripts/ensure_project_role_files.py --project /path/to/project --write
-python skills/agent-role-orchestrator/scripts/render_role_prompt.py --role 开发 --objective "修复筛选" --source-role 架构 --task-size small --profile auto
+python skills/agent-role-orchestrator/scripts/prepare_role_window.py --role 开发 --objective "修复筛选" --source-role 架构 --task-size small --profile auto --required-skill gstack
 python skills/agent-role-orchestrator/scripts/validate_role_loop.py --project /path/to/project --prompt /path/to/prompt.md --callback /path/to/callback.md
 python skills/agent-role-orchestrator/scripts/check_codegraph.py --project /path/to/project
 python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py /path/to/callbacks
@@ -213,7 +214,7 @@ Read `references/role-cards.md`, then only the thematic reference required by th
 3. Choose task size and smallest loop depth.
 4. Choose owner/executor role, model route, and Token Budget Profile.
 5. Load only the relevant reference file and required downstream skills.
-6. Generate with `render_role_prompt.py`; use explicit `--executor-tier` and parallel arguments when applicable.
+6. Run `prepare_role_window.py`; dispatch only after required role/skill plugins are enabled and the prompt is generated. Use explicit `--executor-tier` and parallel arguments when applicable.
 7. Validate before dispatch.
 8. On terminal state, update ledger, send callback, aggregate skill hits when useful, and route reusable improvements.
 
@@ -232,16 +233,16 @@ Generated prompts must include:
 
 ```bash
 # Durable Dev Lead, serial by default
-python scripts/render_role_prompt.py --role 开发 --objective "实现订单修复" --source-role 架构 --profile auto
+python scripts/prepare_role_window.py --role 开发 --objective "实现订单修复" --source-role 架构 --profile auto
 
 # Bounded one-shot Luna executor
-python scripts/render_role_prompt.py --role 开发 --objective "实现独立适配器" --source-role 架构 --executor-tier bounded --profile compact
+python scripts/prepare_role_window.py --role 开发 --objective "实现独立适配器" --source-role 架构 --executor-tier bounded --profile compact
 
 # Same bounded task using confirmed Spark preview quota
-python scripts/render_role_prompt.py --role 开发 --objective "实现独立适配器" --source-role 架构 --executor-tier bounded --prefer-spark --spark-available --validation "pytest tests/test_adapter.py"
+python scripts/prepare_role_window.py --role 开发 --objective "实现独立适配器" --source-role 架构 --executor-tier bounded --prefer-spark --spark-available --validation "pytest tests/test_adapter.py"
 
 # Explicit three-worker parallel execution
-python scripts/render_role_prompt.py --role 开发 --objective "实现三个独立适配器" --source-role 架构 --execution-profile parallel --worker-count 3 --disjoint-scope "每人一个目录" --independent-validation "每个目录独立测试"
+python scripts/prepare_role_window.py --role 开发 --objective "实现三个独立适配器" --source-role 架构 --execution-profile parallel --worker-count 3 --disjoint-scope "每人一个目录" --independent-validation "每个目录独立测试"
 ```
 
 ## Quality Bar

@@ -42,9 +42,10 @@ npm install --global @openai/codex
 
 ```text
 skills/                          人工维护的 canonical 源
-registry/plugin-packages.json    skill 到包的唯一归属与依赖
+registry/plugin-packages.json    role/skill 到包的唯一归属与依赖
 .agents/plugins/marketplace.json 安装策略与插件入口
 plugins/*/skills/                自动生成副本，禁止手改
+plugins/codex-skills-core/registry/plugin-packages.json 运行时注册表镜像，自动生成
 ```
 
 维护顺序：
@@ -56,7 +57,7 @@ python scripts/validate_plugins.py
 python scripts/validate_public_skills.py
 ```
 
-`sync_plugin_bundles.py --write` 只会清理经过路径验证的 `plugins/<package>/skills/`，然后从 canonical 源复制。`--check` 使用逐文件 SHA-256 比较，缺文件、旧文件和手改副本都会失败。
+`sync_plugin_bundles.py --write` 只会清理经过路径验证的 `plugins/<package>/skills/`，然后从 canonical 源复制；同时把插件包注册表镜像到 Core，供已安装的 `prepare_role_window.py` 在普通项目中运行。`--check` 使用逐文件 SHA-256 和注册表字节比较，缺文件、旧文件和手改副本都会失败。
 
 生成副本保留上游文件字节，包括 vendored 内容已有的格式。因此 `.gitattributes` 对 `plugins/*/skills/**` 关闭重复 whitespace 报警；canonical `skills/` 仍接受正常检查。
 

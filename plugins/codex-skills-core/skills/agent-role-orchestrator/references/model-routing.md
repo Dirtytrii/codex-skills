@@ -52,7 +52,7 @@ Default: `serial`, one worker.
 Parallel work is allowed only when each task has disjoint file/surface ownership and independent validation. Two workers are the normal ceiling. Three to five workers require an explicit profile and are justified only by genuinely independent work, not by task size alone.
 
 ```bash
-python scripts/render_role_prompt.py \
+python scripts/prepare_role_window.py \
   --role 开发 \
   --objective "实现三个独立适配器" \
   --source-role 架构 \

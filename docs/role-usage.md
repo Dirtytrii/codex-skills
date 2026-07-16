@@ -28,6 +28,7 @@
 │   ├── aggregate_skill_hits.py
 │   ├── check_codegraph.py
 │   ├── ensure_project_role_files.py
+│   ├── prepare_role_window.py
 │   ├── render_role_prompt.py
 │   └── validate_role_loop.py
 └── README.md
@@ -117,7 +118,7 @@
 6. 新本地代码项目由 `架构 / CTO` 默认先用 `check_codegraph.py --project <path>` 检查 CodeGraph；未初始化时在允许写入的前提下初始化并重查，未安装时提示安装，或在环境允许且安装方式明确时做用户级静默安装。
 7. 技术需求确认到足以描述问题后，`架构 / CTO` 先做有边界的开源/可借鉴方案扫描；若网络不可用、用户禁用或上下文敏感，要写明跳过原因。
 8. 内容任务由 `内容主编` 判断是否拆给 `公众号发布`、`小红书`、`视频` 或 `UI/PPT` 视觉资产协作。
-9. `总控`、`架构`、`内容主编` 只在必要时输出下游提示词，并写清模型建议、文件范围、禁止范围、验证和回调；脚本可用时优先用 `render_role_prompt.py` 生成骨架。
+9. `总控`、`架构`、`内容主编` 只在必要时输出下游提示词，并写清模型建议、文件范围、禁止范围、验证和回调；脚本可用时先用 `prepare_role_window.py` 检查角色和必选 Skill 所需插件，通过后才生成骨架。
 10. 已建立过的角色默认走 `继承` / `接续`，不要重复新建窗口；`.codex/role-windows.md` 中已有线程 ID 时必须复用。
 11. 下游角色完成、阻塞或需要发起方决策时，用 `压缩回调` 默认回调任务发起窗口；不无条件回报给 `总控` 或 `架构`。
 12. 完成、阻塞或需要发起方决策时，必须同时完成两件事：更新 `.codex/role-windows.md` 并提交；向来源 thread 主动发送 `压缩回调`。仅完成第 1 项不算闭环。
@@ -178,7 +179,7 @@ Loop 深度：
 
 `agent-role-orchestrator` 的规则分两层：Markdown 负责原则和角色边界；脚本负责台账、模板、字段、枚举、统计和校验。
 
-生成角色提示词：
+检查插件并生成角色提示词：
 
 ```bash
 python skills/agent-role-orchestrator/scripts/ensure_project_role_files.py \
@@ -187,7 +188,7 @@ python skills/agent-role-orchestrator/scripts/ensure_project_role_files.py \
 ```
 
 ```bash
-python skills/agent-role-orchestrator/scripts/render_role_prompt.py \
+python skills/agent-role-orchestrator/scripts/prepare_role_window.py \
   --role 开发 \
   --objective "实现订单列表筛选修复" \
   --source-role 架构 \
@@ -197,6 +198,8 @@ python skills/agent-role-orchestrator/scripts/render_role_prompt.py \
   --required-skill gstack-investigate \
   --validation "npm test"
 ```
+
+缺失或关闭插件时脚本非零退出，只输出 `codex plugin marketplace upgrade` 和对应 `codex plugin add` 命令，不生成角色 Prompt。启用后重新运行，再创建新的角色任务。`render_role_prompt.py` 是其底层生成器，不作为正常派发入口。
 
 校验台账、提示词或回调：
 
@@ -260,7 +263,7 @@ python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --st
 - 多窗口 loop 默认用 `压缩回调`，只传当前状态、本轮变化、证据链接/文件/命令、需要决策、下一回流对象和可复用优化沉淀状态。
 - 负责人层关闭技术或内容子树前，必须确认 `.codex/role-windows.md` 已更新并提交，且来源 thread 已收到压缩回调；如果没有发送工具，回调输出必须以 `<codex_delegation>` 或 `压缩回调` 开头。
 - 当上下文接近过长、remote compact 失败、或同一任务跨多个 PR/闭环时，优先开新窗口或接续既有角色窗口；输入只用 `.codex/role-windows.md`、压缩交接卡、提交/PR、文件证据和必要短摘要。
-- 生成下游提示词时使用 Token Budget Profile：`compact` 给 tiny/small 和普通 medium 小闭环；`standard` 给 large、L2、架构或新代码项目；`full` 给 critical、L3、关键 PR、对抗审查、高风险公开声明、生产/数据/安全闭环，并增加独立复核、失败回退和 go/no-go 字段。`render_role_prompt.py --profile auto` 是默认入口，显式 `--profile` 覆盖自动分级。
+- 生成下游提示词时使用 Token Budget Profile：`compact` 给 tiny/small 和普通 medium 小闭环；`standard` 给 large、L2、架构或新代码项目；`full` 给 critical、L3、关键 PR、对抗审查、高风险公开声明、生产/数据/安全闭环，并增加独立复核、失败回退和 go/no-go 字段。`prepare_role_window.py --profile auto` 是默认入口；它通过插件门禁后调用底层生成器，显式 `--profile` 覆盖自动分级。
 - `agent-role-orchestrator/SKILL.md` 只加载稳定闭环契约；角色边界、模型分级、工具路由、内容平台规则按需读取 `references/role-cards.md`、`model-routing.md`、`tool-routing.md`、`content-routing.md`，避免无关角色说明进入每个窗口上下文。PR 校验会限制入口文件行数和字节数。
 - 有回调文件或台账快照时，用 `aggregate_skill_hits.py` 聚合自报命中、声明覆盖、回调完整和有效使用率；只有含路由声明或技能回调的 eligible 文件进入分母，普通 Markdown 会被忽略。没有必选声明时命中率是 `null`，不是 0% 或 100%；回传为误召却未声明已加载的 skill 必须作为数据不一致单列。
 - 用 `evaluate_skill_routing.py` 对代表性输入和实际 `selected_skills` 做离线评分，并同时覆盖“应该命中”和“不应加载任何 skill”的负样本。重点同时看 `required_skill_recall`、`negative_case_pass_rate`、`unexpected_skills` 和 `unevaluated_case_count`，不要只追一个命中率。
