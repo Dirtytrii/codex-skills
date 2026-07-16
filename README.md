@@ -4,18 +4,19 @@
 
 核心设计亮点：CEO-first 入口、可折叠多窗口 Loop、来源窗口主动回调、Fail-Closed Tool Layer、按需 skill 路由、模型与 Token 预算、可量化的技能命中率，以及可复用优化沉淀。
 
-详细资料：[技术亮点与设计取舍](docs/technical-highlights.md) · [插件拆包与安装](docs/plugin-packaging.md) · [路由、Token 与 Skill 评估](docs/routing-token-and-evaluation.md) · [角色与运行规则](docs/role-usage.md) · [机器可读 skill 清单](registry/skills.json) · [来源治理](docs/source-policy.md) · [新增 skill](docs/add-skill.md)
+详细资料：[技术亮点与设计取舍](docs/technical-highlights.md) · [插件拆包与安装](docs/plugin-packaging.md) · [跨机器安装与更新](docs/plugin-update-guide.md) · [路由、Token 与 Skill 评估](docs/routing-token-and-evaluation.md) · [角色与运行规则](docs/role-usage.md) · [机器可读 skill 清单](registry/skills.json) · [来源治理](docs/source-policy.md) · [新增 skill](docs/add-skill.md)
 
 ## 30 秒上手
 
 推荐把仓库注册为插件 marketplace。`core` 是唯一默认包，其余领域包按当前任务启用：
 
 ```bash
-codex plugin marketplace add Dirtytrii/codex-skills
+codex plugin marketplace add Dirtytrii/codex-skills --ref main
+codex plugin add codex-skills-core@dirtytrii-codex-skills
 codex plugin add codex-skills-engineering@dirtytrii-codex-skills
 ```
 
-也可以在 Codex 桌面的 Plugins 面板添加该 marketplace，并按任务安装领域包。若只做总控分流、浏览器能力选择或项目压力测试，保持默认 `core` 即可。
+也可以在 Codex 桌面的 Plugins 面板添加该 marketplace，并按任务安装领域包。CLI 安装显式执行 `plugin add codex-skills-core`，不要只依赖 marketplace 的默认安装标记。若只做总控分流、浏览器能力选择或项目压力测试，保持默认 `core` 即可；其他机器的日常刷新见[跨机器安装与更新](docs/plugin-update-guide.md)。
 
 | 包 | 安装策略 | 适用任务 |
 | --- | --- | --- |
@@ -175,6 +176,7 @@ plugins/                        从 skills/ 生成的 Codex 插件 bundle；禁�
 .agents/plugins/marketplace.json 仓库级插件 marketplace
 docs/technical-highlights.md    角色编排、Loop、Token 和 Fail-Closed 的设计取舍
 docs/plugin-packaging.md        插件安装、拆包边界、迁移和上下文审计
+docs/plugin-update-guide.md     跨机器安装、缓存刷新、新任务验证和回滚
 docs/routing-token-and-evaluation.md  路由推导、模型/Profile、指标和评估输入格式
 docs/role-usage.md              完整角色边界、模型、回调和平台运行规则
 docs/source-policy.md           local / external-github / hermes 来源治理
