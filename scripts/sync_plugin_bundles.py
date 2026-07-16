@@ -8,7 +8,12 @@ import shutil
 import sys
 from pathlib import Path
 
-from plugin_packages import bundle_sync_errors, load_package_specs, should_package
+from plugin_packages import (
+    PACKAGE_CONFIG,
+    bundle_sync_errors,
+    load_package_specs,
+    should_package,
+)
 
 
 def assert_safe_bundle_root(bundle_root: Path, plugin_root: Path) -> None:
@@ -55,6 +60,11 @@ def write_bundles() -> tuple[int, int]:
                 raise ValueError(f"canonical skill is missing: {source}")
             file_count += copy_skill(source, spec.bundle_root / skill)
             skill_count += 1
+        if spec.name == "codex-skills-core":
+            registry_target = spec.plugin_root / "registry" / "plugin-packages.json"
+            registry_target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(PACKAGE_CONFIG, registry_target)
+            file_count += 1
     return skill_count, file_count
 
 

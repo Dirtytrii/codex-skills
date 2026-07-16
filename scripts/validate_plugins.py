@@ -69,11 +69,14 @@ def validate() -> tuple[list[str], dict[str, object]]:
         errors.append("codex-skills-core must be the only default-installed package")
 
     assignments: dict[str, list[str]] = {}
+    role_assignments: dict[str, list[str]] = {}
     for spec in specs:
         if spec.name != "codex-skills-core" and "codex-skills-core" not in spec.requires:
             errors.append(f"{spec.name}: domain plugin must require codex-skills-core")
         for skill in spec.skills:
             assignments.setdefault(skill, []).append(spec.name)
+        for role in spec.roles:
+            role_assignments.setdefault(role, []).append(spec.name)
     for skill in sorted(canonical - assignments.keys()):
         errors.append(f"unassigned canonical skill: {skill}")
     for skill in sorted(assignments.keys() - canonical):
@@ -81,6 +84,9 @@ def validate() -> tuple[list[str], dict[str, object]]:
     for skill, owners in sorted(assignments.items()):
         if len(owners) != 1:
             errors.append(f"skill must belong to exactly one package: {skill} -> {owners}")
+    for role, owners in sorted(role_assignments.items()):
+        if len(owners) != 1:
+            errors.append(f"role must belong to exactly one package: {role} -> {owners}")
 
     try:
         marketplace = load_json(MARKETPLACE)

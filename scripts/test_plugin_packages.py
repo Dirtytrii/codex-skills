@@ -16,6 +16,14 @@ from validate_plugins import validate
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
 PLUGIN_GUIDE = ROOT / "docs" / "plugin-packaging.md"
+PACKAGE_REGISTRY = ROOT / "registry" / "plugin-packages.json"
+BUNDLED_PACKAGE_REGISTRY = (
+    ROOT
+    / "plugins"
+    / "codex-skills-core"
+    / "registry"
+    / "plugin-packages.json"
+)
 
 
 def run(args: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -130,6 +138,30 @@ def test_package_registry_source_stays_canonical() -> None:
     assert source_root == (ROOT / "skills").resolve()
     assert marketplace == "dirtytrii-codex-skills"
     assert len({skill for spec in specs for skill in spec.skills}) == 67
+    expected_roles = {
+        "总控",
+        "架构",
+        "开发",
+        "UI/PPT",
+        "测试",
+        "QA",
+        "安全",
+        "DBA",
+        "运维",
+        "内容主编",
+        "公众号发布",
+        "小红书",
+        "视频",
+        "知识库",
+        "技能维护",
+        "文档/交付",
+    }
+    assert {role for spec in specs for role in spec.roles} == expected_roles
+    assert sum(len(spec.roles) for spec in specs) == len(expected_roles)
+
+
+def test_core_bundles_runtime_plugin_registry() -> None:
+    assert BUNDLED_PACKAGE_REGISTRY.read_bytes() == PACKAGE_REGISTRY.read_bytes()
 
 
 def test_documented_package_metrics_match_validator() -> None:
@@ -150,6 +182,7 @@ def main() -> int:
         test_context_audit_fails_closed_for_oversized_multi_domain_set,
         test_tree_comparison_detects_changed_and_stale_files,
         test_package_registry_source_stays_canonical,
+        test_core_bundles_runtime_plugin_registry,
         test_documented_package_metrics_match_validator,
     ]
     for test in tests:

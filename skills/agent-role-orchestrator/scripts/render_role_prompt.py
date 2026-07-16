@@ -757,7 +757,7 @@ Token Budget Profile：
 """
 
 
-def parse_args(argv: list[str]) -> argparse.Namespace:
+def build_arg_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Render a copy-paste role prompt with mandatory loop, callback, skill-hit, and model-routing fields.",
     )
@@ -802,7 +802,11 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--allow-ceo-direct-dispatch", action="store_true", help="Allow an explicit user override for 总控 -> execution-role direct dispatch.")
     parser.add_argument("--override-reason", help="Required when --allow-ceo-direct-dispatch bypasses 架构 / CTO or 内容主编.")
     parser.add_argument("--output", type=Path, help="Write prompt to file instead of stdout.")
-    return parser.parse_args(argv)
+    return parser
+
+
+def parse_args(argv: list[str]) -> argparse.Namespace:
+    return build_arg_parser().parse_args(argv)
 
 
 def main(argv: list[str]) -> int:

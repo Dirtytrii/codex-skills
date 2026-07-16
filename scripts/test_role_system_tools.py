@@ -18,6 +18,16 @@ ROUTING_GUIDE = ROOT / "docs" / "routing-token-and-evaluation.md"
 BROWSER_AUTOMATION_DOC = ROOT / "docs" / "browser-automation.md"
 ENSURE = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "ensure_project_role_files.py"
 RENDER_PROMPT = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "render_role_prompt.py"
+PREPARE_ROLE_WINDOW = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "prepare_role_window.py"
+BUNDLED_PREPARE_ROLE_WINDOW = (
+    ROOT
+    / "plugins"
+    / "codex-skills-core"
+    / "skills"
+    / "agent-role-orchestrator"
+    / "scripts"
+    / "prepare_role_window.py"
+)
 VALIDATE_LOOP = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "validate_role_loop.py"
 CHECK_CODEGRAPH = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "check_codegraph.py"
 AGGREGATE_SKILL_HITS = ROOT / "skills" / "agent-role-orchestrator" / "scripts" / "aggregate_skill_hits.py"
@@ -36,6 +46,7 @@ UI_SOURCE_CATALOG = UI_WORKFLOW.parent / "references" / "source-catalog.md"
 UI_VISUAL_DIRECTION = UI_WORKFLOW.parent / "references" / "visual-direction.md"
 UI_VISUAL_REVIEW_SIGNALS = UI_WORKFLOW.parent / "references" / "visual-review-signals.md"
 DESIGN_TASTE_ADAPTER = ROOT / "skills" / "design-taste-frontend" / "SKILL.md"
+PLUGIN_REGISTRY = ROOT / "registry" / "plugin-packages.json"
 
 
 def run(args: list[str], cwd: Path | None = None, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -53,6 +64,16 @@ def run(args: list[str], cwd: Path | None = None, check: bool = True) -> subproc
             f"stderr:\n{result.stderr}"
         )
     return result
+
+
+def write_plugin_config(path: Path, enabled_plugins: set[str]) -> None:
+    blocks = []
+    for plugin in sorted(enabled_plugins):
+        blocks.append(
+            f'[plugins."{plugin}@dirtytrii-codex-skills"]\n'
+            "enabled = true\n"
+        )
+    path.write_text("\n".join(blocks), encoding="utf-8")
 
 
 def test_project_role_file_bootstrap() -> None:
@@ -151,6 +172,148 @@ def test_check_codegraph_reports_state_without_guessing() -> None:
         initialized_payload = json.loads(initialized.stdout)
         assert initialized_payload["initialized"] is True
         assert initialized_payload["initialization_status"] == "已初始化"
+
+
+def test_prepare_role_window_fails_closed_when_role_plugin_is_disabled() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        config = Path(temp) / "config.toml"
+        write_plugin_config(config, {"codex-skills-core"})
+        result = run(
+            [
+                PYTHON,
+                str(PREPARE_ROLE_WINDOW),
+                "--role",
+                "开发",
+                "--objective",
+                "实现订单筛选",
+                "--source-role",
+                "架构",
+                "--required-skill",
+                "gstack",
+                "--plugin-registry",
+                str(PLUGIN_REGISTRY),
+                "--codex-config",
+                str(config),
+            ],
+            check=False,
+        )
+        assert result.returncode != 0
+        assert "prepare_role_window blocked" in result.stderr
+        assert "codex-skills-engineering" in result.stderr
+        assert (
+            "codex plugin add "
+            "codex-skills-engineering@dirtytrii-codex-skills"
+        ) in result.stderr
+        assert "【给 开发 窗口的" not in result.stdout
+
+
+def test_prepare_role_window_generates_only_after_required_plugins_are_enabled() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        config = Path(temp) / "config.toml"
+        write_plugin_config(
+            config,
+            {"codex-skills-core", "codex-skills-engineering"},
+        )
+        result = run(
+            [
+                PYTHON,
+                str(PREPARE_ROLE_WINDOW),
+                "--role",
+                "开发",
+                "--objective",
+                "实现订单筛选",
+                "--source-role",
+                "架构",
+                "--required-skill",
+                "gstack",
+                "--plugin-registry",
+                str(PLUGIN_REGISTRY),
+                "--codex-config",
+                str(config),
+            ]
+        )
+        assert "插件前置检查：" in result.stdout
+        assert "状态：通过" in result.stdout
+        assert "codex-skills-core、codex-skills-engineering" in result.stdout
+        assert "【给 开发 窗口的" in result.stdout
+
+
+def test_prepare_role_window_required_skill_can_add_cross_domain_plugin() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        config = Path(temp) / "config.toml"
+        write_plugin_config(
+            config,
+            {"codex-skills-core", "codex-skills-content"},
+        )
+        result = run(
+            [
+                PYTHON,
+                str(PREPARE_ROLE_WINDOW),
+                "--role",
+                "内容主编",
+                "--objective",
+                "准备公众号文章和配图",
+                "--source-role",
+                "总控",
+                "--required-skill",
+                "ui-implementation-workflow",
+                "--plugin-registry",
+                str(PLUGIN_REGISTRY),
+                "--codex-config",
+                str(config),
+            ],
+            check=False,
+        )
+        assert result.returncode != 0
+        assert "codex-skills-visual-delivery" in result.stderr
+        assert "【给 内容主编 窗口的" not in result.stdout
+
+
+def test_prepare_role_window_rejects_unmapped_required_skill() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        config = Path(temp) / "config.toml"
+        write_plugin_config(config, {"codex-skills-core"})
+        result = run(
+            [
+                PYTHON,
+                str(PREPARE_ROLE_WINDOW),
+                "--role",
+                "总控",
+                "--objective",
+                "路由任务",
+                "--required-skill",
+                "unknown-private-skill",
+                "--plugin-registry",
+                str(PLUGIN_REGISTRY),
+                "--codex-config",
+                str(config),
+            ],
+            check=False,
+        )
+        assert result.returncode != 0
+        assert "required skill is not mapped" in result.stderr
+        assert "unknown-private-skill" in result.stderr
+
+
+def test_bundled_prepare_role_window_discovers_bundled_registry() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        config = Path(temp) / "config.toml"
+        write_plugin_config(config, {"codex-skills-core"})
+        result = run(
+            [
+                PYTHON,
+                str(BUNDLED_PREPARE_ROLE_WINDOW),
+                "--role",
+                "总控",
+                "--objective",
+                "判断任务路由",
+                "--codex-config",
+                str(config),
+            ]
+        )
+        assert "插件前置检查：" in result.stdout
+        assert "codex-skills-core" in result.stdout
+        assert "【给 总控 窗口的" in result.stdout
 
 
 def test_aggregate_skill_hits_quantifies_required_actual_and_misfires() -> None:
@@ -1347,6 +1510,11 @@ def main() -> int:
         test_existing_agents_file_is_preserved,
         test_role_ledger_rejects_duplicate_threads_and_bad_status,
         test_check_codegraph_reports_state_without_guessing,
+        test_prepare_role_window_fails_closed_when_role_plugin_is_disabled,
+        test_prepare_role_window_generates_only_after_required_plugins_are_enabled,
+        test_prepare_role_window_required_skill_can_add_cross_domain_plugin,
+        test_prepare_role_window_rejects_unmapped_required_skill,
+        test_bundled_prepare_role_window_discovers_bundled_registry,
         test_aggregate_skill_hits_quantifies_required_actual_and_misfires,
         test_aggregate_skill_hits_ignores_ordinary_notes_in_denominators,
         test_aggregate_skill_hits_separates_misfires_that_were_not_loaded,
