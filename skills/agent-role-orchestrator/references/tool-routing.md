@@ -7,7 +7,8 @@ Read only the section relevant to the selected role. Script output provides stru
 | Need | Tool |
 | --- | --- |
 | Create/check `AGENTS.md` and `.codex/role-windows.md` | `ensure_project_role_files.py` |
-| Generate a role prompt | `render_role_prompt.py` |
+| Check required plugins and generate a role prompt | `prepare_role_window.py` |
+| Render a prompt after plugin preflight | `render_role_prompt.py` |
 | Validate ledger, prompt, or callback | `validate_role_loop.py` |
 | Inspect CodeGraph state | `check_codegraph.py` |
 | Aggregate required/actual/misfire skill use | `aggregate_skill_hits.py` |

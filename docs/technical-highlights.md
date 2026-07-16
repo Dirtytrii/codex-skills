@@ -56,7 +56,8 @@
 | 工具 | 机械保证 |
 | --- | --- |
 | `ensure_project_role_files.py` | 项目入口规则与角色台账存在，重复执行保持幂等 |
-| `render_role_prompt.py` | 角色、来源、模型、范围、验证、回调字段稳定生成 |
+| `prepare_role_window.py` | 角色和必选 Skill 对应插件已启用，否则阻断派发并输出启用命令 |
+| `render_role_prompt.py` | 前置检查通过后稳定生成角色、来源、模型、范围、验证和回调字段 |
 | `validate_role_loop.py` | prompt、回调和台账缺字段时拒绝闭环 |
 | `check_codegraph.py` | 读取真实初始化状态，避免架构凭感觉判断 |
 | `aggregate_skill_hits.py` | 从产物计算技能命中、漏召和误召 |

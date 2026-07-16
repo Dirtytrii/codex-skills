@@ -94,7 +94,8 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 | 脚本 | 作用 |
 | --- | --- |
 | `ensure_project_role_files.py` | 检查或创建 `AGENTS.md` 与 `.codex/role-windows.md` 托管规则 |
-| `render_role_prompt.py` | 按角色、风险、来源、范围、模型和 Token 档位生成 prompt |
+| `prepare_role_window.py` | 按角色和必选 Skill 解析所需插件；缺失时阻断并输出启用命令，通过后才生成 prompt |
+| `render_role_prompt.py` | 前置检查通过后的底层 prompt 生成器 |
 | `validate_role_loop.py` | 校验台账、prompt、回调和技能命中字段 |
 | `check_codegraph.py` | 检查新代码项目的 CodeGraph 可用性和初始化状态 |
 | `aggregate_skill_hits.py` | 仅从含路由声明或技能回调的文件聚合自报命中、漏召、有效使用、真实误召和不一致回传 |
@@ -105,7 +106,7 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 
 ```bash
 python skills/agent-role-orchestrator/scripts/ensure_project_role_files.py --project /path/to/project --write
-python skills/agent-role-orchestrator/scripts/render_role_prompt.py --role 开发 --objective "修复订单筛选" --source-role 架构 --profile auto --validation "pytest"
+python skills/agent-role-orchestrator/scripts/prepare_role_window.py --role 开发 --objective "修复订单筛选" --source-role 架构 --profile auto --required-skill gstack --validation "pytest"
 python skills/agent-role-orchestrator/scripts/validate_role_loop.py --prompt /path/to/prompt.md --callback /path/to/callback.md
 python scripts/evaluate_skill_routing.py --validate-only --strict
 ```

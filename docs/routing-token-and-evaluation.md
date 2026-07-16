@@ -2,11 +2,11 @@
 
 这份文档回答三个容易混在一起的问题：任务应该走多深的角色 Loop、应该使用哪一档模型和 Prompt，以及 Skill 是否真的选对。角色边界仍以 `agent-role-orchestrator` 为准；这里解释脚本输入、有效值和指标口径。
 
-在角色路由之前，先做插件层路由：默认仅保留 core，当前任务需要哪个领域再启用哪个 domain。可用 `audit_plugin_context.py` 估算所选插件目录并发现旧平铺安装重复项；包边界见 [plugin-packaging.md](plugin-packaging.md)。
+在角色路由之前，先做插件层路由：默认仅保留 core，当前任务需要哪个领域再启用哪个 domain。`prepare_role_window.py` 根据角色和必选 Skill 查询包注册表，插件未启用时阻断 Prompt 生成；`audit_plugin_context.py` 用于估算所选插件目录并发现旧平铺安装重复项。包边界见 [plugin-packaging.md](plugin-packaging.md)。
 
 ## 一条统一决策链
 
-`render_role_prompt.py` 不应分别猜测模型、Loop 和 Profile。推荐决策顺序是：
+`prepare_role_window.py` 是角色派发入口；插件前置检查通过后，它调用 `render_role_prompt.py`。底层生成器不应分别猜测模型、Loop 和 Profile。推荐决策顺序是：
 
 ```text
 原始输入
@@ -55,19 +55,19 @@ Token Budget Profile
 
 ```bash
 # 普通、边界清楚的开发负责人任务
-python skills/agent-role-orchestrator/scripts/render_role_prompt.py \
+python skills/agent-role-orchestrator/scripts/prepare_role_window.py \
   --role 开发 --source-role 架构 \
   --objective "修复订单筛选" \
   --task-size medium --profile auto
 
 # large 自动进入 L2 + standard
-python skills/agent-role-orchestrator/scripts/render_role_prompt.py \
+python skills/agent-role-orchestrator/scripts/prepare_role_window.py \
   --role 开发 --source-role 架构 \
   --objective "完成三个相关模块的集成交付" \
   --task-size large --profile auto
 
 # critical 自动进入 risk=critical + L3 + full，并使用高风险模型路由
-python skills/agent-role-orchestrator/scripts/render_role_prompt.py \
+python skills/agent-role-orchestrator/scripts/prepare_role_window.py \
   --role QA --source-role 架构 \
   --objective "关键 PR 发布门禁" \
   --task-size critical --profile auto

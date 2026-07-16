@@ -36,11 +36,19 @@ UI_VISUAL_DIRECTION = UI_WORKFLOW.parent / "references" / "visual-direction.md"
 UI_VISUAL_REVIEW_SIGNALS = UI_WORKFLOW.parent / "references" / "visual-review-signals.md"
 DESIGN_TASTE_ADAPTER = ROOT / "skills" / "design-taste-frontend" / "SKILL.md"
 RENDER_PROMPT = ORCHESTRATOR / "scripts" / "render_role_prompt.py"
+PREPARE_ROLE_WINDOW = ORCHESTRATOR / "scripts" / "prepare_role_window.py"
 VALIDATE_LOOP = ORCHESTRATOR / "scripts" / "validate_role_loop.py"
 ENSURE_FILES = ORCHESTRATOR / "scripts" / "ensure_project_role_files.py"
 CHECK_CODEGRAPH = ORCHESTRATOR / "scripts" / "check_codegraph.py"
 AGGREGATE_SKILL_HITS = ORCHESTRATOR / "scripts" / "aggregate_skill_hits.py"
-ROLE_SCRIPTS = (RENDER_PROMPT, VALIDATE_LOOP, ENSURE_FILES, CHECK_CODEGRAPH, AGGREGATE_SKILL_HITS)
+ROLE_SCRIPTS = (
+    PREPARE_ROLE_WINDOW,
+    RENDER_PROMPT,
+    VALIDATE_LOOP,
+    ENSURE_FILES,
+    CHECK_CODEGRAPH,
+    AGGREGATE_SKILL_HITS,
+)
 
 
 def read(path: Path) -> str:
@@ -83,6 +91,7 @@ def validate_docs(errors: list[str]) -> None:
             "架构 / CTO",
             "内容主编",
             "Fail-Closed Tool Layer",
+            "prepare_role_window.py",
             "render_role_prompt.py",
             "validate_role_loop.py",
             "ensure_project_role_files.py",
@@ -244,6 +253,7 @@ def validate_orchestrator(errors: list[str]) -> None:
         SKILL_MD,
         [
             "Fail-Closed Tool Layer Rule",
+            "prepare_role_window.py",
             "render_role_prompt.py",
             "validate_role_loop.py",
             "ensure_project_role_files.py",
@@ -296,6 +306,7 @@ def validate_orchestrator(errors: list[str]) -> None:
             "Act as `架构` / `CTO`",
             "## 内容主编",
             "ensure_project_role_files.py",
+            "prepare_role_window.py",
             "validate_role_loop.py",
             "check_codegraph.py",
             "aggregate_skill_hits.py",
@@ -333,7 +344,7 @@ def validate_registry(errors: list[str]) -> None:
         errors.append("agent-role-orchestrator registry missing consumed_by_roles: " + "、".join(sorted(missing_roles)))
 
     summary = item.get("summary", "")
-    for needle in ("总控/CEO", "CTO", "内容主编", "Luna 有界执行", "Spark 独立额度机会通道", "显式并行 worker 门禁", "原生 Browser/Chrome fail-closed 路由", "反老登味/反AI味内容闸门", "UI预览图实现路线选择", "来源thread压缩回调闭环", "fail-closed"):
+    for needle in ("总控/CEO", "CTO", "内容主编", "Luna 有界执行", "Spark 独立额度机会通道", "显式并行 worker 门禁", "原生 Browser/Chrome fail-closed 路由", "反老登味/反AI味内容闸门", "UI预览图实现路线选择", "角色/必选 Skill 插件前置检查", "来源thread压缩回调闭环", "fail-closed"):
         if needle not in summary:
             errors.append(f"agent-role-orchestrator summary missing: {needle}")
 
@@ -367,6 +378,18 @@ def validate_scripts(errors: list[str]) -> None:
         if not script.is_file():
             errors.append(f"missing role-system script: {script.relative_to(ROOT)}")
 
+    require_contains(
+        PREPARE_ROLE_WINDOW,
+        [
+            "registry/plugin-packages.json",
+            "required skill is not mapped",
+            "required plugins are not enabled",
+            "codex plugin marketplace upgrade",
+            "codex plugin add",
+            "build_prompt(args)",
+        ],
+        errors,
+    )
     require_contains(
         RENDER_PROMPT,
         [
@@ -415,7 +438,7 @@ def validate_scripts(errors: list[str]) -> None:
         ["gpt-5.6-luna", "gpt-5.3-codex-spark", "gpt-5.4-mini", "gpt-5.6-terra", "gpt-5.6-sol", "Spark Opportunity Lane", "--prefer-spark --spark-available", "--execution-profile parallel", "--disjoint-scope", "--independent-validation", "Reasoning Effort Eval Gate"],
         errors,
     )
-    require_contains(TOOL_ROUTING, ["Fail-Closed Scripts", "aggregate_skill_hits.py", "Skill Ledger", "$browser-automation-router", "$playwright", "$ui-implementation-workflow", "visual-direction", ".codex/ui-visual-review-signals.md"], errors)
+    require_contains(TOOL_ROUTING, ["Fail-Closed Scripts", "prepare_role_window.py", "aggregate_skill_hits.py", "Skill Ledger", "$browser-automation-router", "$playwright", "$ui-implementation-workflow", "visual-direction", ".codex/ui-visual-review-signals.md"], errors)
     require_contains(CONTENT_ROUTING, ["X MCP Content Research Source", "反老登味 / 反 AI 味内容闸门", "$browser-automation-router", "$xhs-automation-publisher"], errors)
     require_contains(BROWSER_ROUTER, ["Route Order", "2026-06-11", "existing Chrome profile", "Fail-Closed Capability Gate", "Write Gates"], errors)
     require_contains(PLAYWRIGHT_SKILL, ["deterministic CLI/CI lane", "$browser-automation-router", "Do not import cookies"], errors)
@@ -531,12 +554,22 @@ def validate_scripts(errors: list[str]) -> None:
         good_callback = temp_path / "good-callback.md"
         bad_callback = temp_path / "bad-callback.md"
         project = temp_path / "project"
+        plugin_config = temp_path / "config.toml"
         project.mkdir()
+        plugin_config.write_text(
+            """[plugins."codex-skills-core@dirtytrii-codex-skills"]
+enabled = true
+
+[plugins."codex-skills-engineering@dirtytrii-codex-skills"]
+enabled = true
+""",
+            encoding="utf-8",
+        )
 
         run(
             [
                 PYTHON,
-                str(RENDER_PROMPT),
+                str(PREPARE_ROLE_WINDOW),
                 "--role",
                 "开发",
                 "--objective",
@@ -549,6 +582,8 @@ def validate_scripts(errors: list[str]) -> None:
                 "--read-ledger",
                 "--required-skill",
                 "gstack-investigate",
+                "--codex-config",
+                str(plugin_config),
                 "--validation",
                 "npm test",
                 "--output",
@@ -559,10 +594,40 @@ def validate_scripts(errors: list[str]) -> None:
         run([PYTHON, str(VALIDATE_LOOP), "--prompt", str(prompt)], errors)
         if prompt.exists():
             prompt_text = prompt.read_text(encoding="utf-8")
+            if "插件前置检查：" not in prompt_text:
+                errors.append("prepare_role_window.py output is missing plugin preflight")
             if "profile：compact" not in prompt_text:
-                errors.append("render_role_prompt.py auto profile did not compact an L1 execution prompt")
+                errors.append("prepare_role_window.py auto profile did not compact an L1 execution prompt")
             if "任务分发决策：" not in prompt_text:
-                errors.append("render_role_prompt.py output is missing 任务分发决策")
+                errors.append("prepare_role_window.py output is missing 任务分发决策")
+
+        blocked_config = temp_path / "blocked-config.toml"
+        blocked_config.write_text(
+            """[plugins."codex-skills-core@dirtytrii-codex-skills"]
+enabled = true
+""",
+            encoding="utf-8",
+        )
+        blocked = run(
+            [
+                PYTHON,
+                str(PREPARE_ROLE_WINDOW),
+                "--role",
+                "开发",
+                "--objective",
+                "验证插件门禁",
+                "--source-role",
+                "架构",
+                "--required-skill",
+                "gstack",
+                "--codex-config",
+                str(blocked_config),
+            ],
+            errors,
+            expect_success=False,
+        )
+        if "codex plugin add codex-skills-engineering@dirtytrii-codex-skills" not in blocked.stderr:
+            errors.append("prepare_role_window.py did not output the missing plugin enable command")
 
         small_direct = run(
             [

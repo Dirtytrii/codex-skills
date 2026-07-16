@@ -1,6 +1,6 @@
 # Role Cards
 
-Use this file as a compact ownership index. The shared callback, ledger, model, Token Budget Profile, and skill-hit contracts live in the main `SKILL.md`. Generate the actual prompt with `render_role_prompt.py --profile auto` and validate it with `validate_role_loop.py`.
+Use this file as a compact ownership index. The shared callback, ledger, model, Token Budget Profile, and skill-hit contracts live in the main `SKILL.md`. Check plugins and generate the actual prompt with `prepare_role_window.py --profile auto`, then validate it with `validate_role_loop.py`.
 
 ## 总控
 
@@ -106,6 +106,7 @@ Owns: client-facing documentation, release notes, handoff packages, traceability
 4. Reuse known threads; unknown state is `待确认`.
 5. Select the smallest Token Budget Profile and only the relevant reference.
 6. Declare allowed/forbidden scope, validation, required skills, and source callback.
+7. Run `prepare_role_window.py`; do not dispatch while a required plugin is missing or disabled.
 
 ## Shared Completion
 

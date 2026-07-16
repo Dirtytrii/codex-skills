@@ -34,6 +34,7 @@ class PackageSpec:
     name: str
     default_install: bool
     requires: tuple[str, ...]
+    roles: tuple[str, ...]
     skills: tuple[str, ...]
 
     @property
@@ -76,6 +77,7 @@ def load_package_specs(path: Path = PACKAGE_CONFIG) -> tuple[Path, list[PackageS
         name = raw.get("name")
         default_install = raw.get("default_install")
         requires = raw.get("requires")
+        roles = raw.get("roles")
         skills = raw.get("skills")
         if not isinstance(name, str) or not name:
             raise ValueError(f"{path} packages[{index}].name must be a non-empty string")
@@ -83,6 +85,10 @@ def load_package_specs(path: Path = PACKAGE_CONFIG) -> tuple[Path, list[PackageS
             raise ValueError(f"{path} package {name} default_install must be boolean")
         if not isinstance(requires, list) or not all(isinstance(item, str) for item in requires):
             raise ValueError(f"{path} package {name} requires must be a string list")
+        if not isinstance(roles, list) or not roles or not all(
+            isinstance(item, str) and item for item in roles
+        ):
+            raise ValueError(f"{path} package {name} roles must be a non-empty string list")
         if not isinstance(skills, list) or not skills or not all(
             isinstance(item, str) and item for item in skills
         ):
@@ -92,6 +98,7 @@ def load_package_specs(path: Path = PACKAGE_CONFIG) -> tuple[Path, list[PackageS
                 name=name,
                 default_install=default_install,
                 requires=tuple(requires),
+                roles=tuple(roles),
                 skills=tuple(skills),
             )
         )
@@ -205,4 +212,10 @@ def bundle_sync_errors(source_root: Path, spec: PackageSpec) -> list[str]:
             f"{spec.name}/{skill}: {error}"
             for error in compare_skill_trees(source, bundled)
         )
+    if spec.name == "codex-skills-core":
+        mirror = spec.plugin_root / "registry" / "plugin-packages.json"
+        if not mirror.is_file():
+            errors.append(f"{spec.name}: missing generated registry/plugin-packages.json")
+        elif mirror.read_bytes() != PACKAGE_CONFIG.read_bytes():
+            errors.append(f"{spec.name}: generated registry/plugin-packages.json is stale")
     return errors
