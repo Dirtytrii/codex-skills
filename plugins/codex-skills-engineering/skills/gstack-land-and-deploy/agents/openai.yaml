@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Land And Deploy"
+  short_description: "明确授权下的合并、发布和部署流程门禁"
+  default_prompt: "Use $gstack-land-and-deploy for this task and keep the current role boundary explicit."

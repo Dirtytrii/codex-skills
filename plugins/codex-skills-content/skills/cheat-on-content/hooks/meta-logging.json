@@ -1,0 +1,57 @@
+{
+  "_comment": "cheat-on-content meta-logging hook. Passively records local event metadata to .cheat-cache/usage.jsonl. It stores event type, tool/file metadata, and prompt presence/length only — not raw prompt excerpts. All hooks are async fire-and-forget — never blocks. Used by /cheat-status to compute things like 'distance since last bump'.",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PROJECT_DIR}/.cheat-hooks/log-event.sh tool_use",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PROJECT_DIR}/.cheat-hooks/log-event.sh user_prompt",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PROJECT_DIR}/.cheat-hooks/log-event.sh session_start",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PROJECT_DIR}/.cheat-hooks/log-event.sh session_end",
+            "timeout": 5,
+            "async": true
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Freeze"
+  short_description: "暂停写操作并切换到只读取证"
+  default_prompt: "Use $gstack-freeze for this task and keep the current role boundary explicit."

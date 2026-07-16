@@ -1,0 +1,28 @@
+{
+  "name": "codex-skills-content",
+  "version": "0.1.0",
+  "description": "Content strategy, public writing, WeChat, Xiaohongshu, research, and publishing workflows.",
+  "author": {
+    "name": "Dirtytrii",
+    "email": "springcloudjiang@foxmail.com",
+    "url": "https://github.com/Dirtytrii"
+  },
+  "homepage": "https://github.com/Dirtytrii/codex-skills",
+  "repository": "https://github.com/Dirtytrii/codex-skills",
+  "license": "MIT",
+  "keywords": ["codex", "content", "wechat", "xiaohongshu", "writing"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Skills Content",
+    "shortDescription": "Research, write, humanize, and publish content safely.",
+    "longDescription": "Adds editorial calibration, anti-AI writing gates, WeChat article operations, Xiaohongshu research and publishing preparation, and platform confirmation gates.",
+    "developerName": "Dirtytrii",
+    "category": "Marketing",
+    "capabilities": ["Research", "Write", "Publish Preparation"],
+    "websiteURL": "https://github.com/Dirtytrii/codex-skills",
+    "defaultPrompt": [
+      "Use the content plugin to research and draft this public-facing topic.",
+      "Prepare this WeChat or Xiaohongshu content for preview without publishing."
+    ]
+  }
+}

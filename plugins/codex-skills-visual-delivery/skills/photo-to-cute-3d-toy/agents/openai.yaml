@@ -1,0 +1,7 @@
+interface:
+  display_name: "Photo to Cute 3D Toy"
+  short_description: "Photo refs to cute toy GLB assets"
+  default_prompt: "Use $photo-to-cute-3d-toy to create a cute 3D toy asset from scene photos and a manifest."
+
+policy:
+  allow_implicit_invocation: true

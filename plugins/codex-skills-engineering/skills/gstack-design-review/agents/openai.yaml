@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Design Review"
+  short_description: "渲染后视觉层级、布局、可访问性和完成度审查"
+  default_prompt: "Use $gstack-design-review for this task and keep the current role boundary explicit."

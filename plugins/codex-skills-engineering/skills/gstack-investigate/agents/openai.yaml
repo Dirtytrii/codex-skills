@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Investigate"
+  short_description: "故障、失败测试和回归的证据优先根因调查"
+  default_prompt: "Use $gstack-investigate for this task and keep the current role boundary explicit."

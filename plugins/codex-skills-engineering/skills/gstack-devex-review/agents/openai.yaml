@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Devex Review"
+  short_description: "已实现仓库/流程的开发体验审查"
+  default_prompt: "Use $gstack-devex-review for this task and keep the current role boundary explicit."

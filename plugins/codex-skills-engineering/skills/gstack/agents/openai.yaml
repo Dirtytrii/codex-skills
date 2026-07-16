@@ -1,0 +1,4 @@
+interface:
+  display_name: "GStack Method Router"
+  short_description: "Route gstack methods across architecture, engineering, design, QA, security, and release work."
+  default_prompt: "Use $gstack to choose the right gstack method for this role and keep the role boundary explicit."

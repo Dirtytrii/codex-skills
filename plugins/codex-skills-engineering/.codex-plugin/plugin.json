@@ -1,0 +1,28 @@
+{
+  "name": "codex-skills-engineering",
+  "version": "0.1.0",
+  "description": "Engineering, architecture, development, QA, testing, and release workflows.",
+  "author": {
+    "name": "Dirtytrii",
+    "email": "springcloudjiang@foxmail.com",
+    "url": "https://github.com/Dirtytrii"
+  },
+  "homepage": "https://github.com/Dirtytrii/codex-skills",
+  "repository": "https://github.com/Dirtytrii/codex-skills",
+  "license": "MIT",
+  "keywords": ["codex", "engineering", "architecture", "qa", "release"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Skills Engineering",
+    "shortDescription": "Architecture-to-release engineering workflows.",
+    "longDescription": "Adds gstack adapters, architecture and development methods, deterministic browser regression, QA and test assets, and release-readiness workflows.",
+    "developerName": "Dirtytrii",
+    "category": "Developer Tools",
+    "capabilities": ["Read", "Write", "Test", "Review"],
+    "websiteURL": "https://github.com/Dirtytrii/codex-skills",
+    "defaultPrompt": [
+      "Use the engineering plugin to plan, implement, test, and review this change.",
+      "Run an adversarial engineering and release-readiness review."
+    ]
+  }
+}

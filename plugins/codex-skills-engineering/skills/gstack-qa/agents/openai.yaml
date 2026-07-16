@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack QA"
+  short_description: "Web/UI QA 验证和授权后的窄范围修复闭环"
+  default_prompt: "Use $gstack-qa for this task and keep the current role boundary explicit."

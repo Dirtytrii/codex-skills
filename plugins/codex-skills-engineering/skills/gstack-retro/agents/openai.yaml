@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Retro"
+  short_description: "完工复盘、流程改进和角色/skill 优化"
+  default_prompt: "Use $gstack-retro for this task and keep the current role boundary explicit."

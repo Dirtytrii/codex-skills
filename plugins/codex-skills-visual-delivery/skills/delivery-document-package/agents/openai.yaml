@@ -1,0 +1,4 @@
+interface:
+  display_name: "Delivery Document Package"
+  short_description: "Keep client-facing delivery docs clean"
+  default_prompt: "Use $delivery-document-package to prepare formal delivery documents and update the document package index."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Canary"
+  short_description: "灰度/冒烟门禁、发布信号和回滚条件"
+  default_prompt: "Use $gstack-canary for this task and keep the current role boundary explicit."

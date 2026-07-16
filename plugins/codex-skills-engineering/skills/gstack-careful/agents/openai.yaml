@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Careful"
+  short_description: "高风险动作前的保守检查和确认点"
+  default_prompt: "Use $gstack-careful for this task and keep the current role boundary explicit."

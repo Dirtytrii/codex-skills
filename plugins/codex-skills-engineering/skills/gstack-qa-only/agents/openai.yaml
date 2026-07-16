@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack QA Only"
+  short_description: "只报告不修改的 Web/UI QA 验证"
+  default_prompt: "Use $gstack-qa-only for this task and keep the current role boundary explicit."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Ship"
+  short_description: "合并、PR、发布和部署前最终检查"
+  default_prompt: "Use $gstack-ship for this task and keep the current role boundary explicit."

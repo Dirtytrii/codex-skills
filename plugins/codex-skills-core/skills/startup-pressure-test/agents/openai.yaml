@@ -1,0 +1,4 @@
+interface:
+  display_name: "Startup Pressure Test"
+  short_description: "Pressure-test startup ideas brutally"
+  default_prompt: "Use $startup-pressure-test to pressure-test my startup idea."

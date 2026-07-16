@@ -18,6 +18,7 @@ SKILLS = ROOT / "skills"
 REGISTRY = ROOT / "registry" / "skills.json"
 ROLE_SYSTEM_VALIDATOR = ROOT / "scripts" / "validate_role_system.py"
 SKILL_ROUTING_EVALUATOR = ROOT / "scripts" / "evaluate_skill_routing.py"
+PLUGIN_VALIDATOR = ROOT / "scripts" / "validate_plugins.py"
 
 NAME_RE = re.compile(r"^[a-z0-9-]+$")
 ORIGIN_TYPES = {"local", "external-github", "hermes", "upstream-adapted"}
@@ -105,6 +106,25 @@ def validate_skill_routing_cases(errors: list[str]) -> None:
         )
 
 
+def validate_plugins(errors: list[str]) -> None:
+    if not PLUGIN_VALIDATOR.is_file():
+        errors.append("missing scripts/validate_plugins.py")
+        return
+    result = subprocess.run(
+        [sys.executable, str(PLUGIN_VALIDATOR)],
+        cwd=str(ROOT),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        errors.append(
+            "plugin validation failed:\n"
+            f"stdout:\n{result.stdout}\n"
+            f"stderr:\n{result.stderr}"
+        )
+
+
 def main() -> int:
     errors: list[str] = []
 
@@ -176,6 +196,7 @@ def main() -> int:
 
     validate_role_system(errors)
     validate_skill_routing_cases(errors)
+    validate_plugins(errors)
 
     for path in iter_text_files():
         try:

@@ -1,0 +1,68 @@
+{
+  "name": "dirtytrii-codex-skills",
+  "interface": {
+    "displayName": "Dirtytrii Codex Skills"
+  },
+  "plugins": [
+    {
+      "name": "codex-skills-core",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-skills-core"
+      },
+      "policy": {
+        "installation": "INSTALLED_BY_DEFAULT",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "codex-skills-engineering",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-skills-engineering"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "codex-skills-operations",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-skills-operations"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    },
+    {
+      "name": "codex-skills-content",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-skills-content"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Marketing"
+    },
+    {
+      "name": "codex-skills-visual-delivery",
+      "source": {
+        "source": "local",
+        "path": "./plugins/codex-skills-visual-delivery"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Design"
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Health"
+  short_description: "项目健康度、测试、文档、DX 和维护性巡检"
+  default_prompt: "Use $gstack-health for this task and keep the current role boundary explicit."

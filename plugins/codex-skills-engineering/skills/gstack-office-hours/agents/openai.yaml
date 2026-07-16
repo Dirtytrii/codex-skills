@@ -1,0 +1,4 @@
+interface:
+  display_name: "Gstack Office Hours"
+  short_description: "早期想法、需求现实性和最小切入口梳理"
+  default_prompt: "Use $gstack-office-hours for this task and keep the current role boundary explicit."
