@@ -113,14 +113,14 @@ skill 多了以后，仅靠描述命中会产生“感觉都加载了”的错�
 
 ```text
 必选自报命中率 = 实际使用的必选 skill / 声明的必选 skill
-路由声明覆盖率 = 包含必选声明的文件 / 扫描文件
-回调完整率 = 五个技能回传字段齐全的文件 / 扫描文件
+路由声明覆盖率 = 包含必选声明的文件 / 纳入统计的 eligible 文件
+回调完整率 = 五个技能回传字段齐全的文件 / 包含技能回调的文件
 有效使用率 = 真正影响产出的已加载 skill / 已加载 skill
-误召率 = 加载但未产生作用的 skill / 总加载 skill
+误召率 = 已加载且回传为误召的 skill / 总加载 skill
 漏召数 = 任务结束后确认本应使用但未使用的 skill 数
 ```
 
-`aggregate_skill_hits.py` 只统计回调中的自报数据；没有必选声明时返回“不可评估”，不会伪造 `100%`。`evals/skill-routing-cases.jsonl` 与 `evaluate_skill_routing.py` 用代表性输入独立评估真实选择，区分必选漏召、禁止误召和意外加载。单次异常只记录证据；持续漏召、误召、触发漂移或文档膨胀再交给 `技能维护` 修改 skill 和 registry。
+`aggregate_skill_hits.py` 只统计含路由声明或技能回调的 eligible 文件；普通 Markdown 不进入分母。没有必选声明时返回“不可评估”，不会伪造 `100%`。回传为误召却未出现在已加载列表中的 skill 会作为不一致数据单列，不污染误召率。`evals/skill-routing-cases.jsonl` 与 `evaluate_skill_routing.py` 用代表性输入独立评估真实选择，区分必选漏召、禁止误召和意外加载。单次异常只记录证据；持续漏召、误召、触发漂移或文档膨胀再交给 `技能维护` 修改 skill 和 registry。
 
 ## 能力路由与内容门禁
 

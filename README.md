@@ -92,7 +92,7 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 | `render_role_prompt.py` | 按角色、风险、来源、范围、模型和 Token 档位生成 prompt |
 | `validate_role_loop.py` | 校验台账、prompt、回调和技能命中字段 |
 | `check_codegraph.py` | 检查新代码项目的 CodeGraph 可用性和初始化状态 |
-| `aggregate_skill_hits.py` | 聚合自报命中、声明覆盖、回调完整、漏召、误召和有效使用率 |
+| `aggregate_skill_hits.py` | 仅从含路由声明或技能回调的文件聚合自报命中、漏召、有效使用、真实误召和不一致回传 |
 | `evaluate_skill_routing.py` | 用代表性输入和实际选择独立评估 Skill 路由 |
 | `audit_skill_catalog.py` | 递归检查 Skill 目录、描述预算和隐式调用策略 |
 

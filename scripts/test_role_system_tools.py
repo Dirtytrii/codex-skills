@@ -159,7 +159,7 @@ def test_aggregate_skill_hits_quantifies_required_actual_and_misfires() -> None:
             """技能路由台账：
 - 必选 skill：humanizer-zh、xhs-publish-assistant
 技能命中回传：
-- 已加载并使用：humanizer-zh
+- 已加载并使用：humanizer-zh、story-deslop
 - 来源窗口要求但未使用：xhs-publish-assistant
 - 临时发现应补用：cheat-on-content
 - 误召/无效加载：story-deslop
@@ -175,11 +175,64 @@ def test_aggregate_skill_hits_quantifies_required_actual_and_misfires() -> None:
         assert payload["declared_unused_required_skill_count"] == 1
         assert payload["missing_required_skill_count"] == 0
         assert payload["misfire_skill_count"] == 1
+        assert payload["misfire_not_loaded_skill_count"] == 0
         assert payload["hit_rate"] == 0.5
         assert payload["routing_declaration_coverage"] == 1.0
         assert payload["skill_callback_completeness"] == 1.0
-        assert payload["effective_use_rate"] == 1.0
-        assert payload["misfire_rate"] == 1.0
+        assert payload["effective_use_rate"] == 0.5
+        assert payload["misfire_rate"] == 0.5
+
+
+def test_aggregate_skill_hits_ignores_ordinary_notes_in_denominators() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        callbacks = Path(temp)
+        for index in range(9):
+            (callbacks / f"note-{index}.md").write_text(
+                f"# 普通记录 {index}\n\n这里没有技能路由或回调。\n",
+                encoding="utf-8",
+            )
+        (callbacks / "callback.md").write_text(
+            """技能路由台账：
+- 必选 skill：humanizer-zh
+技能命中回传：
+- 已加载并使用：humanizer-zh
+- 来源窗口要求但未使用：无
+- 临时发现应补用：无
+- 误召/无效加载：无
+- 影响产出的 skill：humanizer-zh
+""",
+            encoding="utf-8",
+        )
+
+        result = run([PYTHON, str(AGGREGATE_SKILL_HITS), str(callbacks), "--json"])
+        payload = json.loads(result.stdout)
+        assert payload["files_discovered"] == 10
+        assert payload["files_scanned"] == 1
+        assert payload["ignored_file_count"] == 9
+        assert payload["routing_declaration_coverage"] == 1.0
+        assert payload["skill_callback_completeness"] == 1.0
+
+
+def test_aggregate_skill_hits_separates_misfires_that_were_not_loaded() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        callback = Path(temp) / "callback.md"
+        callback.write_text(
+            """技能命中回传：
+- 已加载并使用：humanizer-zh
+- 来源窗口要求但未使用：无
+- 临时发现应补用：无
+- 误召/无效加载：story-deslop
+- 影响产出的 skill：humanizer-zh
+""",
+            encoding="utf-8",
+        )
+
+        result = run([PYTHON, str(AGGREGATE_SKILL_HITS), str(callback), "--json"])
+        payload = json.loads(result.stdout)
+        assert payload["misfire_skill_count"] == 0
+        assert payload["misfire_not_loaded_skill_count"] == 1
+        assert payload["misfire_rate"] == 0.0
+        assert payload["files"][0]["misfire_not_loaded_skills"] == ["story-deslop"]
 
 
 def test_aggregate_skill_hits_does_not_claim_success_without_requirements() -> None:
@@ -1219,6 +1272,8 @@ def main() -> int:
         test_role_ledger_rejects_duplicate_threads_and_bad_status,
         test_check_codegraph_reports_state_without_guessing,
         test_aggregate_skill_hits_quantifies_required_actual_and_misfires,
+        test_aggregate_skill_hits_ignores_ordinary_notes_in_denominators,
+        test_aggregate_skill_hits_separates_misfires_that_were_not_loaded,
         test_aggregate_skill_hits_does_not_claim_success_without_requirements,
         test_skill_routing_eval_scores_observed_decisions_independently,
         test_callback_must_start_with_forwardable_prefix,
