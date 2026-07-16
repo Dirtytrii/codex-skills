@@ -21,11 +21,14 @@
 在普通终端使用独立 Codex CLI：
 
 ```bash
-codex plugin marketplace add Dirtytrii/codex-skills
+codex plugin marketplace add Dirtytrii/codex-skills --ref main
+codex plugin add codex-skills-core@dirtytrii-codex-skills
 codex plugin add codex-skills-content@dirtytrii-codex-skills
 ```
 
-也可以从 Codex 桌面的 Plugins 面板添加 marketplace 和领域插件。marketplace 把 `codex-skills-core` 标为 `INSTALLED_BY_DEFAULT`，其他包标为 `AVAILABLE`。
+也可以从 Codex 桌面的 Plugins 面板添加 marketplace 和领域插件。marketplace 把 `codex-skills-core` 标为 `INSTALLED_BY_DEFAULT`，其他包标为 `AVAILABLE`；CLI 路径仍显式安装 Core，不假定注册 marketplace 会自动完成安装。
+
+其他机器首次安装、日常刷新、同版本缓存更新、新任务验证和旧平铺目录迁移见[插件安装、更新与跨机器同步](plugin-update-guide.md)。
 
 若 Windows 桌面应用内的子进程无法直接执行 WindowsApps 中的 `codex.exe`，而桌面 Codex 本身仍正常，无需修改系统目录权限。只有需要在终端运行上述命令时，才安装独立 CLI：
 
