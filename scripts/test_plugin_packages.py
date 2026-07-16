@@ -15,6 +15,7 @@ from validate_plugins import validate
 
 ROOT = Path(__file__).resolve().parents[1]
 PYTHON = sys.executable
+PLUGIN_GUIDE = ROOT / "docs" / "plugin-packaging.md"
 
 
 def run(args: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -89,6 +90,26 @@ def test_context_audit_adds_core_and_reports_legacy_duplicates() -> None:
         ]
 
 
+def test_context_audit_fails_closed_for_oversized_multi_domain_set() -> None:
+    result = run(
+        [
+            PYTHON,
+            "scripts/audit_plugin_context.py",
+            "--plugin",
+            "codex-skills-content",
+            "--plugin",
+            "codex-skills-visual-delivery",
+            "--strict",
+            "--json",
+        ],
+        check=False,
+    )
+    assert result.returncode == 1
+    report = json.loads(result.stdout)
+    assert report["catalog_chars"] == 10004
+    assert report["within_target"] is False
+
+
 def test_tree_comparison_detects_changed_and_stale_files() -> None:
     with tempfile.TemporaryDirectory() as temp:
         root = Path(temp)
@@ -111,13 +132,25 @@ def test_package_registry_source_stays_canonical() -> None:
     assert len({skill for spec in specs for skill in spec.skills}) == 67
 
 
+def test_documented_package_metrics_match_validator() -> None:
+    errors, report = validate()
+    assert errors == []
+    guide = PLUGIN_GUIDE.read_text(encoding="utf-8")
+    for item in report["packages"]:
+        assert f"| `{item['name']}` |" in guide
+        assert f"| {item['catalog_chars']} |" in guide
+    assert "10004" in guide
+
+
 def main() -> int:
     tests = [
         test_marketplace_and_package_registry_are_valid,
         test_generated_bundles_are_exact_copies,
         test_context_audit_adds_core_and_reports_legacy_duplicates,
+        test_context_audit_fails_closed_for_oversized_multi_domain_set,
         test_tree_comparison_detects_changed_and_stale_files,
         test_package_registry_source_stays_canonical,
+        test_documented_package_metrics_match_validator,
     ]
     for test in tests:
         test()

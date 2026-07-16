@@ -44,13 +44,16 @@ skills/<skill-name>/assets/
 }
 ```
 
-来源字段说明见 `docs/source-policy.md`。
+来源字段说明见 `docs/source-policy.md`。同时把顶层目录名加入 `registry/plugin-packages.json` 中唯一一个包：默认不要加入 core，应按实际任务域选择 engineering、operations、content 或 visual-delivery。跨域消费关系写在 registry 和路由规则里，不通过重复打包实现。
 
 ## 4. 公开前检查
 
 运行：
 
 ```bash
+python3 scripts/sync_plugin_bundles.py --write
+python3 scripts/test_plugin_packages.py
+python3 scripts/validate_plugins.py
 python3 scripts/validate_public_skills.py
 ```
 

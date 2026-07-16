@@ -65,6 +65,12 @@
 
 ## Token-Aware Prompt Architecture
 
+### Core + Domain 插件隔离
+
+默认上下文只安装 `codex-skills-core`，工程、运维、内容和视觉交付作为独立 domain 按任务启用。`skills/` 保持唯一维护源，生成器把每个 skill 精确复制到一个插件，校验器拒绝漏包、重复归属、bundle 漂移和超预算组合。这样 Token 控制发生在任务开始前，而不是等所有 skill 描述进入目录后再依赖模型克制。
+
+完整包边界、安装和审计命令见 [plugin-packaging.md](plugin-packaging.md)。
+
 系统从三个层面控制 Token：
 
 ### 按需加载
