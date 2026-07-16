@@ -259,7 +259,7 @@ def test_skill_routing_eval_scores_observed_decisions_independently() -> None:
     validation = run(
         [PYTHON, str(EVALUATE_SKILL_ROUTING), "--validate-only", "--strict"]
     )
-    assert json.loads(validation.stdout)["case_count"] >= 15
+    assert json.loads(validation.stdout)["case_count"] >= 18
 
     with tempfile.TemporaryDirectory() as temp:
         observed = Path(temp) / "observed.jsonl"
@@ -292,6 +292,30 @@ def test_skill_routing_eval_scores_observed_decisions_independently() -> None:
         assert payload["unevaluated_case_count"] == 0
         assert payload["case_pass_rate"] == 1.0
         assert payload["required_skill_recall"] == 1.0
+        assert payload["negative_case_count"] >= 3
+        assert payload["evaluated_negative_case_count"] >= 3
+        assert payload["negative_case_pass_rate"] == 1.0
+
+        first_negative = next(
+            case
+            for case in cases
+            if not case["required_skills"] and not case["allowed_skills"]
+        )
+        observed.write_text(
+            json.dumps(
+                {"id": first_negative["id"], "selected_skills": ["humanizer-zh"]},
+                ensure_ascii=False,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        negative = run(
+            [PYTHON, str(EVALUATE_SKILL_ROUTING), "--observed", str(observed)]
+        )
+        negative_payload = json.loads(negative.stdout)
+        assert negative_payload["evaluated_negative_case_count"] == 1
+        assert negative_payload["negative_case_pass_rate"] == 0.0
+        assert negative_payload["results"][0]["unexpected_skills"] == ["humanizer-zh"]
 
 
 def test_callback_must_start_with_forwardable_prefix() -> None:

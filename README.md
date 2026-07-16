@@ -95,7 +95,7 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 | `validate_role_loop.py` | 校验台账、prompt、回调和技能命中字段 |
 | `check_codegraph.py` | 检查新代码项目的 CodeGraph 可用性和初始化状态 |
 | `aggregate_skill_hits.py` | 仅从含路由声明或技能回调的文件聚合自报命中、漏召、有效使用、真实误召和不一致回传 |
-| `evaluate_skill_routing.py` | 用代表性输入和实际选择独立评估 Skill 路由 |
+| `evaluate_skill_routing.py` | 对实际选择做离线评分，覆盖应命中与无需 Skill 的负样本 |
 | `audit_skill_catalog.py` | 递归检查 Skill 目录、描述预算和隐式调用策略 |
 
 角色运行脚本位于 `skills/agent-role-orchestrator/scripts/`；目录审计和路由评估属于仓库级 PR 工具，位于 `scripts/`。典型用法：

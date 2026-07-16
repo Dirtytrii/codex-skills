@@ -86,23 +86,32 @@ def score(
     results: list[dict[str, object]] = []
     required_total = 0
     required_selected = 0
+    negative_case_count = 0
+    evaluated_negative_case_count = 0
+    passed_negative_case_count = 0
     for case in cases:
         case_id = str(case["id"])
+        required = set(case.get("required_skills", []))
+        allowed = set(case.get("allowed_skills", []))
+        expects_no_skill = not required and not allowed
+        negative_case_count += int(expects_no_skill)
         if case_id not in observed_by_id:
             continue
         selected = observed_by_id[case_id]
-        required = set(case.get("required_skills", []))
-        allowed = set(case.get("allowed_skills", []))
         forbidden = set(case.get("forbidden_skills", []))
         missing = required - selected
         forbidden_selected = forbidden & selected
         unexpected = selected - required - allowed
+        passed_case = not missing and not forbidden_selected and not unexpected
         required_total += len(required)
         required_selected += len(required & selected)
+        evaluated_negative_case_count += int(expects_no_skill)
+        passed_negative_case_count += int(expects_no_skill and passed_case)
         results.append(
             {
                 "id": case_id,
-                "passed": not missing and not forbidden_selected and not unexpected,
+                "passed": passed_case,
+                "expects_no_skill": expects_no_skill,
                 "selected_skills": sorted(selected),
                 "missing_required_skills": sorted(missing),
                 "forbidden_selected_skills": sorted(forbidden_selected),
@@ -118,6 +127,14 @@ def score(
         "unevaluated_case_count": len(cases) - evaluated,
         "passed_case_count": passed,
         "case_pass_rate": None if evaluated == 0 else round(passed / evaluated, 4),
+        "negative_case_count": negative_case_count,
+        "evaluated_negative_case_count": evaluated_negative_case_count,
+        "passed_negative_case_count": passed_negative_case_count,
+        "negative_case_pass_rate": (
+            None
+            if evaluated_negative_case_count == 0
+            else round(passed_negative_case_count / evaluated_negative_case_count, 4)
+        ),
         "required_skill_recall": (
             None if required_total == 0 else round(required_selected / required_total, 4)
         ),

@@ -235,7 +235,7 @@ python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --st
 - 生成下游提示词时使用 Token Budget Profile：`compact` 给 tiny/small 和普通 medium 小闭环；`standard` 给 large、L2、架构或新代码项目；`full` 给 critical、L3、关键 PR、对抗审查、高风险公开声明、生产/数据/安全闭环，并增加独立复核、失败回退和 go/no-go 字段。`render_role_prompt.py --profile auto` 是默认入口，显式 `--profile` 覆盖自动分级。
 - `agent-role-orchestrator/SKILL.md` 只加载稳定闭环契约；角色边界、模型分级、工具路由、内容平台规则按需读取 `references/role-cards.md`、`model-routing.md`、`tool-routing.md`、`content-routing.md`，避免无关角色说明进入每个窗口上下文。PR 校验会限制入口文件行数和字节数。
 - 有回调文件或台账快照时，用 `aggregate_skill_hits.py` 聚合自报命中、声明覆盖、回调完整和有效使用率；只有含路由声明或技能回调的 eligible 文件进入分母，普通 Markdown 会被忽略。没有必选声明时命中率必须显示为不可评估；回传为误召却未声明已加载的 skill 必须作为不一致数据单列。
-- 用 `evaluate_skill_routing.py` 对代表性输入和实际 `selected_skills` 做独立评估。回调统计回答“角色说自己用了什么”，路由评估回答“系统对这个输入选对了什么”，两者不能混为一个指标。
+- 用 `evaluate_skill_routing.py` 对代表性输入和实际 `selected_skills` 做离线评分，并同时覆盖“应该命中”和“不应加载任何 skill”的负样本。该脚本不会自动运行 Codex 路由；回调统计回答“角色说自己用了什么”，离线评分回答“给定实际选择后是否符合预期”，两者不能混为一个指标。
 - `总控` 负责本次任务的全局路由判断和聚合视图；`架构` 与 `内容主编` 负责各自子树。长期的漏召、误召、触发描述过期、registry 漂移、README 说明混乱或跨角色 token 过重，转给 `技能维护`。
 - `技能维护` 只沉淀可公开复用的 skill 体系改进，不接收项目私有 `.codex/role-windows.md`、本机 memory、账号登录态或生产细节。
 
@@ -246,7 +246,7 @@ python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --st
 | 角色 | 默认模型 |
 | --- | --- |
 | `总控 / CEO` | `gpt-5.6-terra` + `high`；资金、上线、生产恢复、跨角色最终 go/no-go 升 `gpt-5.6-sol` + `xhigh` |
-| `架构 / CTO` | `gpt-5.6-sol` + `high`；实盘架构、事故根因、DB/并发/安全、不可逆方案升 `xhigh`；不生成不存在的 `max` 档位 |
+| `架构 / CTO` | `gpt-5.6-sol` + `high`；实盘架构、事故根因、DB/并发/安全、不可逆方案升 `xhigh`；自动路由不选 Max/Ultra |
 | `开发负责人 / Dev Lead` | `gpt-5.6-terra` + `high`；live exit、资金安全、PnL/fee、并发、重复失败返工升 `gpt-5.6-sol` + `xhigh` |
 | `开发执行 subagent` | 窗口内一次性 worker。纯机械单文件：`gpt-5.4-mini` + `high`；边界清楚、可独立验证的有限语义任务：`gpt-5.6-luna` + `high`；跨文件业务语义：`gpt-5.6-terra` + `high`；live/资金/并发/账本不下放，由 Dev Lead 用 Sol + xhigh 处理 |
 | `Spark Opportunity Lane` | Spark 当前可用且独立预览额度有剩余时，mechanical/bounded 一次性开发 executor 可用 `gpt-5.3-codex-spark` + `high`；未确认可用时回退 Mini/Luna，不承担 owner、集成、最终 QA 或高风险任务 |
@@ -254,6 +254,8 @@ python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --st
 | `运维` / `DBA` | 只读采证、容量、锁、空间分析：`gpt-5.6-terra` + `high`；部署、restart、rollback、生产故障、DDL、清理、恢复、数据风险：`gpt-5.6-sol` + `xhigh` |
 | `知识库` / `技能维护` / `文档/交付` | 默认 `gpt-5.6-terra` + `high`；纯索引、排版、搬运、registry 机械同步：`gpt-5.4-mini` + `medium` |
 | `UI/PPT` / `内容主编` / 内容执行角色 | 默认 `gpt-5.6-terra` + `high`；机械 HTML/资产整理：`gpt-5.4-mini` + `high`；公开高风险定位、声明或合规：`gpt-5.6-sol` + `xhigh` |
+
+部分 Codex 界面可能为符合条件的模型或账号提供 Max/Ultra。它们不进入本体系的自动默认值；只有用户明确选择、当前界面确认可用，并通过代表性 eval 证明额外成本有效时才使用。
 
 ### 开发团队
 
