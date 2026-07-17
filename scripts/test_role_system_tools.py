@@ -36,6 +36,7 @@ SKILL_ROUTING_CASES = ROOT / "evals" / "skill-routing-cases.jsonl"
 VALIDATE_ROLE_SYSTEM = ROOT / "scripts" / "validate_role_system.py"
 ORCHESTRATOR_SKILL = ROOT / "skills" / "agent-role-orchestrator" / "SKILL.md"
 ROLE_CARDS = ROOT / "skills" / "agent-role-orchestrator" / "references" / "role-cards.md"
+PLANNING_CONTRACT = ROOT / "skills" / "agent-role-orchestrator" / "references" / "planning-contract.md"
 BROWSER_ROUTER = ROOT / "skills" / "browser-automation-router" / "SKILL.md"
 PLAYWRIGHT_SKILL = ROOT / "skills" / "playwright" / "SKILL.md"
 XHS_COMMENT_RESEARCH = ROOT / "skills" / "xhs-comment-research" / "SKILL.md"
@@ -685,6 +686,125 @@ def test_render_prompt_outputs_ceo_dispatch_decision_by_task_size() -> None:
     assert "测试/QA/安全/DBA/运维等门禁" in large.stdout
 
 
+def test_render_prompt_layers_implicit_planning_contract_across_owners() -> None:
+    ceo = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "总控",
+            "--objective",
+            "判断一个跨前后端需求是否值得启动",
+            "--task-size",
+            "large",
+        ]
+    )
+    assert "隐性规划契约：" in ceo.stdout
+    assert "模式：owner-contract" in ceo.stdout
+    assert "价值、成功标准、非目标、负责人、预算与风险" in ceo.stdout
+    assert "不做代码库侦察、不写技术实施步骤" in ceo.stdout
+
+    cto = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "架构",
+            "--objective",
+            "理解代码库并形成可执行技术规格",
+            "--source-role",
+            "总控",
+            "--task-size",
+            "large",
+        ]
+    )
+    assert "模式：implementation-spec" in cto.stdout
+    assert "Recon：读取仓库事实" in cto.stdout
+    assert "Vet：亲自复核" in cto.stdout
+    assert "规格是执行契约，不是最终产品" in cto.stdout
+    assert "默认不亲自实现" in cto.stdout
+
+    dev_lead = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "开发",
+            "--objective",
+            "把技术规格拆成可验证的执行任务",
+            "--source-role",
+            "架构",
+            "--task-size",
+            "large",
+        ]
+    )
+    assert "模式：executor-contract" in dev_lead.stdout
+    assert "零上下文执行卡" in dev_lead.stdout
+    assert "计划基线 commit" in dev_lead.stdout
+    assert "每步验证命令与预期结果" in dev_lead.stdout
+    assert "Dev Lead 仍负责集成、复验和提交" in dev_lead.stdout
+
+
+def test_render_prompt_keeps_executor_contract_short_and_fail_closed() -> None:
+    tiny_ceo = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "总控",
+            "--objective",
+            "判断是否顺手修正文档错字",
+            "--task-size",
+            "tiny",
+        ]
+    )
+    assert "模式：route-only" in tiny_ceo.stdout
+    assert "不得启动全库审计" in tiny_ceo.stdout
+    assert "持久规格文件" not in tiny_ceo.stdout
+
+    executor = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "开发",
+            "--objective",
+            "按任务卡修改一个确定文件",
+            "--source-role",
+            "开发",
+            "--task-size",
+            "small",
+            "--executor-tier",
+            "mechanical",
+        ]
+    )
+    assert "模式：execute-only" in executor.stdout
+    assert "先运行漂移检查" in executor.stdout
+    assert "触发 STOP 条件时立即回报" in executor.stdout
+    assert "不得重新做全库规划" in executor.stdout
+
+
+def test_render_prompt_maps_qa_to_evidence_review_not_planning() -> None:
+    qa = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "QA",
+            "--objective",
+            "审查当前分支是否达到发布条件",
+            "--source-role",
+            "架构",
+            "--task-size",
+            "medium",
+        ]
+    )
+    assert "隐性规划契约：" in qa.stdout
+    assert "模式：evidence-review" in qa.stdout
+    assert "只审查当前变更及直接影响面" in qa.stdout
+    assert "不生成开发实施计划" in qa.stdout
+
+
 def test_render_prompt_rejects_ceo_direct_content_execution() -> None:
     result = run(
         [
@@ -1116,10 +1236,16 @@ def test_render_prompt_extreme_cto_uses_supported_xhigh() -> None:
 def test_orchestrator_entry_files_stay_within_token_budget() -> None:
     skill_text = ORCHESTRATOR_SKILL.read_text(encoding="utf-8")
     role_cards_text = ROLE_CARDS.read_text(encoding="utf-8")
+    planning_contract_text = PLANNING_CONTRACT.read_text(encoding="utf-8")
     assert len(skill_text.splitlines()) <= 350
     assert len(skill_text.encode("utf-8")) <= 30000
     assert len(role_cards_text.splitlines()) <= 180
     assert len(role_cards_text.encode("utf-8")) <= 18000
+    assert len(planning_contract_text.splitlines()) <= 140
+    assert len(planning_contract_text.encode("utf-8")) <= 14000
+    assert "Task size does not authorize a full repository" in planning_contract_text
+    assert "Zero-Context Executor Card" in planning_contract_text
+    assert "shadcn/improve" in planning_contract_text
 
 
 def test_readme_stays_scannable_and_current() -> None:
@@ -1138,6 +1264,8 @@ def test_readme_stays_scannable_and_current() -> None:
         assert heading in text
     assert "docs/technical-highlights.md" in text
     assert "docs/routing-token-and-evaluation.md" in text
+    assert "隐性规划契约" in text
+    assert "零上下文执行卡" in text
     assert len(routing_guide.splitlines()) <= 220
     assert len(routing_guide.encode("utf-8")) <= 12000
     for needle in (
@@ -1527,6 +1655,9 @@ def main() -> int:
         test_render_prompt_rejects_ceo_direct_technical_execution_without_small_or_override,
         test_render_prompt_allows_ceo_direct_small_development_dispatch,
         test_render_prompt_outputs_ceo_dispatch_decision_by_task_size,
+        test_render_prompt_layers_implicit_planning_contract_across_owners,
+        test_render_prompt_keeps_executor_contract_short_and_fail_closed,
+        test_render_prompt_maps_qa_to_evidence_review_not_planning,
         test_render_prompt_rejects_ceo_direct_content_execution,
         test_render_prompt_allows_ceo_to_owner_layer_and_explicit_override,
         test_render_prompt_auto_compacts_l1_owner_prompt,

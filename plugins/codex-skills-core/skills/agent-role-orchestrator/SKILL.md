@@ -35,6 +35,7 @@ Do not load every reference by default:
 
 - role ownership: `references/role-cards.md`;
 - current model tiers, executor tiers, and parallel policy: `references/model-routing.md`;
+- implicit owner-to-executor planning details: `references/planning-contract.md`;
 - script and skill routing: `references/tool-routing.md`;
 - X MCP, public writing, Xiaohongshu, and content gates: `references/content-routing.md`.
 
@@ -97,6 +98,20 @@ Before acting or dispatching, output `任务分发决策：` with size, path, an
 Generate with `--task-size tiny|small|medium|large|critical`. Default unknown work to `medium`.
 
 The generator derives one effective control set before routing: `large` is at least `L2`; `critical`, `risk=critical|extreme`, or an explicit `L3` becomes an `L3` gated loop, and an explicit `L3` also promotes ordinary risk to `critical`. Model, loop depth, Spark eligibility, and Token Budget Profile must all consume these effective values.
+
+## Implicit Planning Contract Rule
+
+Planning is an internal role contract, not a user-invoked mode or a new role. `render_role_prompt.py` adds the smallest role-specific contract automatically:
+
+- `总控 / CEO` decides value, success criteria, non-goals, owner, budget, risk, and planning depth; it does not perform codebase recon or write technical steps.
+- `架构 / CTO` performs scoped Recon and Vet, then writes the technical implementation spec; it does not implement by default.
+- `开发负责人 / Dev Lead` compiles the confirmed spec into zero-context executor cards, then owns integration, re-verification, and commit.
+- one-shot executors run drift checks, obey scope and STOP conditions, and never restart whole-repo planning.
+- `QA` reviews the current change and direct impact surface as evidence, not as a planning or repair owner.
+
+Task size controls contract depth, not audit breadth. `tiny` stays route-only; `small` uses a brief; `medium` uses an owner contract; `large` uses an implementation spec; `critical` adds independent gates and rollback/go-no-go fields. Whole-repo, multi-category, roadmap, or branch improvement audits require an explicit objective and must never fan out merely because a task is large.
+
+Load `references/planning-contract.md` only when designing or auditing this handoff. The plan is an execution contract; verified delivery remains the product.
 
 ## Entry Guard And Registry Rule
 
