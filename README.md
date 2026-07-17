@@ -74,6 +74,8 @@ Loop 深度按任务折叠，而不是默认走最长链路：
 
 总控在行动前输出 `任务分发决策`：`tiny` 可自办，`small` 可直派一个短小开发任务，`medium` 交负责人判断，`large` 启动完整团队，`critical` 进入 L3 门禁。
 
+规划契约由生成器隐性注入，不要求用户调用额外命令：总控只定义价值、成功标准、非目标、负责人和预算；CTO 做有范围的代码库 Recon/Vet 并产出技术规格；Dev Lead 把规格编译成带基线 commit、文件边界、逐步验证和 STOP 条件的零上下文执行卡；QA 只做证据复核。任务规模决定契约深度，不会自动触发全库审计或 3-5 个 subagent fan-out。方法细节见[隐性规划契约](skills/agent-role-orchestrator/references/planning-contract.md)。
+
 生成器会先统一输入值，再选择模型与 Prompt：
 
 | 输入 | 负责决定 | 关键规则 |

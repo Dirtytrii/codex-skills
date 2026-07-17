@@ -237,6 +237,75 @@ def task_dispatch_decision(role: str, args: argparse.Namespace) -> str:
 """
 
 
+def implicit_planning_contract(
+    role: str, args: argparse.Namespace, profile: str
+) -> str:
+    """Render the smallest role-specific planning contract without a new role or command."""
+    if role == "总控":
+        if args.task_size == "tiny":
+            return """隐性规划契约：
+- 模式：route-only；只确认目标、成功条件和停止线，不得启动全库审计或技术规划。
+"""
+        mode = "outcome-brief" if args.task_size == "small" else "owner-contract"
+        if profile == "compact":
+            return f"""隐性规划契约：
+- 模式：{mode}；总控只判断价值、成功标准、非目标、负责人、预算与风险，不做代码库侦察、不写技术实施步骤。
+"""
+        return f"""隐性规划契约：
+- 模式：{mode}
+- 总控只判断任务价值、成功标准、非目标、负责人、预算与风险；不做代码库侦察、不写技术实施步骤。
+- 将技术理解与规格交给架构 / CTO；将内容方案交给内容主编。总控最终验收结果、风险和 go/no-go。
+- 完整仓库或多类别审计必须由目标显式要求；不得仅因任务较大就自动 fan-out。
+"""
+
+    if role == "架构":
+        mode = (
+            "technical-brief"
+            if args.task_size in {"tiny", "small"}
+            else "implementation-spec"
+        )
+        if profile == "compact":
+            return f"""隐性规划契约：
+- 模式：{mode}；先读仓库事实并复核关键证据，再给范围、取舍、验证和 STOP 条件；默认不亲自实现。
+"""
+        return f"""隐性规划契约：
+- 模式：{mode}
+- Recon：读取仓库事实、约定、意图文档和真实构建/测试命令；只调查本任务需要的范围。
+- Vet：亲自复核准备写入规格的关键证据，去掉误报、重复项和已有决策明确接受的取舍。
+- Spec：给出目标/非目标、现状证据、方案取舍、范围、依赖、验证、风险与 STOP 条件；规格是执行契约，不是最终产品。
+- 架构默认不亲自实现；完整仓库或多类别审计仅在目标显式要求时启动，不按 task-size 自动扩张。
+"""
+
+    if role == "开发":
+        if args.executor_tier != "owner":
+            return """隐性规划契约：
+- 模式：execute-only；先运行漂移检查，只执行任务卡范围与验证；触发 STOP 条件时立即回报，不得重新做全库规划或自行改架构。
+"""
+        mode = (
+            "task-card"
+            if args.task_size in {"tiny", "small"}
+            else "executor-contract"
+        )
+        if profile == "compact":
+            return f"""隐性规划契约：
+- 模式：{mode}；仅在下放时生成零上下文执行卡，写清范围、验证、预期结果和 STOP 条件；Dev Lead 仍负责集成、复验和提交。
+"""
+        return f"""隐性规划契约：
+- 模式：{mode}
+- Dev Lead 先核对 CTO 规格与代码现状；只补实现所需细节，不重复做全库审计。
+- 每个 subagent 获得一张零上下文执行卡：计划基线 commit、目标/非目标、现状证据、文件白名单/禁止范围、顺序步骤、每步验证命令与预期结果、测试和 STOP 条件。
+- 内联只保留承载决策的短片段，其余使用文件、符号、提交或测试句柄；同一契约复用，不在窗口间反复改写。
+- Dev Lead 仍负责集成、复验和提交；执行器报告不能替代亲自读取 diff 与重跑验收。
+"""
+
+    if role == "QA":
+        return """隐性规划契约：
+- 模式：evidence-review；默认只审查当前变更及直接影响面，复核验收证据并尝试证伪；不生成开发实施计划、不替实现者修代码。
+"""
+
+    return ""
+
+
 def validate_source_route(role: str, args: argparse.Namespace) -> None:
     source_role = args.source_role or ""
     if source_role != "总控":
@@ -551,6 +620,7 @@ Loop 深度（可折叠路由）：
 - {task_dispatch_decision(role, args).splitlines()[1].removeprefix("- ")}
 - {task_dispatch_decision(role, args).splitlines()[2].removeprefix("- ")}
 - {task_dispatch_decision(role, args).splitlines()[3].removeprefix("- ")}
+{implicit_planning_contract(role, args, profile)}
 负责人交互边界：
 - 总控只对接负责人层；技术执行由 CTO 派发，内容执行由内容主编派发。
 
@@ -670,6 +740,7 @@ Token Budget Profile：
 {task_controls_guidance(args, controls)}
 {loop_depth_explanation(controls.loop_depth, args.override_reason)}
 {task_dispatch_decision(role, args)}
+{implicit_planning_contract(role, args, profile)}
 负责人交互边界：
 - 总控只对接负责人/治理层；技术执行由 CTO 负责，内容执行由内容主编负责。只有用户明确 override 时越级。
 - 总控不编写代码、测试或验收脚本；由开发/测试实现，架构/QA 复核，总控只验收结果、风险和决策点。
