@@ -24,6 +24,30 @@
 
 这种分层增加一次 owner 判断，但降低了范围漂移、重复返工和用户持续介入的概率。负责人层的价值不是转发消息，而是压缩信息、做取舍并承担集成责任。
 
+## 隐性规划契约
+
+规划不是一个需要用户记忆的命令，也不是新角色。`render_role_prompt.py` 根据角色、`task-size` 和 Token Budget Profile 自动生成最小契约：
+
+```text
+总控：价值 / 成功标准 / 非目标 / owner / 预算 / 风险
+  -> CTO：Scoped Recon -> Vet evidence -> Implementation Spec
+    -> Dev Lead：Zero-context executor cards -> Integrate -> Re-verify
+      -> Executor：Drift check -> Execute -> Verify or STOP
+    -> QA：Evidence review -> Falsify readiness
+```
+
+这里借鉴 [shadcn/improve](https://github.com/shadcn/improve) 的高能力模型负责理解与规格、低成本模型负责有界执行的思想，但按本仓库角色边界重新分配：CEO 不读代码写技术步骤，CTO 不默认实现，Dev Lead 不把集成责任下放给 subagent，QA 不生成开发计划。
+
+为避免规划本身吞掉 Token：
+
+- `tiny` 只保留 route-only，`small` 只生成 brief；
+- `medium` 生成 owner contract，`large` 才生成 implementation spec，`critical` 再增加独立门禁和回滚/go-no-go；
+- 全库、多类别、roadmap 或 branch improvement audit 必须由目标显式要求，不因任务规模自动 fan-out；
+- 规格只写一次，跨窗口复用文件、符号、commit、测试和必要短片段；
+- plan 是执行契约，经过实现、复验、集成和 owner 验收的交付才是产品。
+
+完整字段、漂移检查和 STOP 条件见 [planning-contract.md](../skills/agent-role-orchestrator/references/planning-contract.md)。
+
 ## 可折叠的 Multi-Window Loop
 
 角色树不是固定调用链。总控按风险选择最小 Loop 深度：
@@ -179,6 +203,7 @@ skill 多了以后，仅靠描述命中会产生“感觉都加载了”的错�
 | 选择 | 收益 | 成本与约束 |
 | --- | --- | --- |
 | CEO/owner 分层 | 减少用户介入和执行漂移 | 小任务必须允许折叠，否则链路过长 |
+| 隐性规划契约 | 高能力 owner 的判断可被低成本 executor 可靠消费 | 只按任务范围 Recon；完整审计必须显式触发 |
 | 双写回调 | 状态可恢复、来源窗口能及时收到结果 | 需要脚本和角色共同执行 |
 | 一次性 subagent | 利用低成本/独立额度做短任务 | Dev Lead 必须整合、验证和提交 |
 | 按需 references | 降低固定上下文 | 文档路由必须清晰，不能隐藏关键门禁 |

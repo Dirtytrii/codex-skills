@@ -255,6 +255,20 @@ python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --st
 
 表格后保留 `压缩交接卡`：最近摘要、关键决策、当前证据、下一步、新窗口接续提示。长任务和多轮返工都从这里接续，不要求新窗口读取完整旧线程。
 
+### 隐性规划契约
+
+用户不需要调用 `/improve`、新增角色或手工选择规划模式。`prepare_role_window.py` 生成的角色 Prompt 会自动包含最小契约：
+
+| 角色 | 自动获得的契约 |
+| --- | --- |
+| `总控 / CEO` | `route-only` / `outcome-brief` / `owner-contract`：价值、成功标准、非目标、负责人、预算和风险；不做代码 Recon 或技术步骤 |
+| `架构 / CTO` | `technical-brief` / `implementation-spec`：Scoped Recon、证据 Vet、方案取舍、范围、验证、风险和 STOP 条件；默认不实现 |
+| `开发负责人 / Dev Lead` | `task-card` / `executor-contract`：把已确认规格转成零上下文执行卡，保留集成、复验和提交所有权 |
+| `开发执行 subagent` | `execute-only`：先做基线漂移检查，只按白名单和步骤执行；命中 STOP 立即回报 |
+| `QA` | `evidence-review`：只审查当前交付/变更和直接影响面，不生成开发计划或静默修代码 |
+
+`tiny` 不创建持久计划；`small` 只写 brief；`medium` 使用 owner contract；`large` 使用 implementation spec；`critical` 再加独立门禁、失败回退和 go/no-go。全库、多类别、roadmap 或 branch improvement audit 必须在目标中显式提出，不能由 task-size 自动推导。详细字段和 `.codex/plans/` 的多会话使用边界见 `references/planning-contract.md`。
+
 ### 技能命中和 Token 压缩
 
 - `总控` 为全局多角色任务维护轻量 `技能路由台账`；`架构` 维护技术子树台账；`内容主编` 维护内容子树台账。
@@ -264,7 +278,7 @@ python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --st
 - 负责人层关闭技术或内容子树前，必须确认 `.codex/role-windows.md` 已更新并提交，且来源 thread 已收到压缩回调；如果没有发送工具，回调输出必须以 `<codex_delegation>` 或 `压缩回调` 开头。
 - 当上下文接近过长、remote compact 失败、或同一任务跨多个 PR/闭环时，优先开新窗口或接续既有角色窗口；输入只用 `.codex/role-windows.md`、压缩交接卡、提交/PR、文件证据和必要短摘要。
 - 生成下游提示词时使用 Token Budget Profile：`compact` 给 tiny/small 和普通 medium 小闭环；`standard` 给 large、L2、架构或新代码项目；`full` 给 critical、L3、关键 PR、对抗审查、高风险公开声明、生产/数据/安全闭环，并增加独立复核、失败回退和 go/no-go 字段。`prepare_role_window.py --profile auto` 是默认入口；它通过插件门禁后调用底层生成器，显式 `--profile` 覆盖自动分级。
-- `agent-role-orchestrator/SKILL.md` 只加载稳定闭环契约；角色边界、模型分级、工具路由、内容平台规则按需读取 `references/role-cards.md`、`model-routing.md`、`tool-routing.md`、`content-routing.md`，避免无关角色说明进入每个窗口上下文。PR 校验会限制入口文件行数和字节数。
+- `agent-role-orchestrator/SKILL.md` 只加载稳定闭环契约；角色边界、隐性规划、模型分级、工具路由、内容平台规则按需读取 `references/role-cards.md`、`planning-contract.md`、`model-routing.md`、`tool-routing.md`、`content-routing.md`，避免无关角色说明进入每个窗口上下文。PR 校验会限制入口文件行数和字节数。
 - 有回调文件或台账快照时，用 `aggregate_skill_hits.py` 聚合自报命中、声明覆盖、回调完整和有效使用率；只有含路由声明或技能回调的 eligible 文件进入分母，普通 Markdown 会被忽略。没有必选声明时命中率是 `null`，不是 0% 或 100%；回传为误召却未声明已加载的 skill 必须作为数据不一致单列。
 - 用 `evaluate_skill_routing.py` 对代表性输入和实际 `selected_skills` 做离线评分，并同时覆盖“应该命中”和“不应加载任何 skill”的负样本。重点同时看 `required_skill_recall`、`negative_case_pass_rate`、`unexpected_skills` 和 `unevaluated_case_count`，不要只追一个命中率。
 - `总控` 负责本次任务的全局路由判断和聚合视图；`架构` 与 `内容主编` 负责各自子树。长期的漏召、误召、触发描述过期、registry 漂移、README 说明混乱或跨角色 token 过重，转给 `技能维护`。

@@ -51,6 +51,20 @@ Token Budget Profile
 
 自动提升只向更安全的方向发生。生成结果中的 `任务控制` 会同时显示输入值、有效值和提升原因，验收时以有效值为准。
 
+## 隐性规划契约
+
+规划契约和模型、Loop、Profile 使用同一组 effective controls，但不新增用户命令或角色：
+
+| task-size | 默认契约 | Token 约束 |
+| --- | --- | --- |
+| `tiny` | route-only | 不做仓库审计，不建持久计划 |
+| `small` | outcome/task brief | 只写范围、验证和升级条件 |
+| `medium` | owner contract | owner 补目标、非目标、证据、风险和回调 |
+| `large` | implementation spec | CTO 规格 + Dev Lead 零上下文执行卡 |
+| `critical` | gated spec | 增加独立门禁、失败回退、剩余风险和 go/no-go |
+
+角色分工固定为：总控决定规划深度，CTO 做 scoped Recon/Vet，Dev Lead 编译任务卡并集成复验，executor 只执行，QA 只做 evidence review。完整全库或多类别 audit 必须显式请求；`large` 只提高规格完整度，不自动提高审计广度或 worker 数量。任务卡优先传文件、符号、commit 和测试句柄，只有承载决策时才内联短代码，避免同一上下文在窗口间重复支付 Token。
+
 典型命令：
 
 ```bash

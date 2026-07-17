@@ -79,6 +79,20 @@
 - 上游 telemetry、cookie import、host routing 自动注入配置。
 - `CLAUDE.md` / `.claude/` / `.agents/` 自动改写逻辑，除非用户明确要做上游 gstack 安装/迁移。
 
+### shadcn/improve 方法吸收规则
+
+`agent-role-orchestrator` 的隐性规划契约借鉴 `https://github.com/shadcn/improve`（MIT，shadcn）的规划经济学：把代码库理解、证据复核和规格交给高能力 owner，把有边界的实现交给更低成本 executor。
+
+本仓库没有引入新的 `improve` 角色或公开 skill，也不 vendoring 上游 slash command、九类全库审计、并行审计 runtime、隔离 worktree executor 或 `plans/` backlog。角色化吸收范围仅包括：
+
+- CTO 的 scoped Recon、Vet 和 implementation spec；
+- Dev Lead 的零上下文执行卡、planned-at commit、逐步验证与 STOP 条件；
+- executor 的漂移检查和 fail-closed 回报；
+- QA 的 current-change evidence review；
+- 总控对价值、规划深度和 owner 的选择。
+
+上述行为属于 `agent-role-orchestrator` 的本地维护逻辑，不新增 `registry/skills.json` 外部 skill 条目。若未来复制上游代码、模板原文或 runtime，必须重新评估 vendoring、许可证和 provenance。
+
 ## Hermes Skill 同步规则
 
 Hermes 同步进来的 skill 默认是运维现场经验沉淀，不等于可以直接公开原始版本。进入仓库前必须先完成脱敏和泛化。

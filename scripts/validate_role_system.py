@@ -22,6 +22,7 @@ REGISTRY = ROOT / "registry" / "skills.json"
 ORCHESTRATOR = ROOT / "skills" / "agent-role-orchestrator"
 SKILL_MD = ORCHESTRATOR / "SKILL.md"
 ROLE_CARDS = ORCHESTRATOR / "references" / "role-cards.md"
+PLANNING_CONTRACT = ORCHESTRATOR / "references" / "planning-contract.md"
 MODEL_ROUTING = ORCHESTRATOR / "references" / "model-routing.md"
 TOOL_ROUTING = ORCHESTRATOR / "references" / "tool-routing.md"
 CONTENT_ROUTING = ORCHESTRATOR / "references" / "content-routing.md"
@@ -100,6 +101,8 @@ def validate_docs(errors: list[str]) -> None:
             "上下文预算",
             "Token Budget Profile",
             "任务分发决策",
+            "隐性规划契约",
+            "零上下文执行卡",
             "`tiny`",
             "`small`",
             "`compact`",
@@ -140,6 +143,7 @@ def validate_docs(errors: list[str]) -> None:
         TECHNICAL_HIGHLIGHTS,
         [
             "CEO-First 与负责人分层",
+            "隐性规划契约",
             "可折叠的 Multi-Window Loop",
             "Fail-Closed Tool Layer",
             "Token-Aware Prompt Architecture",
@@ -157,6 +161,7 @@ def validate_docs(errors: list[str]) -> None:
             "effective risk",
             "effective loop",
             "Owner、Executor 与模型",
+            "隐性规划契约",
             "三层 Skill 评估",
             "misfire_not_loaded_skill_count",
             "negative_case_pass_rate",
@@ -209,6 +214,8 @@ def validate_docs(errors: list[str]) -> None:
             "压缩交接卡",
             "Token Budget Profile",
             "任务分发决策",
+            "隐性规划契约",
+            "零上下文执行卡",
             "`tiny`",
             "`small`",
             "`compact`",
@@ -267,6 +274,9 @@ def validate_orchestrator(errors: list[str]) -> None:
             "上下文预算",
             "Token Budget Profile Rule",
             "CEO Task Dispatch Decision Rule",
+            "Implicit Planning Contract Rule",
+            "references/planning-contract.md",
+            "zero-context executor cards",
             "--task-size tiny|small|medium|large|critical",
             "任务分发决策：",
             "--profile auto",
@@ -312,6 +322,8 @@ def validate_orchestrator(errors: list[str]) -> None:
             "aggregate_skill_hits.py",
             "Token Budget Profile",
             "任务分发决策",
+            "Implicit planning",
+            "zero-context executor cards",
             "--profile auto",
             "反老登味 / 反 AI 味内容闸门",
             "预览图实现路线选择",
@@ -321,6 +333,21 @@ def validate_orchestrator(errors: list[str]) -> None:
             "ui-implementation-workflow",
             "1440/768/390",
             ".codex/ui-visual-review-signals.md",
+        ],
+        errors,
+    )
+    require_contains(
+        PLANNING_CONTRACT,
+        [
+            "Implicit Planning Contract",
+            "Role Mapping",
+            "Automatic Depth",
+            "Scoped Recon And Vet",
+            "Zero-Context Executor Card",
+            "Drift And STOP Gates",
+            "Artifact And Token Policy",
+            "shadcn/improve",
+            "does not vendor",
         ],
         errors,
     )
@@ -344,7 +371,7 @@ def validate_registry(errors: list[str]) -> None:
         errors.append("agent-role-orchestrator registry missing consumed_by_roles: " + "、".join(sorted(missing_roles)))
 
     summary = item.get("summary", "")
-    for needle in ("总控/CEO", "CTO", "内容主编", "Luna 有界执行", "Spark 独立额度机会通道", "显式并行 worker 门禁", "原生 Browser/Chrome fail-closed 路由", "反老登味/反AI味内容闸门", "UI预览图实现路线选择", "角色/必选 Skill 插件前置检查", "来源thread压缩回调闭环", "fail-closed"):
+    for needle in ("总控/CEO", "CTO", "内容主编", "隐性生成的规划契约", "零上下文执行卡", "Luna 有界执行", "Spark 独立额度机会通道", "显式并行 worker 门禁", "原生 Browser/Chrome fail-closed 路由", "反老登味/反AI味内容闸门", "UI预览图实现路线选择", "角色/必选 Skill 插件前置检查", "来源thread压缩回调闭环", "fail-closed"):
         if needle not in summary:
             errors.append(f"agent-role-orchestrator summary missing: {needle}")
 
@@ -417,6 +444,11 @@ def validate_scripts(errors: list[str]) -> None:
             "--independent-validation",
             "Token Budget Profile",
             "任务分发决策",
+            "implicit_planning_contract",
+            "隐性规划契约",
+            "零上下文执行卡",
+            "计划基线 commit",
+            "漂移检查",
             "ui_preview_route_guidance",
             "$ui-implementation-workflow",
             "UI implementation plan",
