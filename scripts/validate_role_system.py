@@ -42,6 +42,11 @@ VALIDATE_LOOP = ORCHESTRATOR / "scripts" / "validate_role_loop.py"
 ENSURE_FILES = ORCHESTRATOR / "scripts" / "ensure_project_role_files.py"
 CHECK_CODEGRAPH = ORCHESTRATOR / "scripts" / "check_codegraph.py"
 AGGREGATE_SKILL_HITS = ORCHESTRATOR / "scripts" / "aggregate_skill_hits.py"
+GOVERNANCE = ROOT / "skills" / "skill-system-governance"
+GOVERNANCE_SKILL = GOVERNANCE / "SKILL.md"
+GOVERNANCE_AGENT = GOVERNANCE / "agents" / "openai.yaml"
+GOVERNANCE_AUDIT = GOVERNANCE / "scripts" / "audit_skill_system.py"
+GOVERNANCE_DIMENSIONS = GOVERNANCE / "references" / "audit-dimensions.md"
 ROLE_SCRIPTS = (
     PREPARE_ROLE_WINDOW,
     RENDER_PROMPT,
@@ -374,6 +379,24 @@ def validate_registry(errors: list[str]) -> None:
     for needle in ("总控/CEO", "CTO", "内容主编", "隐性生成的规划契约", "零上下文执行卡", "Luna 有界执行", "Spark 独立额度机会通道", "显式并行 worker 门禁", "原生 Browser/Chrome fail-closed 路由", "反老登味/反AI味内容闸门", "UI预览图实现路线选择", "角色/必选 Skill 插件前置检查", "来源thread压缩回调闭环", "fail-closed"):
         if needle not in summary:
             errors.append(f"agent-role-orchestrator summary missing: {needle}")
+
+    governance_item = next(
+        (entry for entry in registry if entry.get("name") == "skill-system-governance"),
+        None,
+    )
+    if not governance_item:
+        errors.append("registry missing skill-system-governance")
+    else:
+        governance_roles = set(governance_item.get("consumed_by_roles") or [])
+        missing_governance_roles = {"技能维护", "总控"} - governance_roles
+        if missing_governance_roles:
+            errors.append(
+                "skill-system-governance registry missing consumed_by_roles: "
+                + "、".join(sorted(missing_governance_roles))
+            )
+        for needle in ("只读", "Token", "Core/domain", "no-change", "最小修复", "PR"):
+            if needle not in governance_item.get("summary", ""):
+                errors.append(f"skill-system-governance summary missing: {needle}")
 
     browser_item = next((entry for entry in registry if entry.get("name") == "browser-automation-router"), None)
     if not browser_item:
@@ -785,12 +808,80 @@ def validate_no_machine_specific_paths(errors: list[str]) -> None:
                     errors.append(f"{path.relative_to(ROOT)} contains machine-specific path fragment: {fragment}")
 
 
+def validate_skill_system_governance(errors: list[str]) -> None:
+    for path in (
+        GOVERNANCE_SKILL,
+        GOVERNANCE_AGENT,
+        GOVERNANCE_AUDIT,
+        GOVERNANCE_DIMENSIONS,
+    ):
+        if not path.is_file():
+            errors.append(f"missing skill-system-governance file: {path.relative_to(ROOT)}")
+            return
+
+    require_contains(
+        GOVERNANCE_SKILL,
+        [
+            "deterministic quick audit",
+            "not_evaluable",
+            "no-change",
+            "Apply Only Authorized Minimal Changes",
+            "Do not edit generated `plugins/*/skills/` copies directly",
+            "audit_skill_system.py --repo . --mode full",
+        ],
+        errors,
+    )
+    require_contains(
+        GOVERNANCE_AGENT,
+        ["$skill-system-governance", "allow_implicit_invocation: true"],
+        errors,
+    )
+    require_contains(
+        GOVERNANCE_DIMENSIONS,
+        [
+            "Trigger And Routing Quality",
+            "Token And Context Cost",
+            "Packaging And Source Ownership",
+            "Evidence Ladder",
+        ],
+        errors,
+    )
+    require_contains(
+        ROLE_CARDS,
+        ["Load `$skill-system-governance`", "a valid result may be `no-change`"],
+        errors,
+    )
+    require_contains(
+        TOOL_ROUTING,
+        ["$skill-system-governance` -> `audit_skill_system.py", "read-only baseline"],
+        errors,
+    )
+    require_contains(
+        README,
+        ["skill-system-governance", "audit_skill_system.py", "not_evaluable"],
+        errors,
+    )
+    require_contains(
+        TECHNICAL_HIGHLIGHTS,
+        ["Evidence-First Skill-System Governance", "observed routing", "not_evaluable"],
+        errors,
+    )
+    require_contains(
+        ROLE_USAGE,
+        ["默认加载 `skill-system-governance`", "medium 及以上", "not_evaluable"],
+        errors,
+    )
+    if "--write" in read(GOVERNANCE_AUDIT):
+        errors.append("audit_skill_system.py must remain read-only and cannot expose --write")
+
+
 def main() -> int:
     errors: list[str] = []
     validate_docs(errors)
     validate_orchestrator(errors)
     validate_registry(errors)
     validate_scripts(errors)
+    validate_skill_system_governance(errors)
     validate_no_machine_specific_paths(errors)
 
     if errors:

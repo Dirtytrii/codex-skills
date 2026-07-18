@@ -35,7 +35,7 @@
 - `安全`: `gstack-cso`、`authorized-blackbox-web-security`
 - `文档/交付`: `delivery-document-package`，可按需配合 `gstack-document-*`
 - `知识库`: 由 `agent-role-orchestrator` 的角色卡定义；当前没有独立 skill 目录
-- `技能维护`: 由 `agent-role-orchestrator` 的角色卡定义；用于 skill 命中复盘、触发描述调优、registry/README/docs/source-policy 维护、AGENTS/台账入口规则模板和角色卡拆合建议，不接收项目私有状态
+- `技能维护`: 由 `agent-role-orchestrator` 的角色卡定义，默认使用本地原创 `skill-system-governance`；用于只读体系审计、skill 命中复盘、Token/上下文成本、触发描述调优、Core/domain 拆包、registry/README/docs/source-policy 维护、AGENTS/台账入口规则模板和角色卡拆合建议，不接收项目私有状态。无运行时证据时不声明命中率，未获修改授权时停在审计结论
 
 角色提示词维护时，若使用中发现可复用优化，回调里必须用 `可复用优化沉淀：无 / 建议 / 已沉淀` 显式说明；若涉及 skill 命中率、误召/漏召、触发描述过期、registry 漂移或 README/docs/source-policy 混乱，优先交给 `技能维护` 角色收敛。只有用户授权或任务明确要求维护 workflow 时，才直接改对应 skill、README、清单或项目文档。
 

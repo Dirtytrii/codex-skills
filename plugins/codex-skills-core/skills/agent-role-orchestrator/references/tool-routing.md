@@ -12,6 +12,7 @@ Read only the section relevant to the selected role. Script output provides stru
 | Validate ledger, prompt, or callback | `validate_role_loop.py` |
 | Inspect CodeGraph state | `check_codegraph.py` |
 | Aggregate required/actual/misfire skill use | `aggregate_skill_hits.py` |
+| Audit the shared skill system before optimization | `$skill-system-governance` -> `audit_skill_system.py` |
 
 ## Technical Routing
 
@@ -33,7 +34,7 @@ For public writing or publishing, read `content-routing.md`. Typical required sk
 
 - Knowledge-base role: use the user's vault/project conventions and place durable knowledge before editing.
 - Document/delivery role: use the artifact-specific document, presentation, spreadsheet, or PDF skill when the output format requires it.
-- Skill maintenance: use skill-authoring guidance, update registry/docs/tests, validate, sync local installation, and open a PR.
+- Skill maintenance: load `$skill-system-governance`, run its read-only baseline, then use skill-authoring guidance only when evidence and authorization justify a change. Update registry/docs/tests, validate generated bundles, and open a PR.
 
 ## Skill Ledger
 

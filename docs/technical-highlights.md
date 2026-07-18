@@ -179,6 +179,14 @@ skill 多了以后，仅靠描述命中会产生“感觉都加载了”的错�
 
 `evals/skill-routing-cases.jsonl` 与 `evaluate_skill_routing.py` 是离线评分器，覆盖必选漏召、禁止误召、意外加载和无需 Skill 的负样本；它还不是自动运行 Codex 的 runtime runner。负样本通过率和必选 recall 必须一起看，否则“什么都加载”也可能制造虚假的高命中。单次异常只记录证据；持续漏召、误召、触发漂移或文档膨胀再交给 `技能维护` 修改 Skill 和 registry。
 
+## Evidence-First Skill-System Governance
+
+`skill-system-governance` 把以往分散在对话里的体系优化流程收成一个顶层 Core Skill，由现有 `技能维护` 角色负责，不新增角色层级。调用后默认先运行只读 quick audit，统一检查目录、公开边界、角色契约、插件归属、生成 bundle 和路由 case；full 模式再加入较慢的角色与插件回归测试。
+
+它刻意允许 `no-change`。静态校验、实际路由观测和回调自报是三种不同证据：没有 observed routing 或 callback artifact 时，脚本返回 `not_evaluable`，模型不能把“结构正常”扩写成“命中率正常”。只有任务授权修改时，流程才从审计进入 canonical 源修复、bundle 同步、完整验证和 PR。
+
+治理边界同样用于节省 Token：角色卡只负责把治理任务路由到该 Skill；详细审计维度按需加载；重复字段、枚举、聚合和一致性检查由脚本完成。这样不会为了“持续优化”让总控、CTO 和每个执行窗口都常驻一份治理提示词。
+
 ## 能力路由与内容门禁
 
 角色 prompt 只描述边界，具体方法由 skill 提供。架构可以路由 gstack 方法，UI 先做预览图实现路线选择，测试与 QA 分离，运维/DBA 第一轮只读，安全能力按授权范围分流。

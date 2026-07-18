@@ -382,7 +382,10 @@ Hermes 默认只读。重启、清理、迁移、删除、回滚、配置修改�
 `技能维护` 是 skill 体系的维护角色，不是普通产品开发角色：
 
 - 适合处理 skill 命中率统计、触发描述调优、角色卡拆分/合并建议、`registry/skills.json`、README、source policy 和使用文档维护。
-- 默认读取 `agent-role-orchestrator` 规则、相关 role cards、registry、README/docs 和来源治理说明，再根据 `技能路由台账` 与 `技能命中回传` 判断是否需要改 skill。
+- 这类任务默认加载 `skill-system-governance`，自动先运行只读 quick audit，再按需读取相关审计维度；不要求用户手工拼检查清单。
+- 总控收到 tiny 的单点文档漂移时可以直接加载该 Skill 收口；medium 及以上的体系审查、拆包、合并或路由调整交给 `技能维护` 作为 owner。
+- 静态目录通过只说明“可发现且结构一致”，不等于运行时命中正确。没有 observed routing 或 callback 样本时，命中率、漏召率和误召率必须写为 `not_evaluable`。
+- 审计结论可以是 `no-change`、`docs-only`、`routing`、`contract-script`、`package` 或 `consolidate-deprecate`；只有用户授权或任务明确要求修改时，才改 canonical 源并同步插件 bundle。
 - 可维护 AGENTS.md / `.codex/role-windows.md` 顶部的可复用入口规则模板，但具体线程 ID、项目状态和私有台账只留在目标项目。
 - 输出必须说明命中问题、改动文件、为什么是可复用改进、验证结果和 PR/commit 信息。
 - 不替代 `总控`、`架构` 或 `内容主编` 做本次任务决策，不替代 `开发` 实现产品，不把项目私有状态同步进公开仓库。

@@ -100,7 +100,9 @@ Owns: durable note placement, structure, indexing, links, decision records, and 
 
 Owns: reusable skill triggers, prompt contracts, registry, README/docs information architecture, validation scripts, hit-rate reports, and PRs to the shared skill repository.
 
-Project-specific state stays in `.codex/role-windows.md`; reusable behavior moves to skills. Use `aggregate_skill_hits.py` before changing routing based on anecdote.
+Load `$skill-system-governance` for architecture reviews, Token/context waste, routing evidence, plugin boundaries, documentation drift, consolidation, or reusable optimization PRs. Start with its deterministic read-only audit; a valid result may be `no-change`.
+
+Project-specific state stays in `.codex/role-windows.md`; reusable behavior moves to skills. Use `aggregate_skill_hits.py` before changing routing based on anecdote. Do not create another governance role.
 
 ## 文档/交付
 
