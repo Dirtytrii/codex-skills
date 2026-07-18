@@ -45,7 +45,7 @@ def run(args: list[str], check: bool = True) -> subprocess.CompletedProcess[str]
 def test_marketplace_and_package_registry_are_valid() -> None:
     errors, report = validate()
     assert errors == []
-    assert report["canonical_public_skills"] == 67
+    assert report["canonical_public_skills"] == 68
     packages = report["packages"]
     assert [item["name"] for item in packages] == [
         "codex-skills-core",
@@ -114,7 +114,7 @@ def test_context_audit_fails_closed_for_oversized_multi_domain_set() -> None:
     )
     assert result.returncode == 1
     report = json.loads(result.stdout)
-    assert report["catalog_chars"] == 10004
+    assert report["catalog_chars"] == 10414
     assert report["within_target"] is False
 
 
@@ -137,7 +137,7 @@ def test_package_registry_source_stays_canonical() -> None:
     source_root, specs, marketplace = load_package_specs()
     assert source_root == (ROOT / "skills").resolve()
     assert marketplace == "dirtytrii-codex-skills"
-    assert len({skill for spec in specs for skill in spec.skills}) == 67
+    assert len({skill for spec in specs for skill in spec.skills}) == 68
     expected_roles = {
         "总控",
         "架构",
@@ -171,7 +171,7 @@ def test_documented_package_metrics_match_validator() -> None:
     for item in report["packages"]:
         assert f"| `{item['name']}` |" in guide
         assert f"| {item['catalog_chars']} |" in guide
-    assert "10004" in guide
+    assert "10414" in guide
 
 
 def main() -> int:

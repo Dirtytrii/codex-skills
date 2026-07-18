@@ -15,6 +15,7 @@
 {"id":"test-report","prompt":"根据现有需求和执行结果生成测试用例表与测试报告。","required_skills":["test-case-report-builder"],"allowed_skills":[],"forbidden_skills":[]}
 {"id":"social-card","prompt":"根据文章生成一套小红书 3:4 图文卡和微信公众号双封面。","required_skills":["guizang-social-card-skill"],"allowed_skills":[],"forbidden_skills":[]}
 {"id":"explicit-visual-compatibility","prompt":"明确使用 design-taste-frontend 为品牌首页提供视觉方向，再进入统一 UI 流程。","required_skills":["design-taste-frontend","ui-implementation-workflow"],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"skill-system-governance","prompt":"检查当前 skill 体系是否存在角色边界、插件拆包、Token、命中率或文档注册漂移，并在有证据时做最小优化。","required_skills":["skill-system-governance"],"allowed_skills":["agent-role-orchestrator"],"forbidden_skills":[]}
 {"id":"no-skill-arithmetic","prompt":"计算 17 + 25，只返回结果。","required_skills":[],"allowed_skills":[],"forbidden_skills":[]}
 {"id":"no-skill-translation","prompt":"把这句话翻译成英文：今天下雨了。","required_skills":[],"allowed_skills":[],"forbidden_skills":[]}
 {"id":"no-skill-basic-explanation","prompt":"用一句话解释什么是变量。","required_skills":[],"allowed_skills":[],"forbidden_skills":[]}

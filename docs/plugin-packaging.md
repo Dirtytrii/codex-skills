@@ -6,7 +6,7 @@
 
 | 插件 | 默认 | 顶层 skill | 目录字符预算 | 主要职责 |
 | --- | --- | ---: | ---: | --- |
-| `codex-skills-core` | 是 | 3 | 793 | 总控/角色路由、浏览器路由、项目压力测试 |
+| `codex-skills-core` | 是 | 4 | 1203 | 总控/角色路由、Skill 体系治理、浏览器路由、项目压力测试 |
 | `codex-skills-engineering` | 否 | 34 | 6677 | 架构、开发、测试、QA、工程发布 |
 | `codex-skills-operations` | 否 | 9 | 2204 | 运维诊断、安全、部署门禁、恢复规划 |
 | `codex-skills-content` | 否 | 12 | 6542 | 内容研究、写作、公众号、小红书和发布准备 |
@@ -14,7 +14,7 @@
 
 内容插件还包含 `cheat-on-content` 下的 nested skills，因此它的 catalog record 多于顶层目录数。当前 core 与任一单个 domain 的组合都低于仓库的 8000 字符目录目标。这个数字是用于防止目录膨胀的稳定 guardrail，不等同于一次任务的精确 Token 账单。
 
-跨域任务先运行审计。组合仍低于目标时可以同时启用；超过目标时拆成阶段任务，并用压缩交接传递必要事实。例如 content + visual-delivery 当前为 10004 字符，公众号文章和社交卡片应分别在内容阶段、视觉阶段处理，而不是让两个大目录长期同时常驻。不要复制同一个 skill，也不要把领域能力塞回 core。
+跨域任务先运行审计。组合仍低于目标时可以同时启用；超过目标时拆成阶段任务，并用压缩交接传递必要事实。例如 core + content + visual-delivery 当前为 10414 字符，公众号文章和社交卡片应分别在内容阶段、视觉阶段处理，而不是让两个大目录长期同时常驻。不要复制同一个 skill，也不要把领域能力塞回 core。
 
 ## 安装
 
@@ -65,7 +65,7 @@ python scripts/validate_public_skills.py
 
 `validate_plugins.py` fail closed 检查：
 
-- 67 个顶层 skill 恰好归属一个插件，没有漏包或重复打包。
+- 68 个顶层 skill 恰好归属一个插件，没有漏包或重复打包。
 - 只有 core 默认安装，所有 domain 都依赖 core。
 - marketplace、manifest、`agents/openai.yaml` 和生成 bundle 一致且可用于插件。
 - core 与任一单 domain 不超过 8000 字符目录目标。
