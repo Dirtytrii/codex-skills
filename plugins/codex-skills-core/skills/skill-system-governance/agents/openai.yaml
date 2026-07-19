@@ -1,0 +1,6 @@
+interface:
+  display_name: "Skill System Governance"
+  short_description: "Audit and optimize skill architecture with evidence"
+  default_prompt: "Use $skill-system-governance to audit this skill system and apply only evidence-backed improvements."
+policy:
+  allow_implicit_invocation: true

@@ -2,7 +2,7 @@
 
 一套可安装、可验证、可跨项目继承的 **role-based agent workflow**。它不是 prompt 合集：`agent-role-orchestrator` 先让 `总控 / CEO` 判断目标、范围、风险和预算，再由 `架构 / CTO`、`内容主编` 或其他负责人组织执行角色闭环。
 
-核心设计亮点：CEO-first 入口、可折叠多窗口 Loop、来源窗口主动回调、Fail-Closed Tool Layer、按需 skill 路由、模型与 Token 预算、可量化的技能命中率，以及可复用优化沉淀。
+核心设计亮点：CEO-first 入口、可折叠多窗口 Loop、来源窗口主动回调、Fail-Closed Tool Layer、按需 skill 路由、模型与 Token 预算、可量化的技能命中率，以及证据驱动的 Skill 体系治理。
 
 详细资料：[技术亮点与设计取舍](docs/technical-highlights.md) · [插件拆包与安装](docs/plugin-packaging.md) · [跨机器安装与更新](docs/plugin-update-guide.md) · [路由、Token 与 Skill 评估](docs/routing-token-and-evaluation.md) · [角色与运行规则](docs/role-usage.md) · [机器可读 skill 清单](registry/skills.json) · [来源治理](docs/source-policy.md) · [新增 skill](docs/add-skill.md)
 
@@ -103,6 +103,7 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 | `aggregate_skill_hits.py` | 仅从含路由声明或技能回调的文件聚合自报命中、漏召、有效使用、真实误召和不一致回传 |
 | `evaluate_skill_routing.py` | 对实际选择做离线评分，覆盖应命中与无需 Skill 的负样本 |
 | `audit_skill_catalog.py` | 递归检查 Skill 目录、描述预算和隐式调用策略 |
+| `audit_skill_system.py` | 汇总目录、角色、插件、bundle、路由 case 和可选运行时证据；缺少实际观测时明确返回 `not_evaluable`（不可评估） |
 
 角色运行脚本位于 `skills/agent-role-orchestrator/scripts/`；目录审计和路由评估属于仓库级 PR 工具，位于 `scripts/`。典型用法：
 
@@ -157,7 +158,8 @@ Token Budget Profile 控制 prompt 体积：`compact` 用于 tiny/small 和普�
 | 中文正式对外文案 | `social-text-websense-gate` + `反老登味 / 反 AI 味内容闸门` + `humanizer-zh`；叙事按需用 `story-deslop` |
 | 测试与安全 | `test-case-report-builder`、`playwright`、`authorized-blackbox-web-security` 或 Codex Security 系列 |
 | 运维与数据库 | 只读诊断 skills + 运维/DBA 角色；写操作和危险动作单独授权 |
-| 知识、交付、技能治理 | 知识库、文档/交付、技能维护角色按边界处理 |
+| Skill 架构、Token/命中与插件治理 | `技能维护` + [`skill-system-governance`](skills/skill-system-governance/SKILL.md)：自动先跑只读审计，允许 `no-change`，只有证据和授权齐全才做最小修复 |
+| 知识与交付 | 知识库、文档/交付角色按边界处理 |
 
 浏览器能力从 Codex Desktop `2026-06-11` 发布版本起作为最低能力门槛，并且必须在当前任务中实际检测到 Browser/Chrome 插件；完整路由和旧版降级见 [docs/browser-automation.md](docs/browser-automation.md)。
 
@@ -167,7 +169,7 @@ Token Budget Profile 控制 prompt 体积：`compact` 用于 tiny/small 和普�
 - **内容语气闸门**：正式对外中文先去掉说教、爹味、模板化和 AI 味，再用 `humanizer-zh`；不改变事实、数据、来源、授权或发布状态。
 - **小红书自动化发布门禁**：`xhs-automation-publisher` 默认预览/填充；发布、评论、点赞、收藏、切号等动作必须二次确认，cookie 与账号状态不进仓库。
 
-skill 命中通过回调量化：负责人声明候选/必选/可选/跳过，下游回传实际使用、漏召、误召和产出影响。长期触发漂移、README/docs 混乱和跨角色 Token 过重由 `技能维护` 收敛，不让总控或架构长期背负。
+skill 命中通过回调量化：负责人声明候选/必选/可选/跳过，下游回传实际使用、漏召、误召和产出影响。长期触发漂移、README/docs 混乱和跨角色 Token 过重由 `技能维护` 调用 `skill-system-governance` 收敛，不让总控或架构长期背负；没有实际路由观测或回调样本时不编造命中率。
 
 ## 仓库与维护
 
