@@ -11,6 +11,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+from check_codegraph import build_status, maybe_initialize, maybe_sync
 from render_role_prompt import build_arg_parser, build_prompt, canonical_role
 
 
@@ -249,6 +250,69 @@ def passed_header(plan: PluginPlan) -> str:
     )
 
 
+def effective_codegraph_policy(args: argparse.Namespace, role: str) -> str:
+    if args.codegraph_policy != "auto":
+        return args.codegraph_policy
+    if role == "架构" or args.new_code_project:
+        return "check"
+    return "skip"
+
+
+def skipped_codegraph_status(reason: str) -> dict[str, object]:
+    return {
+        "project": "未检查",
+        "project_exists": False,
+        "tool_available": False,
+        "tool_path": "未检查",
+        "initialized": False,
+        "initialization_status": "未检查",
+        "index_path": "未检查",
+        "index_ignored_by_gitignore": False,
+        "status_checked": False,
+        "file_count": None,
+        "node_count": None,
+        "edge_count": None,
+        "pending_changes": None,
+        "worktree_mismatch": None,
+        "freshness_status": "未检查",
+        "ready": False,
+        "recommendation": "按当前策略无需执行 CodeGraph 前置检查。",
+        "skip_or_failure_reason": reason,
+    }
+
+
+def apply_codegraph_preflight(args: argparse.Namespace, role: str) -> None:
+    policy = effective_codegraph_policy(args, role)
+    args.codegraph_effective_policy = policy
+
+    if policy == "skip":
+        args.codegraph_status = skipped_codegraph_status("codegraph-policy=skip。")
+        return
+
+    if not args.project:
+        status = skipped_codegraph_status("未提供 --project，无法检查本地索引。")
+        args.codegraph_status = status
+        if policy in {"required", "init", "sync"}:
+            raise ValueError(
+                f"CodeGraph policy {policy} requires --project with a local project path"
+            )
+        return
+
+    project = Path(args.project)
+    status = build_status(project)
+    if policy == "init":
+        status = maybe_initialize(project, status)
+    elif policy == "sync":
+        status = maybe_sync(project, status)
+    args.codegraph_status = status
+
+    if policy in {"required", "init", "sync"} and not status["ready"]:
+        raise ValueError(
+            f"CodeGraph policy {policy} did not reach ready state: "
+            f"{status['skip_or_failure_reason']}"
+        )
+
+
 def parse_args(argv: list[str]) -> argparse.Namespace:
     parser = build_arg_parser()
     parser.description = (
@@ -274,6 +338,7 @@ def main(argv: list[str]) -> int:
         if plan.missing_plugins:
             print(blocked_message(plan), file=sys.stderr)
             return 3
+        apply_codegraph_preflight(args, plan.role)
         prompt = f"{passed_header(plan)}\n\n{build_prompt(args)}"
     except Exception as exc:  # noqa: BLE001
         print(f"prepare_role_window failed: {exc}", file=sys.stderr)

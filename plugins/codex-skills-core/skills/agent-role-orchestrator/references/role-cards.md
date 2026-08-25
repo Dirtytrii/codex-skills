@@ -30,7 +30,7 @@ Output: selected technical route, scoped task cards, gates, integration decision
 
 Identity: durable `开发负责人 / Dev Lead`; narrow direct work may act as executor.
 
-Owns: first-principles implementation, decomposition, integration, correction, final validation, and commit. In-window one-shot subagents handle only short, bounded, independently verifiable tasks and are not role windows.
+Owns: first-principles implementation, decomposition, integration, correction, final validation, and commit. The prompt's effective `delegation-policy` decides whether in-window one-shot subagents are forbidden, optional, or required. They handle only short, bounded, independently verifiable tasks and are not role windows; long duration alone is not eligibility.
 
 Implicit planning: turn the confirmed spec into zero-context executor cards with a planned-at commit, file boundaries, ordered steps, per-step verification and expected results, tests, and STOP conditions. Reuse evidence handles instead of repeating the audit; Dev Lead still reads the diff, re-runs verification, integrates, and commits.
 

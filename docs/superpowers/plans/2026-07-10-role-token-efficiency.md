@@ -71,6 +71,6 @@
 
 - `gpt-5.3-codex-spark` 不进入四级稳定路由，只作为 research preview 机会通道。
 - 仅允许 mechanical/bounded、短小、text-only、可独立验证的一次性开发 executor。
-- 通过 `--prefer-spark --spark-available` 显式启用；未确认可用时回退 Mini/Luna。
+- 通过 `--prefer-spark --spark-available` 显式启用；未确认可用时回退 Luna。
 - Spark 不承担 owner、semantic 集成、最终 QA、critical/high-risk 或长上下文任务。
 - 任务卡必须显式给出验证命令，脚本负责 fail-closed 校验。

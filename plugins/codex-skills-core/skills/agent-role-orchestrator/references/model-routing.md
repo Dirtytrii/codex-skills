@@ -25,12 +25,27 @@ Record completion correctness, required validation, tool calls, retries, correct
 
 | Tier | Model | Boundary |
 | --- | --- | --- |
-| `mechanical` | `gpt-5.4-mini` + `high` | One deterministic file/change, complete spec, explicit test. |
+| `mechanical` | `gpt-5.6-luna` + `high` | One deterministic file/change, complete spec, explicit test. |
 | `bounded` | `gpt-5.6-luna` + `high` | Narrow semantic task with clear file ownership and independent validation. |
 | `semantic` | `gpt-5.6-terra` + `high` | Limited business semantics or a few related files; Dev Lead still integrates. |
 | `high-risk` | `gpt-5.6-sol` + `xhigh` | Not delegated to a cheap worker; Dev Lead owns it directly. |
 
 Use `--executor-tier mechanical|bounded|semantic|high-risk`. The worker is an in-window one-shot subagent, not a durable role thread.
+
+This matrix uses Luna as the stable cost-sensitive lane. OpenAI describes it for high-volume, cost-sensitive workloads; product-surface availability and membership-credit accounting are separate concerns and must be checked at runtime. Source: [GPT-5.6 Luna](https://developers.openai.com/api/docs/models/gpt-5.6-luna).
+
+## Delegation Contract
+
+Use `--delegation-policy auto|forbidden|optional|required` on development cards:
+
+- `forbidden`: Dev Lead implements directly. Task-specific “no subagent”, critical/extreme risk, and `high-risk` tier override generic cost-saving advice.
+- `optional`: a serial Dev Lead may delegate only when it can isolate one short leaf task with an exact write scope, validation, and STOP gate. If it does not delegate, report why.
+- `required`: at least one eligible one-shot executor must be used. Explicit mechanical/bounded/semantic tiers and any parallel profile require this policy; fail closed if no eligible leaf exists.
+- `auto`: resolves to the three rules above and prints the effective policy in the prompt.
+
+Long-running means the work is likely to cross the current interaction/context boundary or includes slow staged validation. It triggers task cards, checkpoints, commits, or compressed handoff; duration alone never makes work delegable or parallel.
+
+Generating a card does not create a worker. The Dev Lead must explicitly create the one-shot subagent with the recommended model/thinking when the runtime supports overrides. Every development callback reports whether delegation happened, actual model/thinking, task-card or evidence handle, retries/rework, and Dev Lead revalidation. Model availability is checked at execution time; substitutions are recorded rather than silently assumed.
 
 ## Spark Opportunity Lane
 
@@ -43,19 +58,20 @@ Select it only when all are true:
 - scope is short, text-only, and independently verifiable;
 - the task card names the validation command and requires its result.
 
-Use `--prefer-spark --spark-available`. Without confirmed availability, the generator falls back to Mini/Luna. Spark is forbidden for owner, semantic integration, high-risk, critical, architecture, final QA, and long-context work.
+Use `--prefer-spark --spark-available`. Without confirmed availability, the generator falls back to Luna. Spark is forbidden for owner, semantic integration, high-risk, critical, architecture, final QA, and long-context work.
 
 ## Parallel Profile
 
 Default: `serial`, one worker.
 
-Parallel work is allowed only when each task has disjoint file/surface ownership and independent validation. Two workers are the normal ceiling. Three to five workers require an explicit profile and are justified only by genuinely independent work, not by task size alone.
+Parallel work is allowed only when each task has disjoint file/surface ownership, no shared evolving state, and independent validation. Two workers are the normal ceiling. Three to five workers require an explicit profile and are justified only by genuinely independent work, not by task size or duration alone. Parallel always requires `--delegation-policy required`.
 
 ```bash
 python scripts/prepare_role_window.py \
   --role 开发 \
   --objective "实现三个独立适配器" \
   --source-role 架构 \
+  --delegation-policy required \
   --execution-profile parallel \
   --worker-count 3 \
   --disjoint-scope "每个 worker 一个独立目录" \

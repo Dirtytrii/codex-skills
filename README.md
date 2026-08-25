@@ -99,7 +99,7 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 | `prepare_role_window.py` | 按角色和必选 Skill 解析所需插件；缺失时阻断并输出启用命令，通过后才生成 prompt |
 | `render_role_prompt.py` | 前置检查通过后的底层 prompt 生成器 |
 | `validate_role_loop.py` | 校验台账、prompt、回调和技能命中字段 |
-| `check_codegraph.py` | 检查新代码项目的 CodeGraph 可用性和初始化状态 |
+| `check_codegraph.py` | 调用真实 CLI 检查 CodeGraph 可用性、初始化状态、索引新鲜度和待同步变更 |
 | `aggregate_skill_hits.py` | 仅从含路由声明或技能回调的文件聚合自报命中、漏召、有效使用、真实误召和不一致回传 |
 | `evaluate_skill_routing.py` | 对实际选择做离线评分，覆盖应命中与无需 Skill 的负样本 |
 | `audit_skill_catalog.py` | 递归检查 Skill 目录、描述预算和隐式调用策略 |
@@ -116,7 +116,7 @@ python scripts/evaluate_skill_routing.py --validate-only --strict
 
 生成后先看 `任务控制`、`模型建议` 和 `Token Budget Profile` 是否一致。统计时区分三层：目录审计只证明 Skill 可发现；回调聚合只反映角色自报；路由评分需要外部提供实际 `selected_skills`，当前脚本不会自动运行 Codex。无需 Skill 的负样本也必须保持空选择，用来发现过度加载。
 
-新本地代码项目由架构先运行 `check_codegraph.py`，技术方案确认后再做有边界的开源/可借鉴方案扫描。项目台账有 thread id 就复用，状态不明写 `待确认`，不能靠聊天记忆编造。
+新本地代码项目或显式 `--new-code-project` 由 `prepare_role_window.py` 自动执行只读 CodeGraph 检查并把真实状态写入 Prompt。可用策略为 `auto|skip|check|required|init|sync`：`required` 未就绪即阻断，`init` / `sync` 是唯一允许写索引的显式策略；脚本不会静默安装 CLI。项目台账有 thread id 就复用，状态不明写明原因，不能靠聊天记忆编造。
 
 ## 稳定模型路由与 Spark 机会通道
 
@@ -133,14 +133,16 @@ python scripts/evaluate_skill_routing.py --validate-only --strict
 
 | Executor tier | 模型 | 边界 |
 | --- | --- | --- |
-| `mechanical` | `gpt-5.4-mini` + `high` | 单文件、规格和测试明确、无业务判断 |
+| `mechanical` | `gpt-5.6-luna` + `high` | 单文件、规格和测试明确、无业务判断 |
 | `bounded` | `gpt-5.6-luna` + `high` | 边界清楚、有限语义、可独立验证 |
 | `semantic` | `gpt-5.6-terra` + `high` | 跨少量相关文件，需要业务语义 |
 | `high-risk` | `gpt-5.6-sol` + `xhigh` | 由 Dev Lead 亲自处理，不下放廉价 executor |
 
-`Spark Opportunity Lane` 不是稳定第五级。Spark 当前可用且独立预览额度有剩余时，mechanical/bounded executor 可用 `gpt-5.3-codex-spark` + `high`；通过 `--prefer-spark --spark-available` 显式启用，未确认可用时回退 Mini/Luna。它不承担 owner、跨文件集成、最终 QA、critical/high-risk 或长上下文任务，并且任务卡必须显式运行验证命令。
+`Spark Opportunity Lane` 不是稳定第五级。Spark 当前可用且独立预览额度有剩余时，mechanical/bounded executor 可用 `gpt-5.3-codex-spark` + `high`；通过 `--prefer-spark --spark-available` 显式启用，未确认可用时回退 Luna。它不承担 owner、跨文件集成、最终 QA、critical/high-risk 或长上下文任务，并且任务卡必须显式运行验证命令。
 
-默认串行。并行必须有互斥范围和独立验证；3-5 个 worker 只能显式使用 `--execution-profile parallel --worker-count N --disjoint-scope ... --independent-validation ...`，不会因为“任务很大”自动扩散。
+开发卡用 `--delegation-policy auto|forbidden|optional|required` 声明是否允许下放：具体任务中的“不派 subagent”和 critical/high-risk 自动收敛为 `forbidden`；普通串行 Dev Lead 为 `optional`；明确的一次性 executor 或并行为 `required`。`optional` 才由 Dev Lead 在边界内判断。生成任务卡不等于真正派发；创建 subagent 时要显式传入 model/thinking，并回传是否派发、实际模型、任务卡、重试和复验。具体禁止条件始终覆盖通用降本建议。
+
+默认串行。“耗时长”只触发任务卡、检查点、提交或压缩交接，不自动触发下放。并行必须同时满足互斥写集、无共享演进状态和独立验证；2-5 个 worker 只能显式使用 `--execution-profile parallel --worker-count N --disjoint-scope ... --independent-validation ...`，不会因为“任务很大”自动扩散。
 
 Token Budget Profile 控制 prompt 体积：`compact` 用于 tiny/small 和普通 medium 小闭环，`standard` 用于 large、L2、架构或新项目，`full` 用于 critical、L3 与高风险门禁，并额外要求独立复核、失败回退和 go/no-go 决策方。显式 `--profile` 优先于自动路由。上下文预算只传状态增量、证据句柄、决策和下一回流对象；长任务依靠台账、提交、PR 和压缩交接卡接续。
 

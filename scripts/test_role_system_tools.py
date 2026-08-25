@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import importlib.util
+import json
 import subprocess
 import sys
 import tempfile
-import json
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -175,6 +177,88 @@ def test_check_codegraph_reports_state_without_guessing() -> None:
         assert initialized_payload["initialization_status"] == "已初始化"
 
 
+def test_check_codegraph_reads_cli_freshness_and_trailing_slash_ignore() -> None:
+    spec = importlib.util.spec_from_file_location(
+        "check_codegraph_under_test", CHECK_CODEGRAPH
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / ".codegraph").mkdir()
+        (project / ".gitignore").write_text(".codegraph/\n", encoding="utf-8")
+        payload = {
+            "initialized": True,
+            "fileCount": 12,
+            "nodeCount": 34,
+            "edgeCount": 56,
+            "pendingChanges": {"added": 0, "modified": 0, "removed": 0},
+            "worktreeMismatch": None,
+        }
+        completed = subprocess.CompletedProcess(
+            ["fake-codegraph", "status"], 0, json.dumps(payload), ""
+        )
+        with (
+            patch.object(
+                module.shutil,
+                "which",
+                side_effect=lambda name: "fake-codegraph" if name == "codegraph" else None,
+            ),
+            patch.object(module.subprocess, "run", return_value=completed) as runner,
+        ):
+            status = module.build_status(project)
+
+        assert status["ready"] is True
+        assert status["freshness_status"] == "最新"
+        assert status["index_ignored_by_gitignore"] is True
+        assert status["file_count"] == 12
+        assert status["pending_change_count"] == 0
+        assert runner.call_args.args[0][1:3] == ["status", "--json"]
+
+
+def test_check_codegraph_init_uses_current_cli_without_deprecated_flag() -> None:
+    spec = importlib.util.spec_from_file_location(
+        "check_codegraph_init_under_test", CHECK_CODEGRAPH
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+
+        def fake_run(command: list[str], **_: object) -> subprocess.CompletedProcess[str]:
+            if command[1] == "init":
+                (project / ".codegraph").mkdir()
+                return subprocess.CompletedProcess(command, 0, "initialized", "")
+            payload = {
+                "initialized": True,
+                "fileCount": 1,
+                "nodeCount": 2,
+                "edgeCount": 3,
+                "pendingChanges": {"added": 0, "modified": 0, "removed": 0},
+                "worktreeMismatch": None,
+            }
+            return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+
+        with (
+            patch.object(
+                module.shutil,
+                "which",
+                side_effect=lambda name: "fake-codegraph" if name == "codegraph" else None,
+            ),
+            patch.object(module.subprocess, "run", side_effect=fake_run) as runner,
+        ):
+            status = module.build_status(project)
+            initialized = module.maybe_initialize(project, status)
+
+        assert runner.call_args_list[0].args[0] == ["fake-codegraph", "init"]
+        assert initialized["ready"] is True
+        assert initialized["init_result"] == "初始化并确认完成。"
+
+
 def test_prepare_role_window_fails_closed_when_role_plugin_is_disabled() -> None:
     with tempfile.TemporaryDirectory() as temp:
         config = Path(temp) / "config.toml"
@@ -237,6 +321,47 @@ def test_prepare_role_window_generates_only_after_required_plugins_are_enabled()
         assert "状态：通过" in result.stdout
         assert "codex-skills-core、codex-skills-engineering" in result.stdout
         assert "【给 开发 窗口的" in result.stdout
+
+
+def test_prepare_role_window_injects_codegraph_check_and_strict_gate() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        project = root / "project"
+        project.mkdir()
+        config = root / "config.toml"
+        write_plugin_config(
+            config,
+            {"codex-skills-core", "codex-skills-engineering"},
+        )
+        base_args = [
+            PYTHON,
+            str(PREPARE_ROLE_WINDOW),
+            "--role",
+            "开发",
+            "--objective",
+            "检查新项目代码关系",
+            "--source-role",
+            "架构",
+            "--project",
+            str(project),
+            "--new-code-project",
+            "--plugin-registry",
+            str(PLUGIN_REGISTRY),
+            "--codex-config",
+            str(config),
+        ]
+        checked = run(base_args)
+        assert "CodeGraph policy：check" in checked.stdout
+        assert "门禁结果：只读检查未就绪" in checked.stdout
+        assert "尚未发现 .codegraph/ 索引目录" in checked.stdout
+
+        required = run(
+            [*base_args, "--codegraph-policy", "required"],
+            check=False,
+        )
+        assert required.returncode != 0
+        assert "CodeGraph policy required did not reach ready state" in required.stderr
+        assert "【给 开发 窗口的" not in required.stdout
 
 
 def test_prepare_role_window_required_skill_can_add_cross_domain_plugin() -> None:
@@ -1000,14 +1125,17 @@ def test_render_prompt_routes_development_lead_and_subagents() -> None:
     assert "model：gpt-5.6-terra" in dev.stdout
     assert "thinking：high" in dev.stdout
     assert "开发负责人 / Dev Lead" in dev.stdout
-    assert "开发执行 subagent" in dev.stdout
-    assert "gpt-5.4-mini + high" in dev.stdout
+    assert "delegation-policy：optional" in dev.stdout
+    assert "Dev Lead 可自行判断是否派发" in dev.stdout
+    assert "耗时长" in dev.stdout
+    assert "不自动触发 subagent" in dev.stdout
+    assert "gpt-5.6-luna + high" in dev.stdout
     assert "gpt-5.6-terra + high" in dev.stdout
-    assert "gpt-5.6-sol + xhigh" in dev.stdout
-    assert "只执行单一、短、小、可验证的代码任务" in dev.stdout
-    assert "窗口内一次性 subagent" in dev.stdout
-    assert "不写入 .codex/role-windows.md" in dev.stdout
-    assert "任务结束后关闭，不作为角色窗口复用" in dev.stdout
+    assert "gpt-5.4-mini" not in dev.stdout
+    assert "生成任务卡不等于已派发" in dev.stdout
+    assert "显式传入 model/thinking" in dev.stdout
+    assert "执行器使用回传（开发必填）" in dev.stdout
+    assert "未派发写原因" in dev.stdout
 
     bounded = run(
         [
@@ -1025,7 +1153,73 @@ def test_render_prompt_routes_development_lead_and_subagents() -> None:
     )
     assert "model：gpt-5.6-luna" in bounded.stdout
     assert "thinking：high" in bounded.stdout
-    assert "一次性 subagent" in bounded.stdout
+    assert "开发执行 subagent 规则" in bounded.stdout
+    assert "delegation-policy：required（已派发）" in bounded.stdout
+    assert "只执行一张单一、短小、边界明确且可独立验证的任务卡" in bounded.stdout
+
+
+def test_render_prompt_respects_forbidden_delegation_and_task_text() -> None:
+    forbidden = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "开发",
+            "--objective",
+            "按既定白名单完成高风险修复",
+            "--source-role",
+            "架构",
+            "--executor-tier",
+            "high-risk",
+            "--work-requirements",
+            "按四笔提交完成；不派subagent",
+        ]
+    )
+    assert "model：gpt-5.6-sol" in forbidden.stdout
+    assert "有效控制：risk=critical；loop=L3" in forbidden.stdout
+    assert "delegation-policy：forbidden" in forbidden.stdout
+    assert "本任务禁止派发开发执行 subagent" in forbidden.stdout
+    assert "具体任务要求和高风险门禁优先" in forbidden.stdout
+    assert "不构成派发或并行理由" in forbidden.stdout
+    assert "worker-count：1" in forbidden.stdout
+    assert "串行由 Dev Lead 亲自执行；禁止创建 worker" in forbidden.stdout
+    assert "Dev Lead 可自行判断是否派发" not in forbidden.stdout
+    assert "mechanical 使用" not in forbidden.stdout
+
+    conflict = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "开发",
+            "--objective",
+            "执行禁止下放的修复",
+            "--source-role",
+            "架构",
+            "--delegation-policy",
+            "required",
+            "--work-requirements",
+            "不派 subagent",
+        ],
+        check=False,
+    )
+    assert conflict.returncode != 0
+    assert "explicitly forbid subagents" in conflict.stderr
+
+    with tempfile.TemporaryDirectory() as temp:
+        prompt = Path(temp) / "contradictory-development-prompt.md"
+        prompt.write_text(
+            forbidden.stdout.replace(
+                "delegation-policy：forbidden", "delegation-policy：optional"
+            ),
+            encoding="utf-8",
+        )
+        invalid = run(
+            [PYTHON, str(VALIDATE_LOOP), "--prompt", str(prompt)],
+            check=False,
+        )
+        assert invalid.returncode != 0
+        assert "task text forbids subagents" in invalid.stdout
 
 
 def test_render_prompt_rejects_unsafe_parallel_worker_fanout() -> None:
@@ -1072,6 +1266,7 @@ def test_render_prompt_rejects_unsafe_parallel_worker_fanout() -> None:
     )
     assert "execution-profile：parallel" in accepted.stdout
     assert "worker-count：3" in accepted.stdout
+    assert "delegation-policy：required" in accepted.stdout
     assert "默认串行" not in accepted.stdout
 
 
@@ -1154,7 +1349,7 @@ def test_render_prompt_uses_spark_only_for_confirmed_short_executor() -> None:
         check=False,
     )
     assert critical_task.returncode != 0
-    assert "does not support critical or extreme risk" in critical_task.stderr
+    assert "critical/extreme development" in critical_task.stderr
 
 
 def test_render_prompt_compact_profile_stays_within_budget() -> None:
@@ -1378,7 +1573,7 @@ def test_render_prompt_routes_owner_ops_dba_and_mechanical_work() -> None:
             "mechanical",
         ]
     )
-    assert "model：gpt-5.4-mini" in knowledge.stdout
+    assert "model：gpt-5.6-luna" in knowledge.stdout
     assert "thinking：medium" in knowledge.stdout
 
 
@@ -1638,8 +1833,11 @@ def main() -> int:
         test_existing_agents_file_is_preserved,
         test_role_ledger_rejects_duplicate_threads_and_bad_status,
         test_check_codegraph_reports_state_without_guessing,
+        test_check_codegraph_reads_cli_freshness_and_trailing_slash_ignore,
+        test_check_codegraph_init_uses_current_cli_without_deprecated_flag,
         test_prepare_role_window_fails_closed_when_role_plugin_is_disabled,
         test_prepare_role_window_generates_only_after_required_plugins_are_enabled,
+        test_prepare_role_window_injects_codegraph_check_and_strict_gate,
         test_prepare_role_window_required_skill_can_add_cross_domain_plugin,
         test_prepare_role_window_rejects_unmapped_required_skill,
         test_bundled_prepare_role_window_discovers_bundled_registry,
@@ -1664,6 +1862,7 @@ def main() -> int:
         test_render_prompt_full_profile_keeps_deep_sections,
         test_render_prompt_auto_profile_uses_task_size_and_risk,
         test_render_prompt_routes_development_lead_and_subagents,
+        test_render_prompt_respects_forbidden_delegation_and_task_text,
         test_render_prompt_rejects_unsafe_parallel_worker_fanout,
         test_render_prompt_uses_spark_only_for_confirmed_short_executor,
         test_render_prompt_compact_profile_stays_within_budget,
