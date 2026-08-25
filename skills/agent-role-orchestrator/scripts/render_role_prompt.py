@@ -548,6 +548,58 @@ def token_profile_strategy(profile: str) -> str:
     return strategies[profile]
 
 
+def prompt_codegraph_policy(role: str, args: argparse.Namespace) -> str:
+    effective = getattr(args, "codegraph_effective_policy", None)
+    if effective:
+        return effective
+    if args.codegraph_policy != "auto":
+        return args.codegraph_policy
+    if role == "架构" or args.new_code_project:
+        return "check"
+    return "skip"
+
+
+def codegraph_planning_section(role: str, args: argparse.Namespace) -> str:
+    policy = prompt_codegraph_policy(role, args)
+    status = getattr(args, "codegraph_status", None)
+    if status is None:
+        status = {
+            "tool_available": False,
+            "tool_path": "未检查",
+            "initialization_status": "未检查",
+            "freshness_status": "未检查",
+            "index_path": "未检查",
+            "index_ignored_by_gitignore": False,
+            "file_count": None,
+            "node_count": None,
+            "edge_count": None,
+            "pending_changes": None,
+            "worktree_mismatch": None,
+            "ready": False,
+            "recommendation": "请改用 prepare_role_window.py 执行前置检查。",
+            "skip_or_failure_reason": "底层渲染器不执行环境探测。",
+        }
+
+    if policy == "skip":
+        gate = "已按策略跳过"
+    elif status["ready"]:
+        gate = "通过" if policy in {"required", "init", "sync"} else "只读检查通过"
+    else:
+        gate = "未通过" if policy in {"required", "init", "sync"} else "只读检查未就绪"
+
+    availability = "可用" if status["tool_available"] else "不可用/未检查"
+    ignored = "是" if status["index_ignored_by_gitignore"] else "否/未配置"
+    return f"""CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
+- CodeGraph policy：{policy}
+- 门禁结果：{gate}
+- 可用性与初始化状态：工具{availability}（{status['tool_path']}）；{status['initialization_status']}；新鲜度={status['freshness_status']}
+- 索引路径/忽略策略：{status['index_path']}；.gitignore 忽略={ignored}
+- 索引摘要：files={status['file_count']}；nodes={status['node_count']}；edges={status['edge_count']}；pending={status['pending_changes']}；worktreeMismatch={status['worktree_mismatch']}
+- 建议动作：{status['recommendation']}
+- 跳过或失败原因：{status['skip_or_failure_reason']}
+"""
+
+
 def architecture_planning_sections(role: str, args: argparse.Namespace) -> str:
     sections: list[str] = []
     if role == "架构":
@@ -556,12 +608,8 @@ def architecture_planning_sections(role: str, args: argparse.Namespace) -> str:
 - 候选方案与取舍：待确认
 - 推荐与约束：待确认
 """)
-    if role == "架构" or args.new_code_project:
-        sections.append("""CodeGraph 状态（新本地代码项目必填；不适用时写明原因）：
-- 可用性与初始化状态：待确认
-- 索引路径/忽略策略：待确认
-- 跳过或失败原因：待确认
-""")
+    if role == "架构" or args.new_code_project or args.codegraph_policy != "auto":
+        sections.append(codegraph_planning_section(role, args))
     if role == "架构":
         sections.append("""开源/可借鉴方案扫描：
 - 检索关键词与候选方案：待确认
@@ -669,6 +717,14 @@ Loop 深度（可折叠路由）：
 def build_prompt(args: argparse.Namespace) -> str:
     role = canonical_role(args.role)
     controls = effective_task_controls(args)
+    if (
+        args.codegraph_policy in {"required", "init", "sync"}
+        and not hasattr(args, "codegraph_status")
+    ):
+        raise ValueError(
+            "strict CodeGraph policies require prepare_role_window.py; "
+            "render_role_prompt.py does not inspect or mutate the project"
+        )
     validate_source_route(role, args)
     validate_execution_profile(role, args)
     validate_spark_opportunity(role, args, controls)
@@ -870,6 +926,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--read-orchestrator", action="store_true", help="Mark orchestrator skill as read.")
     parser.add_argument("--read-ledger", action="store_true", help="Mark project role ledger as read.")
     parser.add_argument("--new-code-project", action="store_true", help="Require CodeGraph status fields.")
+    parser.add_argument(
+        "--codegraph-policy",
+        default="auto",
+        choices=["auto", "skip", "check", "required", "init", "sync"],
+        help=(
+            "CodeGraph preflight. auto performs a read-only check for architecture/new-code prompts; "
+            "required fails unless the index is ready; init/sync are explicit write policies and only run through prepare_role_window.py."
+        ),
+    )
     parser.add_argument("--allow-ceo-direct-dispatch", action="store_true", help="Allow an explicit user override for 总控 -> execution-role direct dispatch.")
     parser.add_argument("--override-reason", help="Required when --allow-ceo-direct-dispatch bypasses 架构 / CTO or 内容主编.")
     parser.add_argument("--output", type=Path, help="Write prompt to file instead of stdout.")

@@ -99,7 +99,7 @@ Markdown 管原则和角色边界，脚本管固定字段、枚举、模板、�
 | `prepare_role_window.py` | 按角色和必选 Skill 解析所需插件；缺失时阻断并输出启用命令，通过后才生成 prompt |
 | `render_role_prompt.py` | 前置检查通过后的底层 prompt 生成器 |
 | `validate_role_loop.py` | 校验台账、prompt、回调和技能命中字段 |
-| `check_codegraph.py` | 检查新代码项目的 CodeGraph 可用性和初始化状态 |
+| `check_codegraph.py` | 调用真实 CLI 检查 CodeGraph 可用性、初始化状态、索引新鲜度和待同步变更 |
 | `aggregate_skill_hits.py` | 仅从含路由声明或技能回调的文件聚合自报命中、漏召、有效使用、真实误召和不一致回传 |
 | `evaluate_skill_routing.py` | 对实际选择做离线评分，覆盖应命中与无需 Skill 的负样本 |
 | `audit_skill_catalog.py` | 递归检查 Skill 目录、描述预算和隐式调用策略 |
@@ -116,7 +116,7 @@ python scripts/evaluate_skill_routing.py --validate-only --strict
 
 生成后先看 `任务控制`、`模型建议` 和 `Token Budget Profile` 是否一致。统计时区分三层：目录审计只证明 Skill 可发现；回调聚合只反映角色自报；路由评分需要外部提供实际 `selected_skills`，当前脚本不会自动运行 Codex。无需 Skill 的负样本也必须保持空选择，用来发现过度加载。
 
-新本地代码项目由架构先运行 `check_codegraph.py`，技术方案确认后再做有边界的开源/可借鉴方案扫描。项目台账有 thread id 就复用，状态不明写 `待确认`，不能靠聊天记忆编造。
+新本地代码项目或显式 `--new-code-project` 由 `prepare_role_window.py` 自动执行只读 CodeGraph 检查并把真实状态写入 Prompt。可用策略为 `auto|skip|check|required|init|sync`：`required` 未就绪即阻断，`init` / `sync` 是唯一允许写索引的显式策略；脚本不会静默安装 CLI。项目台账有 thread id 就复用，状态不明写明原因，不能靠聊天记忆编造。
 
 ## 稳定模型路由与 Spark 机会通道
 

@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
+import importlib.util
+import json
 import subprocess
 import sys
 import tempfile
-import json
 from pathlib import Path
+from unittest.mock import patch
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -175,6 +177,88 @@ def test_check_codegraph_reports_state_without_guessing() -> None:
         assert initialized_payload["initialization_status"] == "已初始化"
 
 
+def test_check_codegraph_reads_cli_freshness_and_trailing_slash_ignore() -> None:
+    spec = importlib.util.spec_from_file_location(
+        "check_codegraph_under_test", CHECK_CODEGRAPH
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+        (project / ".codegraph").mkdir()
+        (project / ".gitignore").write_text(".codegraph/\n", encoding="utf-8")
+        payload = {
+            "initialized": True,
+            "fileCount": 12,
+            "nodeCount": 34,
+            "edgeCount": 56,
+            "pendingChanges": {"added": 0, "modified": 0, "removed": 0},
+            "worktreeMismatch": None,
+        }
+        completed = subprocess.CompletedProcess(
+            ["fake-codegraph", "status"], 0, json.dumps(payload), ""
+        )
+        with (
+            patch.object(
+                module.shutil,
+                "which",
+                side_effect=lambda name: "fake-codegraph" if name == "codegraph" else None,
+            ),
+            patch.object(module.subprocess, "run", return_value=completed) as runner,
+        ):
+            status = module.build_status(project)
+
+        assert status["ready"] is True
+        assert status["freshness_status"] == "最新"
+        assert status["index_ignored_by_gitignore"] is True
+        assert status["file_count"] == 12
+        assert status["pending_change_count"] == 0
+        assert runner.call_args.args[0][1:3] == ["status", "--json"]
+
+
+def test_check_codegraph_init_uses_current_cli_without_deprecated_flag() -> None:
+    spec = importlib.util.spec_from_file_location(
+        "check_codegraph_init_under_test", CHECK_CODEGRAPH
+    )
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    with tempfile.TemporaryDirectory() as temp:
+        project = Path(temp)
+
+        def fake_run(command: list[str], **_: object) -> subprocess.CompletedProcess[str]:
+            if command[1] == "init":
+                (project / ".codegraph").mkdir()
+                return subprocess.CompletedProcess(command, 0, "initialized", "")
+            payload = {
+                "initialized": True,
+                "fileCount": 1,
+                "nodeCount": 2,
+                "edgeCount": 3,
+                "pendingChanges": {"added": 0, "modified": 0, "removed": 0},
+                "worktreeMismatch": None,
+            }
+            return subprocess.CompletedProcess(command, 0, json.dumps(payload), "")
+
+        with (
+            patch.object(
+                module.shutil,
+                "which",
+                side_effect=lambda name: "fake-codegraph" if name == "codegraph" else None,
+            ),
+            patch.object(module.subprocess, "run", side_effect=fake_run) as runner,
+        ):
+            status = module.build_status(project)
+            initialized = module.maybe_initialize(project, status)
+
+        assert runner.call_args_list[0].args[0] == ["fake-codegraph", "init"]
+        assert initialized["ready"] is True
+        assert initialized["init_result"] == "初始化并确认完成。"
+
+
 def test_prepare_role_window_fails_closed_when_role_plugin_is_disabled() -> None:
     with tempfile.TemporaryDirectory() as temp:
         config = Path(temp) / "config.toml"
@@ -237,6 +321,47 @@ def test_prepare_role_window_generates_only_after_required_plugins_are_enabled()
         assert "状态：通过" in result.stdout
         assert "codex-skills-core、codex-skills-engineering" in result.stdout
         assert "【给 开发 窗口的" in result.stdout
+
+
+def test_prepare_role_window_injects_codegraph_check_and_strict_gate() -> None:
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp)
+        project = root / "project"
+        project.mkdir()
+        config = root / "config.toml"
+        write_plugin_config(
+            config,
+            {"codex-skills-core", "codex-skills-engineering"},
+        )
+        base_args = [
+            PYTHON,
+            str(PREPARE_ROLE_WINDOW),
+            "--role",
+            "开发",
+            "--objective",
+            "检查新项目代码关系",
+            "--source-role",
+            "架构",
+            "--project",
+            str(project),
+            "--new-code-project",
+            "--plugin-registry",
+            str(PLUGIN_REGISTRY),
+            "--codex-config",
+            str(config),
+        ]
+        checked = run(base_args)
+        assert "CodeGraph policy：check" in checked.stdout
+        assert "门禁结果：只读检查未就绪" in checked.stdout
+        assert "尚未发现 .codegraph/ 索引目录" in checked.stdout
+
+        required = run(
+            [*base_args, "--codegraph-policy", "required"],
+            check=False,
+        )
+        assert required.returncode != 0
+        assert "CodeGraph policy required did not reach ready state" in required.stderr
+        assert "【给 开发 窗口的" not in required.stdout
 
 
 def test_prepare_role_window_required_skill_can_add_cross_domain_plugin() -> None:
@@ -1638,8 +1763,11 @@ def main() -> int:
         test_existing_agents_file_is_preserved,
         test_role_ledger_rejects_duplicate_threads_and_bad_status,
         test_check_codegraph_reports_state_without_guessing,
+        test_check_codegraph_reads_cli_freshness_and_trailing_slash_ignore,
+        test_check_codegraph_init_uses_current_cli_without_deprecated_flag,
         test_prepare_role_window_fails_closed_when_role_plugin_is_disabled,
         test_prepare_role_window_generates_only_after_required_plugins_are_enabled,
+        test_prepare_role_window_injects_codegraph_check_and_strict_gate,
         test_prepare_role_window_required_skill_can_add_cross_domain_plugin,
         test_prepare_role_window_rejects_unmapped_required_skill,
         test_bundled_prepare_role_window_discovers_bundled_registry,

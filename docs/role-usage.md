@@ -115,7 +115,7 @@
 3. 一旦进入总控管理流，原则是总控只直接对接负责人层：`架构 / CTO`、`内容主编`、`知识库`、`技能维护`，必要时 `文档/交付`；只有 `tiny` 低风险局部小改动可以总控自办，只有 `small` 单一、短、小、可验证的低风险开发任务可以总控直派 `开发`。
 4. 总控/架构/多角色/派发/回调/台账类任务必须先读取已安装的 `agent-role-orchestrator/SKILL.md` 和项目 `.codex/role-windows.md`；若台账缺失或不可读，状态写 `待确认`，不要编造线程 ID。项目允许写入时，优先用 `ensure_project_role_files.py --write` 创建或刷新 `AGENTS.md` 托管规则块和初始台账模板。
 5. 技术复杂需求交给 `架构 / CTO` 输出 3-5 个可行技术路线的选型简报，再进入下游实施。
-6. 新本地代码项目由 `架构 / CTO` 默认先用 `check_codegraph.py --project <path>` 检查 CodeGraph；未初始化时在允许写入的前提下初始化并重查，未安装时提示安装，或在环境允许且安装方式明确时做用户级静默安装。
+6. 新本地代码项目由 `架构 / CTO` 给 `prepare_role_window.py` 传入 `--project <path> --new-code-project`；默认 `auto` 只读检查真实 CLI 状态并注入 Prompt。只有显式 `--codegraph-policy init|sync` 才写索引，`required` 未就绪即阻断；工具层不静默安装 CLI。
 7. 技术需求确认到足以描述问题后，`架构 / CTO` 先做有边界的开源/可借鉴方案扫描；若网络不可用、用户禁用或上下文敏感，要写明跳过原因。
 8. 内容任务由 `内容主编` 判断是否拆给 `公众号发布`、`小红书`、`视频` 或 `UI/PPT` 视觉资产协作。
 9. `总控`、`架构`、`内容主编` 只在必要时输出下游提示词，并写清模型建议、文件范围、禁止范围、验证和回调；脚本可用时先用 `prepare_role_window.py` 检查角色和必选 Skill 所需插件，通过后才生成骨架。
@@ -214,8 +214,11 @@ python skills/agent-role-orchestrator/scripts/validate_role_loop.py \
 
 ```bash
 python skills/agent-role-orchestrator/scripts/check_codegraph.py \
-  --project /path/to/project
+  --project /path/to/project \
+  --require-ready
 ```
+
+正常派发入口使用 `prepare_role_window.py --project /path/to/project --new-code-project --codegraph-policy check|required|init|sync`。`check` 只报告，`required` 只读且未就绪即阻断，`init/sync` 是显式写入动作；不存在隐式安装或初始化。
 
 聚合技能命中率：
 
@@ -450,7 +453,7 @@ done
 - 总控先选 loop 深度，不默认走最长链路。
 - 总控只找负责人层，技术找架构，内容找主编。
 - 技术复杂需求交给 `架构 / CTO` 看多条技术路线，选定路线再拆下游。
-- 新本地代码项目由 `架构 / CTO` 先检查或初始化 CodeGraph，未安装则提示安装或在可行时静默安装。
+- 新本地代码项目由 `架构 / CTO` 先做只读 CodeGraph 预检；初始化或同步必须显式授权，CLI 缺失只报告、不静默安装。
 - `架构 / CTO` 确认技术需求后，先做有边界的开源/可借鉴方案扫描，再决定是否拆给技术下游角色。
 - 内容任务交给 `内容主编` 管平台、账号、文案、视觉资产和发布授权。
 - 代码和产物交给 Codex。

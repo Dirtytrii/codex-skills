@@ -49,7 +49,7 @@ When `scripts/` is available:
 - preflight plugins and generate non-trivial prompts with `prepare_role_window.py`;
 - use `render_role_prompt.py` only as the lower-level generator after plugin readiness is established;
 - validate prompts, callbacks, and ledgers with `validate_role_loop.py`;
-- inspect CodeGraph with `check_codegraph.py` instead of guessing;
+- let `prepare_role_window.py` inject the real CodeGraph preflight, and use `check_codegraph.py` for standalone inspection instead of guessing;
 - calculate hit rate with `aggregate_skill_hits.py` instead of chat memory.
 
 If a required check fails, do not dispatch or close the loop. Fix it or record `待确认` with a reason. Scripts do not make architecture, product, or editorial judgment.
@@ -58,7 +58,7 @@ If a required check fails, do not dispatch or close the loop. Fix it or record `
 python skills/agent-role-orchestrator/scripts/ensure_project_role_files.py --project /path/to/project --write
 python skills/agent-role-orchestrator/scripts/prepare_role_window.py --role 开发 --objective "修复筛选" --source-role 架构 --task-size small --profile auto --required-skill gstack
 python skills/agent-role-orchestrator/scripts/validate_role_loop.py --project /path/to/project --prompt /path/to/prompt.md --callback /path/to/callback.md
-python skills/agent-role-orchestrator/scripts/check_codegraph.py --project /path/to/project
+python skills/agent-role-orchestrator/scripts/check_codegraph.py --project /path/to/project --require-ready
 python skills/agent-role-orchestrator/scripts/aggregate_skill_hits.py /path/to/callbacks
 ```
 
@@ -144,7 +144,7 @@ Generate with `--profile auto`; override only with evidence:
 
 ### Architecture
 
-For a complex requirement, `架构` first compares credible technical routes and checks whether a current open-source solution is reusable. For a new local code project, run `check_codegraph.py`; initialize when allowed or report the missing tool/status.
+For a complex requirement, `架构` first compares credible technical routes and checks whether a current open-source solution is reusable. For a new local code project, pass `--project` and `--new-code-project` to `prepare_role_window.py`. Its default `auto` policy performs a read-only CLI freshness check and injects the result. Use `--codegraph-policy required` to fail closed; use `init` or `sync` only with explicit write authorization. Never silently install a CLI or mutate a project during `check`.
 
 ### Development
 
@@ -229,7 +229,7 @@ Read `references/role-cards.md`, then only the thematic reference required by th
 3. Choose task size and smallest loop depth.
 4. Choose owner/executor role, model route, and Token Budget Profile.
 5. Load only the relevant reference file and required downstream skills.
-6. Run `prepare_role_window.py`; dispatch only after required role/skill plugins are enabled and the prompt is generated. Use explicit `--executor-tier` and parallel arguments when applicable.
+6. Run `prepare_role_window.py`; dispatch only after required role/skill plugins and the applicable CodeGraph policy pass. Use explicit `--executor-tier` and parallel arguments when applicable.
 7. Validate before dispatch.
 8. On terminal state, update ledger, send callback, aggregate skill hits when useful, and route reusable improvements.
 
@@ -249,6 +249,9 @@ Generated prompts must include:
 ```bash
 # Durable Dev Lead, serial by default
 python scripts/prepare_role_window.py --role 开发 --objective "实现订单修复" --source-role 架构 --profile auto
+
+# New local project: read-only CodeGraph preflight injected into the prompt
+python scripts/prepare_role_window.py --role 架构 --objective "设计适配方案" --project /path/to/project --new-code-project --codegraph-policy required
 
 # Bounded one-shot Luna executor
 python scripts/prepare_role_window.py --role 开发 --objective "实现独立适配器" --source-role 架构 --executor-tier bounded --profile compact
