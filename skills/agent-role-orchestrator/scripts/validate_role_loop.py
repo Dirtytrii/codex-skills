@@ -297,6 +297,43 @@ def validate_prompt(path: Path) -> CheckResult:
         metrics["codegraph_policy"] = codegraph_policy
         metrics["codegraph_gate"] = codegraph_gate
 
+    is_development_prompt = bool(
+        re.search(r"你现在担任：[\s\r\n]*开发(?:[\s\r\n]|$)", text)
+        or "角色：开发；" in text
+    )
+    if is_development_prompt:
+        raw_policy = extract_field(text, "delegation-policy")
+        delegation_policy = raw_policy.split("（", 1)[0].strip()
+        if delegation_policy not in {"forbidden", "optional", "required"}:
+            errors.append("development prompt delegation-policy is missing or invalid")
+        if "执行器使用回传（开发必填）" not in text:
+            errors.append("development prompt is missing executor usage return fields")
+
+        normalized = re.sub(r"\s+", "", text.lower())
+        explicit_no_subagent = any(
+            marker in normalized
+            for marker in (
+                "不派subagent",
+                "不使用subagent",
+                "禁止使用subagent",
+                "禁止派发subagent",
+                "不得派发subagent",
+            )
+        )
+        if explicit_no_subagent and delegation_policy != "forbidden":
+            errors.append("task text forbids subagents but delegation-policy is not forbidden")
+        if delegation_policy == "forbidden":
+            if "execution-profile：parallel" in text:
+                errors.append("delegation-policy forbidden conflicts with parallel execution")
+            if "Dev Lead 可自行判断是否派发" in text or "必须派发至少一个" in text:
+                errors.append("delegation-policy forbidden conflicts with delegation guidance")
+        if delegation_policy == "optional" and "execution-profile：parallel" in text:
+            errors.append("delegation-policy optional conflicts with parallel execution")
+        if delegation_policy == "required" and "本任务禁止派发开发执行 subagent" in text:
+            errors.append("delegation-policy required conflicts with no-subagent guidance")
+
+        metrics["delegation_policy"] = delegation_policy
+
     return CheckResult(str(path), errors, warnings, metrics)
 
 

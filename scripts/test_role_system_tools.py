@@ -1125,14 +1125,17 @@ def test_render_prompt_routes_development_lead_and_subagents() -> None:
     assert "model：gpt-5.6-terra" in dev.stdout
     assert "thinking：high" in dev.stdout
     assert "开发负责人 / Dev Lead" in dev.stdout
-    assert "开发执行 subagent" in dev.stdout
-    assert "gpt-5.4-mini + high" in dev.stdout
+    assert "delegation-policy：optional" in dev.stdout
+    assert "Dev Lead 可自行判断是否派发" in dev.stdout
+    assert "耗时长" in dev.stdout
+    assert "不自动触发 subagent" in dev.stdout
+    assert "gpt-5.6-luna + high" in dev.stdout
     assert "gpt-5.6-terra + high" in dev.stdout
-    assert "gpt-5.6-sol + xhigh" in dev.stdout
-    assert "只执行单一、短、小、可验证的代码任务" in dev.stdout
-    assert "窗口内一次性 subagent" in dev.stdout
-    assert "不写入 .codex/role-windows.md" in dev.stdout
-    assert "任务结束后关闭，不作为角色窗口复用" in dev.stdout
+    assert "gpt-5.4-mini" not in dev.stdout
+    assert "生成任务卡不等于已派发" in dev.stdout
+    assert "显式传入 model/thinking" in dev.stdout
+    assert "执行器使用回传（开发必填）" in dev.stdout
+    assert "未派发写原因" in dev.stdout
 
     bounded = run(
         [
@@ -1150,7 +1153,73 @@ def test_render_prompt_routes_development_lead_and_subagents() -> None:
     )
     assert "model：gpt-5.6-luna" in bounded.stdout
     assert "thinking：high" in bounded.stdout
-    assert "一次性 subagent" in bounded.stdout
+    assert "开发执行 subagent 规则" in bounded.stdout
+    assert "delegation-policy：required（已派发）" in bounded.stdout
+    assert "只执行一张单一、短小、边界明确且可独立验证的任务卡" in bounded.stdout
+
+
+def test_render_prompt_respects_forbidden_delegation_and_task_text() -> None:
+    forbidden = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "开发",
+            "--objective",
+            "按既定白名单完成高风险修复",
+            "--source-role",
+            "架构",
+            "--executor-tier",
+            "high-risk",
+            "--work-requirements",
+            "按四笔提交完成；不派subagent",
+        ]
+    )
+    assert "model：gpt-5.6-sol" in forbidden.stdout
+    assert "有效控制：risk=critical；loop=L3" in forbidden.stdout
+    assert "delegation-policy：forbidden" in forbidden.stdout
+    assert "本任务禁止派发开发执行 subagent" in forbidden.stdout
+    assert "具体任务要求和高风险门禁优先" in forbidden.stdout
+    assert "不构成派发或并行理由" in forbidden.stdout
+    assert "worker-count：1" in forbidden.stdout
+    assert "串行由 Dev Lead 亲自执行；禁止创建 worker" in forbidden.stdout
+    assert "Dev Lead 可自行判断是否派发" not in forbidden.stdout
+    assert "mechanical 使用" not in forbidden.stdout
+
+    conflict = run(
+        [
+            PYTHON,
+            str(RENDER_PROMPT),
+            "--role",
+            "开发",
+            "--objective",
+            "执行禁止下放的修复",
+            "--source-role",
+            "架构",
+            "--delegation-policy",
+            "required",
+            "--work-requirements",
+            "不派 subagent",
+        ],
+        check=False,
+    )
+    assert conflict.returncode != 0
+    assert "explicitly forbid subagents" in conflict.stderr
+
+    with tempfile.TemporaryDirectory() as temp:
+        prompt = Path(temp) / "contradictory-development-prompt.md"
+        prompt.write_text(
+            forbidden.stdout.replace(
+                "delegation-policy：forbidden", "delegation-policy：optional"
+            ),
+            encoding="utf-8",
+        )
+        invalid = run(
+            [PYTHON, str(VALIDATE_LOOP), "--prompt", str(prompt)],
+            check=False,
+        )
+        assert invalid.returncode != 0
+        assert "task text forbids subagents" in invalid.stdout
 
 
 def test_render_prompt_rejects_unsafe_parallel_worker_fanout() -> None:
@@ -1197,6 +1266,7 @@ def test_render_prompt_rejects_unsafe_parallel_worker_fanout() -> None:
     )
     assert "execution-profile：parallel" in accepted.stdout
     assert "worker-count：3" in accepted.stdout
+    assert "delegation-policy：required" in accepted.stdout
     assert "默认串行" not in accepted.stdout
 
 
@@ -1279,7 +1349,7 @@ def test_render_prompt_uses_spark_only_for_confirmed_short_executor() -> None:
         check=False,
     )
     assert critical_task.returncode != 0
-    assert "does not support critical or extreme risk" in critical_task.stderr
+    assert "critical/extreme development" in critical_task.stderr
 
 
 def test_render_prompt_compact_profile_stays_within_budget() -> None:
@@ -1503,7 +1573,7 @@ def test_render_prompt_routes_owner_ops_dba_and_mechanical_work() -> None:
             "mechanical",
         ]
     )
-    assert "model：gpt-5.4-mini" in knowledge.stdout
+    assert "model：gpt-5.6-luna" in knowledge.stdout
     assert "thinking：medium" in knowledge.stdout
 
 
@@ -1792,6 +1862,7 @@ def main() -> int:
         test_render_prompt_full_profile_keeps_deep_sections,
         test_render_prompt_auto_profile_uses_task_size_and_risk,
         test_render_prompt_routes_development_lead_and_subagents,
+        test_render_prompt_respects_forbidden_delegation_and_task_text,
         test_render_prompt_rejects_unsafe_parallel_worker_fanout,
         test_render_prompt_uses_spark_only_for_confirmed_short_executor,
         test_render_prompt_compact_profile_stays_within_budget,

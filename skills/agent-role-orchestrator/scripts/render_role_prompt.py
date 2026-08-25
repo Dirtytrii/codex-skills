@@ -63,6 +63,7 @@ BROWSER_ROLES = {"UI/PPT", "测试", "QA", "小红书"}
 TECHNICAL_EXECUTION_ROLES = {"开发", "UI/PPT", "测试", "QA", "安全", "DBA", "运维"}
 CONTENT_EXECUTION_ROLES = {"公众号发布", "小红书", "视频"}
 OWNER_LAYER_ROLES = {"架构", "内容主编", "知识库", "技能维护", "文档/交付"}
+ONE_SHOT_EXECUTOR_TIERS = {"mechanical", "bounded", "semantic"}
 
 
 @dataclass(frozen=True)
@@ -99,6 +100,10 @@ def effective_task_controls(args: argparse.Namespace) -> TaskControls:
         risk = "critical"
         promotions.append("critical 任务或 L3 门禁将 risk 提升为 critical")
 
+    if args.executor_tier == "high-risk" and risk not in {"critical", "extreme"}:
+        risk = "critical"
+        promotions.append("high-risk executor tier 实际为 Dev Lead 高风险自办并提升 risk 至 critical")
+
     if risk in {"critical", "extreme"} and loop_depth != "L3":
         loop_depth = "L3"
         promotions.append("critical/extreme risk 至少使用 L3")
@@ -130,7 +135,7 @@ def model_route(role: str, risk: str, executor_tier: str = "owner") -> ModelRout
         return ModelRoute("gpt-5.6-sol", "high", "实盘架构、事故根因、DB/并发/安全或不可逆方案升级到 xhigh。")
     if role == "开发":
         if executor_tier == "mechanical":
-            return ModelRoute("gpt-5.4-mini", "high", "仅限单文件、规格和测试明确、无业务判断的一次性机械实现。")
+            return ModelRoute("gpt-5.6-luna", "high", "仅限单文件、规格和测试明确、无业务判断的一次性机械实现。")
         if executor_tier == "bounded":
             return ModelRoute("gpt-5.6-luna", "high", "仅限边界清楚、可独立验证的一次性执行任务；跨文件集成或范围漂移回流 Dev Lead。")
         if executor_tier == "semantic":
@@ -150,14 +155,14 @@ def model_route(role: str, risk: str, executor_tier: str = "owner") -> ModelRout
         return ModelRoute("gpt-5.6-terra", "high", "只读采证、容量、锁或空间分析用 Terra；部署/恢复/DDL/数据风险升级到 gpt-5.6-sol + xhigh。")
     if role in {"技能维护", "文档/交付", "知识库"}:
         if risk == "mechanical":
-            return ModelRoute("gpt-5.4-mini", "medium", "仅限已确认范围内的索引、排版、搬运或 registry 机械同步；一旦需要判断，回到 Terra + high。")
-        return ModelRoute("gpt-5.6-terra", "high", "策略结论、收益判断、知识结构或跨角色治理使用 Terra；纯索引、排版、搬运可降级到 gpt-5.4-mini + medium。")
+            return ModelRoute("gpt-5.6-luna", "medium", "仅限已确认范围内的索引、排版、搬运或 registry 机械同步；一旦需要判断，回到 Terra + high。")
+        return ModelRoute("gpt-5.6-terra", "high", "策略结论、收益判断、知识结构或跨角色治理使用 Terra；纯索引、排版、搬运可降级到 gpt-5.6-luna + medium。")
     if role in CONTENT_ROLES:
         if risk == "critical":
             return ModelRoute("gpt-5.6-sol", "xhigh", "高风险公开定位、声明、合规或跨平台策略需要 Sol xhigh。")
         return ModelRoute("gpt-5.6-terra", "high", "高风险公开定位、声明、合规或跨平台策略升级到 gpt-5.6-sol + xhigh。")
     if risk == "mechanical":
-        return ModelRoute("gpt-5.4-mini", "high", "仅限单文件、测试明确、无业务语义判断的机械执行。")
+        return ModelRoute("gpt-5.6-luna", "high", "仅限单文件、测试明确、无业务语义判断的机械执行。")
     if risk in {"critical", "extreme"}:
         return ModelRoute("gpt-5.6-sol", "xhigh", "高风险实现、不可逆操作或最终技术判断升级到 Sol xhigh。")
     return ModelRoute("gpt-5.6-terra", "high", "涉及高风险决策或跨角色协调时升级到 gpt-5.6-sol + xhigh。")
@@ -277,18 +282,31 @@ def implicit_planning_contract(
 """
 
     if role == "开发":
-        if args.executor_tier != "owner":
+        if args.executor_tier in ONE_SHOT_EXECUTOR_TIERS:
             return """隐性规划契约：
 - 模式：execute-only；先运行漂移检查，只执行任务卡范围与验证；触发 STOP 条件时立即回报，不得重新做全库规划或自行改架构。
 """
+        delegation_policy = getattr(args, "delegation_effective_policy", "optional")
         mode = (
             "task-card"
             if args.task_size in {"tiny", "small"}
             else "executor-contract"
         )
         if profile == "compact":
+            if delegation_policy == "forbidden":
+                return f"""隐性规划契约：
+- 模式：{mode}；任务卡只用于 Dev Lead 自己分步、验证和跨压缩接续，本卡禁止派给 subagent；Dev Lead 负责实现、复验和提交。
+"""
             return f"""隐性规划契约：
 - 模式：{mode}；仅在下放时生成零上下文执行卡，写清范围、验证、预期结果和 STOP 条件；Dev Lead 仍负责集成、复验和提交。
+"""
+        if delegation_policy == "forbidden":
+            return f"""隐性规划契约：
+- 模式：{mode}
+- Dev Lead 先核对 CTO 规格与代码现状；只补实现所需细节，不重复做全库审计。
+- 任务卡用于 Dev Lead 自己分步、验证和跨压缩接续，不代表派发；本任务禁止创建开发执行 subagent。
+- 内联只保留承载决策的短片段，其余使用文件、符号、提交或测试句柄；长耗时本身不改变 delegation policy。
+- Dev Lead 亲自实现、复验和提交。
 """
         return f"""隐性规划契约：
 - 模式：{mode}
@@ -326,6 +344,81 @@ def validate_source_route(role: str, args: argparse.Namespace) -> None:
             raise ValueError("总控直派内容执行角色必须提供 --override-reason，说明用户为何明确要求绕过 内容主编。")
 
 
+def has_explicit_no_delegation(args: argparse.Namespace) -> bool:
+    values = [args.work_requirements or "", *(args.forbid or [])]
+    normalized = "".join("".join(values).lower().split())
+    return any(
+        marker in normalized
+        for marker in (
+            "不派subagent",
+            "不使用subagent",
+            "禁止subagent",
+            "禁止使用subagent",
+            "禁止派发subagent",
+            "不得派发subagent",
+        )
+    )
+
+
+def effective_delegation_policy(
+    role: str, args: argparse.Namespace, controls: TaskControls
+) -> str:
+    if role != "开发":
+        return "forbidden"
+    if args.delegation_policy != "auto":
+        return args.delegation_policy
+    if (
+        has_explicit_no_delegation(args)
+        or controls.risk in {"critical", "extreme"}
+        or args.executor_tier == "high-risk"
+    ):
+        return "forbidden"
+    if (
+        args.execution_profile == "parallel"
+        or args.executor_tier in ONE_SHOT_EXECUTOR_TIERS
+    ):
+        return "required"
+    return "optional"
+
+
+def validate_delegation_contract(
+    role: str, args: argparse.Namespace, controls: TaskControls
+) -> None:
+    policy = effective_delegation_policy(role, args, controls)
+    args.delegation_effective_policy = policy
+
+    if role != "开发":
+        if args.executor_tier != "owner":
+            raise ValueError("--executor-tier is only supported for 开发")
+        if args.delegation_policy not in {"auto", "forbidden"}:
+            raise ValueError("non-development roles only support delegation-policy auto or forbidden")
+        return
+
+    one_shot_executor = args.executor_tier in ONE_SHOT_EXECUTOR_TIERS
+    high_risk = controls.risk in {"critical", "extreme"} or args.executor_tier == "high-risk"
+
+    if has_explicit_no_delegation(args) and policy != "forbidden":
+        raise ValueError("task requirements explicitly forbid subagents; use --delegation-policy forbidden")
+    if high_risk and policy != "forbidden":
+        raise ValueError("critical/extreme or high-risk development must use delegation-policy forbidden")
+    if controls.risk in {"critical", "extreme"} and one_shot_executor:
+        raise ValueError("critical/extreme development cannot use a cheap one-shot executor tier")
+    if one_shot_executor and policy != "required":
+        raise ValueError("mechanical/bounded/semantic executor tiers require delegation-policy required")
+    if policy == "forbidden" and (
+        one_shot_executor or args.execution_profile == "parallel"
+    ):
+        raise ValueError("delegation-policy forbidden requires owner/high-risk tier and serial execution")
+    if policy == "optional" and (
+        one_shot_executor or args.execution_profile == "parallel"
+    ):
+        raise ValueError("delegation-policy optional is only valid for a serial Dev Lead owner")
+    if policy == "required" and args.executor_tier == "high-risk":
+        raise ValueError("high-risk development is owner work and cannot require delegation")
+    if args.execution_profile == "parallel" and policy != "required":
+        raise ValueError("parallel execution-profile requires delegation-policy required")
+
+
 def default_forbidden(role: str, task_size: str = "medium") -> str:
     defaults = "未授权的生产环境、账号设置、凭据、发布动作、数据库写操作、无关重构"
     if role == "总控":
@@ -347,17 +440,51 @@ def loop_depth_explanation(depth: str, override_reason: str | None) -> str:
 """
 
 
-def role_execution_guidance(role: str) -> str:
+def role_execution_guidance(
+    role: str, args: argparse.Namespace, route: ModelRoute
+) -> str:
     if role != "开发":
         return ""
-    return """开发负责人 / Dev Lead 执行规则：
-- 本窗口默认是开发负责人 / Dev Lead，使用 gpt-5.6-terra + high，负责拆解、集成、纠偏、最终提交。
-- 需要并行或长任务时，先拆成任务卡，再把单一、短、小、可验证的代码任务交给开发执行 subagent。
-- 开发执行 subagent 是窗口内一次性 subagent，不是新的角色窗口；不写入 .codex/role-windows.md，不作为后续任务复用。
-- 任务结束后关闭，不作为角色窗口复用。
-- subagent 只执行单一、短、小、可验证的代码任务：纯机械单文件用 gpt-5.4-mini + high；边界清楚、可独立验证的有限语义任务用 gpt-5.6-luna + high；跨文件业务集成用 gpt-5.6-terra + high。
-- live/资金/并发/账本、PnL/fee 或重复失败返工不得交给廉价 subagent；由 Dev Lead 使用 gpt-5.6-sol + xhigh 亲自处理。
-- subagent 必须带文件白名单、禁止范围、验收命令和退出条件；不要让 subagent 承担架构判断、跨文件整合、纠偏策略、最终验证或提交。
+    policy = args.delegation_effective_policy
+    if args.executor_tier in ONE_SHOT_EXECUTOR_TIERS:
+        return f"""开发执行 subagent 规则：
+- 本窗口是负责人已派发的一次性 executor，使用 {route.model} + {route.thinking}；delegation-policy：required（已派发）。
+- 只执行一张单一、短小、边界明确且可独立验证的任务卡；先做基线漂移检查，命中 STOP 条件立即回报。
+- 必须遵守文件白名单、禁止范围、验收命令和退出条件；不得承担架构判断、跨文件整合、纠偏策略、最终验证或提交。
+- 完成后回传 diff/验证证据并关闭；不写入 .codex/role-windows.md，不作为角色窗口复用。
+"""
+
+    common = f"""开发负责人 / Dev Lead 执行规则：
+- 本窗口是开发负责人 / Dev Lead，使用 {route.model} + {route.thinking}，负责拆解、集成、纠偏、最终验证和提交。
+- delegation-policy：{policy}
+"""
+    if policy == "forbidden":
+        return common + """- 本任务禁止派发开发执行 subagent；Dev Lead 亲自完成实现。具体任务要求和高风险门禁优先于任何通用降本建议。
+- “耗时长”只触发任务卡、检查点、提交或压缩交接，不构成派发或并行理由。
+- live/资金/并发/账本、PnL/fee、高风险实现或重复失败返工不得下放。
+"""
+    if policy == "required":
+        return common + """- 必须派发至少一个单一、短小、边界明确且可独立验证的一次性 executor；无合格叶子任务立即回流。
+- 路由：mechanical/bounded = gpt-5.6-luna + high；semantic = gpt-5.6-terra + high。
+- 生成任务卡不等于已派发；创建 subagent 时必须显式传入 model/thinking，替代时回传实际模型和原因。
+- 任务卡带基线、白名单、禁止范围、验收、预期结果和 STOP；Dev Lead 负责整合、复验、提交。
+- 耗时长本身不是派发或并行理由。
+"""
+    return common + """- Dev Lead 可自行判断是否派发；仅可下放单一、短小、边界明确且可独立验证的叶子任务，未派发回传原因。
+- 路由：mechanical/bounded = gpt-5.6-luna + high；semantic = gpt-5.6-terra + high。
+- 生成任务卡不等于已派发；创建 subagent 时显式传入 model/thinking，替代时回传实际模型和原因。
+- 任务卡带基线、白名单、禁止范围、验收和 STOP；Dev Lead 负责整合、复验、提交。
+- 耗时长只触发任务卡、检查点、提交或压缩交接，不自动触发 subagent；live/资金/并发/账本、PnL/fee 不得下放。
+"""
+
+
+def executor_usage_guidance(role: str, args: argparse.Namespace) -> str:
+    if role != "开发":
+        return ""
+    policy = args.delegation_effective_policy
+    return f"""执行器使用回传（开发必填）：
+- delegation-policy：{policy}
+- 回传：是否派发、实际 model/thinking、任务卡/证据、重试/返工、Dev Lead 复验；optional 未派发写原因，forbidden 写“策略禁止”。
 """
 
 
@@ -365,17 +492,24 @@ def execution_profile_guidance(role: str, args: argparse.Namespace) -> str:
     if role != "开发":
         return ""
     if args.execution_profile == "serial":
-        return """执行拓扑：
+        policy = args.delegation_effective_policy
+        if policy == "forbidden":
+            detail = "串行由 Dev Lead 亲自执行；禁止创建 worker。"
+        elif policy == "required":
+            detail = "串行使用一个一次性 worker；Dev Lead 等待结果后整合和复验。"
+        else:
+            detail = "默认串行；只有满足派发资格时才可选择一个一次性 worker。"
+        return f"""执行拓扑：
 - execution-profile：serial
 - worker-count：1
-- 默认串行；只有任务范围互斥且能独立验证时才开启并行。
+- {detail}
 """
     return f"""执行拓扑：
 - execution-profile：parallel
 - worker-count：{args.worker_count}
 - 范围互斥证据：{args.disjoint_scope}
 - 独立验证证据：{args.independent_validation}
-- 3-5 个 worker 仅用于显式并行 profile；每个 worker 都是任务结束即关闭的一次性 subagent。
+- 2-5 个 worker 仅用于显式并行 profile；每个 worker 都是任务结束即关闭的一次性 subagent。
 """
 
 
@@ -658,7 +792,7 @@ def build_compact_prompt(
 Token Budget Profile：
 - profile：{profile}
 - 策略：{token_profile_strategy(profile)}
-{role_execution_guidance(role)}{execution_profile_guidance(role, args)}{spark_opportunity_guidance(role, args, controls)}{ui_preview_route_guidance(role, args)}{browser_automation_guidance(role)}{content_research_guidance(role)}{content_tone_gate(role)}{xhs_automation_publish_gate(role)}
+{role_execution_guidance(role, args, route)}{execution_profile_guidance(role, args)}{executor_usage_guidance(role, args)}{spark_opportunity_guidance(role, args, controls)}{ui_preview_route_guidance(role, args)}{browser_automation_guidance(role)}{content_research_guidance(role)}{content_tone_gate(role)}{xhs_automation_publish_gate(role)}
 角色树位置：{ROLE_TREE_POSITION[role]}
 {task_controls_guidance(args, controls)}
 Loop 深度（可折叠路由）：
@@ -726,6 +860,7 @@ def build_prompt(args: argparse.Namespace) -> str:
             "render_role_prompt.py does not inspect or mutate the project"
         )
     validate_source_route(role, args)
+    validate_delegation_contract(role, args, controls)
     validate_execution_profile(role, args)
     validate_spark_opportunity(role, args, controls)
     route = selected_model_route(role, args, controls)
@@ -782,8 +917,9 @@ Token Budget Profile：
 - profile：{profile}
 - 策略：{token_profile_strategy(profile)}
 
-{role_execution_guidance(role)}
+{role_execution_guidance(role, args, route)}
 {execution_profile_guidance(role, args)}
+{executor_usage_guidance(role, args)}
 {spark_opportunity_guidance(role, args, controls)}
 {ui_preview_route_guidance(role, args)}
 {browser_automation_guidance(role)}
@@ -897,6 +1033,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--task-size", default="medium", choices=["tiny", "small", "medium", "large", "critical"], help="Task dispatch size. large promotes the effective loop to at least L2; critical promotes effective risk/loop to critical/L3.")
     parser.add_argument("--risk", default="normal", choices=["normal", "mechanical", "critical", "extreme"], help="Use mechanical only for fully scoped rote work. Critical/extreme risk promotes the effective loop to L3 and controls model/profile routing.")
     parser.add_argument("--executor-tier", default="owner", choices=["owner", "mechanical", "bounded", "semantic", "high-risk"], help="Development execution tier. bounded routes a one-shot executor to Luna; owner keeps the durable Dev Lead route.")
+    parser.add_argument(
+        "--delegation-policy",
+        default="auto",
+        choices=["auto", "forbidden", "optional", "required"],
+        help=(
+            "Development subagent contract. auto resolves to forbidden for high-risk or explicit no-subagent work, "
+            "required for one-shot/parallel execution, and optional for an ordinary serial Dev Lead."
+        ),
+    )
     parser.add_argument("--execution-profile", default="serial", choices=["serial", "parallel"], help="Development topology. Parallel is fail-closed and requires disjoint scope plus independent validation.")
     parser.add_argument("--worker-count", type=int, default=1, help="One-shot development workers. Default 1; explicit parallel profile permits 2-5.")
     parser.add_argument("--disjoint-scope", help="Evidence that parallel worker file/surface ownership does not overlap.")

@@ -130,7 +130,8 @@ def validate_docs(errors: list[str]) -> None:
             "gpt-5.6-sol` + `xhigh",
             "gpt-5.6-luna` + `high",
             "gpt-5.3-codex-spark` + `high",
-            "gpt-5.4-mini` + `high",
+            "--delegation-policy auto|forbidden|optional|required",
+            "实际模型",
             "--execution-profile parallel",
             "--prefer-spark --spark-available",
             "docs/technical-highlights.md",
@@ -243,8 +244,8 @@ def validate_docs(errors: list[str]) -> None:
             "gpt-5.6-sol` + `xhigh",
             "gpt-5.6-luna` + `high",
             "gpt-5.3-codex-spark` + `high",
-            "gpt-5.4-mini` + `high",
-            "3-5 个 worker",
+            "--delegation-policy auto|forbidden|optional|required",
+            "2-5 个 worker",
             "--prefer-spark --spark-available",
             "browser-automation-router",
             "原生 Chrome",
@@ -457,8 +458,10 @@ def validate_scripts(errors: list[str]) -> None:
             "gpt-5.6-sol",
             "gpt-5.6-luna",
             "gpt-5.3-codex-spark",
-            "gpt-5.4-mini",
             "--executor-tier",
+            "--delegation-policy",
+            "delegation_effective_policy",
+            "执行器使用回传",
             "--prefer-spark",
             "--spark-available",
             "--execution-profile",
@@ -490,7 +493,7 @@ def validate_scripts(errors: list[str]) -> None:
     )
     require_contains(
         MODEL_ROUTING,
-        ["gpt-5.6-luna", "gpt-5.3-codex-spark", "gpt-5.4-mini", "gpt-5.6-terra", "gpt-5.6-sol", "Spark Opportunity Lane", "--prefer-spark --spark-available", "--execution-profile parallel", "--disjoint-scope", "--independent-validation", "Reasoning Effort Eval Gate"],
+        ["gpt-5.6-luna", "gpt-5.3-codex-spark", "gpt-5.6-terra", "gpt-5.6-sol", "Spark Opportunity Lane", "--prefer-spark --spark-available", "--delegation-policy auto|forbidden|optional|required", "--execution-profile parallel", "--disjoint-scope", "--independent-validation", "Reasoning Effort Eval Gate"],
         errors,
     )
     require_contains(TOOL_ROUTING, ["Fail-Closed Scripts", "prepare_role_window.py", "aggregate_skill_hits.py", "Skill Ledger", "$browser-automation-router", "$playwright", "$ui-implementation-workflow", "visual-direction", ".codex/ui-visual-review-signals.md"], errors)

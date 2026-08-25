@@ -128,7 +128,7 @@ The ledger must track role, status, thread id, source window, responsibility, ne
 
 Load `references/model-routing.md` only when selecting, overriding, or auditing a model. `render_role_prompt.py` is the executable source for current defaults, executor tiers, the optional Spark lane, and escalation rules; do not copy that changing matrix into hand-written prompts.
 
-Keep the ownership invariant: `开发负责人 / Dev Lead` owns decomposition, integration, correction, final validation, and commit. `开发执行 subagent` is an in-window one-shot worker for one narrow, independently verifiable task; it is not a durable role or ledger entry. Parallel workers require disjoint scope and independent validation. User selection and actual availability override recommendations and must be recorded.
+Keep the ownership invariant: `开发负责人 / Dev Lead` owns decomposition, integration, correction, final validation, and commit. `开发执行 subagent` is an in-window one-shot worker for one narrow, independently verifiable task; it is not a durable role or ledger entry. Use `--delegation-policy auto|forbidden|optional|required`: task-specific no-subagent text and critical/high-risk work resolve to `forbidden`; an ordinary serial Dev Lead resolves to `optional`; an explicit executor tier or parallel profile resolves to `required`. Long duration changes checkpointing, not delegation eligibility. Parallel workers additionally require disjoint write scope, no shared evolving state, and independent validation. Record whether delegation happened, actual model/thinking, card/evidence handle, retries, and Dev Lead revalidation. User selection and actual availability override recommendations and must be recorded.
 
 ## Token Budget Profile Rule
 
@@ -229,7 +229,7 @@ Read `references/role-cards.md`, then only the thematic reference required by th
 3. Choose task size and smallest loop depth.
 4. Choose owner/executor role, model route, and Token Budget Profile.
 5. Load only the relevant reference file and required downstream skills.
-6. Run `prepare_role_window.py`; dispatch only after required role/skill plugins and the applicable CodeGraph policy pass. Use explicit `--executor-tier` and parallel arguments when applicable.
+6. Run `prepare_role_window.py`; dispatch only after required role/skill plugins and the applicable CodeGraph policy pass. Use explicit `--delegation-policy`, `--executor-tier`, and parallel arguments when applicable.
 7. Validate before dispatch.
 8. On terminal state, update ledger, send callback, aggregate skill hits when useful, and route reusable improvements.
 
@@ -254,13 +254,13 @@ python scripts/prepare_role_window.py --role 开发 --objective "实现订单修
 python scripts/prepare_role_window.py --role 架构 --objective "设计适配方案" --project /path/to/project --new-code-project --codegraph-policy required
 
 # Bounded one-shot Luna executor
-python scripts/prepare_role_window.py --role 开发 --objective "实现独立适配器" --source-role 架构 --executor-tier bounded --profile compact
+python scripts/prepare_role_window.py --role 开发 --objective "实现独立适配器" --source-role 架构 --delegation-policy required --executor-tier bounded --profile compact
 
 # Same bounded task using confirmed Spark preview quota
 python scripts/prepare_role_window.py --role 开发 --objective "实现独立适配器" --source-role 架构 --executor-tier bounded --prefer-spark --spark-available --validation "pytest tests/test_adapter.py"
 
 # Explicit three-worker parallel execution
-python scripts/prepare_role_window.py --role 开发 --objective "实现三个独立适配器" --source-role 架构 --execution-profile parallel --worker-count 3 --disjoint-scope "每人一个目录" --independent-validation "每个目录独立测试"
+python scripts/prepare_role_window.py --role 开发 --objective "实现三个独立适配器" --source-role 架构 --delegation-policy required --execution-profile parallel --worker-count 3 --disjoint-scope "每人一个目录" --independent-validation "每个目录独立测试"
 ```
 
 ## Quality Bar

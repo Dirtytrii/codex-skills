@@ -10,7 +10,7 @@
 
 ```text
 原始输入
-  task-size + risk + loop-depth + role + executor-tier
+  task-size + risk + loop-depth + role + delegation-policy + executor-tier
       ↓
 effective controls
   effective risk + effective loop
@@ -94,12 +94,14 @@ python skills/agent-role-orchestrator/scripts/prepare_role_window.py \
 | 类型 | 默认职责 | 典型模型层级 |
 | --- | --- | --- |
 | Owner | 拆解、取舍、集成、纠偏、最终验证和回调 | Terra/high 或 Sol/high |
-| Mechanical executor | 单文件、规格完整、验证明确 | Mini/high |
+| Mechanical executor | 单文件、规格完整、验证明确 | Luna/high |
 | Bounded executor | 边界清楚、有限语义、可独立验证 | Luna/high |
 | Semantic executor | 少量相关文件和业务语义 | Terra/high |
 | High-risk owner work | 资金、账本、并发、生产、不可逆操作 | Sol/xhigh |
 
 critical/high-risk 工作不得为了省额度下放给廉价 executor。Spark 只是一条显式机会通道：必须是 mechanical/bounded、当前可用、短小、text-only 且有独立验证；否则回退稳定层级。
+
+开发派发另有独立契约：`forbidden` 禁止下放，`optional` 由串行 Dev Lead 在叶子任务资格内判断，`required` 必须使用至少一个一次性 executor；`auto` 根据具体禁止文本、风险、executor tier 和并行 profile 收敛。耗时长只影响任务卡和接续，不是派发条件。每次回调记录是否派发、实际模型、任务卡/证据、重试和 Dev Lead 复验，才能判断低成本路由是否真的生效。
 
 自动路由有意封顶 `xhigh`。产品界面可能为符合条件的模型或账号显示 Max/Ultra，但只有用户明确选择、当前界面确认可用，并通过代表性 eval 证明额外成本有效时才使用。
 

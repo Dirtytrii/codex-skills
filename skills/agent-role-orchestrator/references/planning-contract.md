@@ -25,7 +25,7 @@ The plan is an execution contract, not the final product. Delivery still require
 | `tiny` | Route-only: objective, success condition, and stop line. No repository audit. |
 | `small` | Outcome/task brief: narrow scope, validation, and escalation condition. |
 | `medium` | Owner contract: goals, non-goals, evidence, scope, validation, risk, and callback. |
-| `large` | Implementation spec plus bounded executor cards and integration order. |
+| `large` | Implementation spec plus, when delegation is permitted, bounded executor cards and integration order. |
 | `critical` | Large contract plus independent gates, rollback/failure conditions, unresolved risk, and go/no-go owner. |
 
 Task size does not authorize a full repository or nine-category audit. Broad audit, roadmap discovery, or branch-wide improvement review must be explicit in the objective.
@@ -71,7 +71,8 @@ The worker reports the observation; it does not improvise around the gate.
 - Do not create a persistent plan file for routine `tiny` or `small` work.
 - For multi-session `large` or `critical` work, reuse the project's existing planning location; when none exists, `.codex/plans/` is the default local artifact directory.
 - Reuse one contract across CTO, Dev Lead, executor, and QA. Pass deltas and evidence handles instead of rewriting the full plan in every callback.
-- Default to serial execution. Parallel workers still require disjoint scope and independent validation.
+- Treat long-running work as a continuity concern: use checkpoints, commits, and compressed handoff when it may cross the current context or includes slow staged validation. Duration alone does not authorize a subagent.
+- Default to serial execution. Parallel workers require disjoint write scope, no shared evolving state, independent validation, and an explicit `required` delegation policy.
 - Load `gstack-spec` only for fuzzy intent, and `gstack-autoplan` or plan-review adapters only when the stated cross-domain review actually needs them.
 
 ## Upstream Method Note

@@ -296,12 +296,12 @@ python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --st
 | `总控 / CEO` | `gpt-5.6-terra` + `high`；资金、上线、生产恢复、跨角色最终 go/no-go 升 `gpt-5.6-sol` + `xhigh` |
 | `架构 / CTO` | `gpt-5.6-sol` + `high`；实盘架构、事故根因、DB/并发/安全、不可逆方案升 `xhigh`；自动路由不选 Max/Ultra |
 | `开发负责人 / Dev Lead` | `gpt-5.6-terra` + `high`；live exit、资金安全、PnL/fee、并发、重复失败返工升 `gpt-5.6-sol` + `xhigh` |
-| `开发执行 subagent` | 窗口内一次性 worker。纯机械单文件：`gpt-5.4-mini` + `high`；边界清楚、可独立验证的有限语义任务：`gpt-5.6-luna` + `high`；跨文件业务语义：`gpt-5.6-terra` + `high`；live/资金/并发/账本不下放，由 Dev Lead 用 Sol + xhigh 处理 |
-| `Spark Opportunity Lane` | Spark 当前可用且独立预览额度有剩余时，mechanical/bounded 一次性开发 executor 可用 `gpt-5.3-codex-spark` + `high`；未确认可用时回退 Mini/Luna，不承担 owner、集成、最终 QA 或高风险任务 |
+| `开发执行 subagent` | 窗口内一次性 worker。纯机械单文件或边界清楚的有限语义任务：`gpt-5.6-luna` + `high`；跨文件业务语义：`gpt-5.6-terra` + `high`；live/资金/并发/账本不下放，由 Dev Lead 用 Sol + xhigh 处理 |
+| `Spark Opportunity Lane` | Spark 当前可用且独立预览额度有剩余时，mechanical/bounded 一次性开发 executor 可用 `gpt-5.3-codex-spark` + `high`；未确认可用时回退 Luna，不承担 owner、集成、最终 QA 或高风险任务 |
 | `QA` | 普通验收：`gpt-5.6-terra` + `high`；关键 PR / 对抗式审查 / 发布门禁：`gpt-5.6-sol` + `xhigh` |
 | `运维` / `DBA` | 只读采证、容量、锁、空间分析：`gpt-5.6-terra` + `high`；部署、restart、rollback、生产故障、DDL、清理、恢复、数据风险：`gpt-5.6-sol` + `xhigh` |
-| `知识库` / `技能维护` / `文档/交付` | 默认 `gpt-5.6-terra` + `high`；纯索引、排版、搬运、registry 机械同步：`gpt-5.4-mini` + `medium` |
-| `UI/PPT` / `内容主编` / 内容执行角色 | 默认 `gpt-5.6-terra` + `high`；机械 HTML/资产整理：`gpt-5.4-mini` + `high`；公开高风险定位、声明或合规：`gpt-5.6-sol` + `xhigh` |
+| `知识库` / `技能维护` / `文档/交付` | 默认 `gpt-5.6-terra` + `high`；纯索引、排版、搬运、registry 机械同步：`gpt-5.6-luna` + `medium` |
+| `UI/PPT` / `内容主编` / 内容执行角色 | 默认 `gpt-5.6-terra` + `high`；机械 HTML/资产整理：`gpt-5.6-luna` + `high`；公开高风险定位、声明或合规：`gpt-5.6-sol` + `xhigh` |
 
 部分 Codex 界面可能为符合条件的模型或账号提供 Max/Ultra。它们不进入本体系的自动默认值；只有用户明确选择、当前界面确认可用，并通过代表性 eval 证明额外成本有效时才使用。
 
@@ -311,12 +311,14 @@ python scripts/evaluate_skill_routing.py --observed /path/to/observed.jsonl --st
 
 - `架构 / CTO` 拆分后的代码实现。
 - `开发` 默认是 `开发负责人 / Dev Lead`：用 `gpt-5.6-terra` + `high` 拆解任务、整合结果、纠偏、最终验证和提交；live exit、资金安全、PnL/fee、并发或重复失败返工升 `gpt-5.6-sol` + `xhigh`。
-- `开发执行 subagent` 是当前开发负责人窗口内的一次性 worker：纯机械单文件用 `gpt-5.4-mini` + `high`；边界清楚、可独立验证的有限语义任务用 `gpt-5.6-luna` + `high`；跨文件业务语义用 `gpt-5.6-terra` + `high`。不写入 `.codex/role-windows.md`，任务结束后关闭，不作为角色窗口复用。
+- `开发执行 subagent` 是当前开发负责人窗口内的一次性 worker：纯机械单文件或边界清楚、可独立验证的有限语义任务用 `gpt-5.6-luna` + `high`；跨文件业务语义用 `gpt-5.6-terra` + `high`。不写入 `.codex/role-windows.md`，任务结束后关闭，不作为角色窗口复用。
+- 每张开发卡用 `--delegation-policy auto|forbidden|optional|required` 声明下放契约。`forbidden` 由 Dev Lead 亲自实现；`optional` 才允许 Dev Lead 在资格边界内自行判断；`required` 必须派至少一个合格叶子任务。生成任务卡不算派发，创建 subagent 时要显式传 model/thinking；具体“不派 subagent”和 critical/high-risk 自动覆盖通用降本建议。
 - 不要让低成本 subagent 独立承担长任务负责人、架构判断、跨文件整合、最终提交或完整上下文恢复；live/资金/并发/账本工作必须由 Dev Lead 使用 `gpt-5.6-sol` + `xhigh` 处理。
 - 开发全过程默认遵循第一性原理：先还原目标、事实、约束/不变量、最小可证伪假设、最小改动和验证证据，再动手实现。
-- 长任务或容易 compact 的任务先由 Dev Lead 写任务卡，包含目标、文件白名单、禁止范围、验证命令、预期输出和回调对象，再派发给开发执行 subagent。
-- 默认串行；普通并行最多 2 个 worker，且必须声明互斥范围和独立验证。3-5 个 worker 只允许显式 `parallel` profile，并通过 `--worker-count`、`--disjoint-scope` 和 `--independent-validation` fail-closed 校验。
-- Spark 是独立额度机会通道，不是稳定第五级：仅在当前可用性已确认时，用 `--prefer-spark --spark-available` 把 mechanical/bounded 一次性 executor 路由到 Spark/high；否则回退 Mini/Luna。Spark 任务必须显式给出验证命令，不承担 owner、跨文件集成、最终 QA、critical/high-risk 或长上下文任务。
+- 长任务定义为可能跨当前交互/上下文边界或包含慢速分阶段验证的工作；它只触发任务卡、检查点、提交或压缩交接，不自动触发 subagent。
+- 默认串行；并行要求互斥写集、无共享演进状态和独立验证。2-5 个 worker 必须显式 `parallel` + `required`，并通过 `--worker-count`、`--disjoint-scope` 和 `--independent-validation` fail-closed 校验。
+- 开发回调必须写是否派发、实际 model/thinking、任务卡或证据句柄、重试/返工次数和 Dev Lead 复验；`optional` 未派发要写原因。
+- Spark 是独立额度机会通道，不是稳定第五级：仅在当前可用性已确认时，用 `--prefer-spark --spark-available` 把 mechanical/bounded 一次性 executor 路由到 Spark/high；否则回退 Luna。Spark 任务必须显式给出验证命令，不承担 owner、跨文件集成、最终 QA、critical/high-risk 或长上下文任务。
 - 前端/UI/PPT/社交卡/视频产物；纯前端或视觉保真任务默认先由 `UI/PPT` / `UI/Frontend` 加载 `ui-implementation-workflow`：选择单一页面类型，审计现有组件/Token/相邻页面。营销、品牌、作品集或内容页在现有系统不足时按需读取内置 `references/visual-direction.md`；后台、表单、列表和配置页不加载。`design-taste-frontend` 仅把旧调用转入这一 reference，不再启动第二套流程。旧审美偏好停用；用户或指定审核者对实际截图的明确反馈从空白基线写入 `.codex/ui-visual-review-signals.md`，先作为 raw 审核证据，不自动成为长期或跨项目偏好。完整记录参考站但每轮只激活 `small` 最多 1 份、`medium+` 最多 3 份职责互斥参考，先输出 UI implementation plan，再按结构 -> 数据/交互 -> 响应式 -> 字体/颜色 -> 装饰 -> 动效实现，最后在 1440/768/390 截图、修复并重截。效果不满意时只替换失败职责位；有预览图时再比较 CSS/组件、资产、Canvas/SVG、Three.js/WebGL、Lottie/视频或成熟库。
 - 公众号文章和小红书笔记的草稿、预览、发布包和明确授权后的发布自动化。
 - 交付文档包和个人知识库整理。

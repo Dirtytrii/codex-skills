@@ -142,15 +142,16 @@ task-size + risk + requested loop
 
 - Terra/high：大多数耐久 owner 和普通 QA。
 - Sol/high 或 xhigh：架构 owner、不可逆决策、资金、账本、并发、生产和关键门禁。
-- Mini/high：规格与测试明确的机械实现。
-- Luna/high：边界清楚、有限语义、可独立验证的短任务。
+- Luna/high：规格与测试明确的机械实现，以及边界清楚、有限语义、可独立验证的短任务。
 - Terra/high executor：需要跨少量相关文件和业务语义的实现。
 
-Spark 不进入稳定层级。它是 research preview 的独立额度机会通道，仅在当前可用性明确时用于 mechanical/bounded 一次性开发 executor。未确认可用时回退 Mini/Luna；owner、跨文件集成、最终 QA、critical/high-risk 和长上下文工作禁止使用 Spark。
+Spark 不进入稳定层级。它是 research preview 的独立额度机会通道，仅在当前可用性明确时用于 mechanical/bounded 一次性开发 executor。未确认可用时回退 Luna；owner、跨文件集成、最终 QA、critical/high-risk 和长上下文工作禁止使用 Spark。
 
 自动模型策略有意止于 `xhigh`，这是本体系的成本与可预测性选择，不是声称产品不存在更高档位。Max/Ultra 仅在用户明确选择、当前界面可用且代表性评估证明收益时使用，不进入默认路由。
 
-并行默认关闭。普通并行需要互斥范围和独立验证；3-5 worker 必须显式开启。这样不会因为模型便宜或额度独立，就把一个耦合任务拆成多个相互覆盖的上下文。
+开发卡把派发写成 `forbidden/optional/required` 契约：具体禁止与高风险优先，只有 `optional` 由 Dev Lead 在叶子任务资格内判断，`required` 才必须使用 executor。生成任务卡不算派发；创建 subagent 时显式传 model/thinking，回调记录实际模型、任务卡、重试和复验，避免“写了便宜模型但从未真正使用”。耗时长只改变接续策略，不改变派发资格。
+
+并行默认关闭。并行需要互斥写集、无共享演进状态和独立验证，并显式使用 `required`；2-5 worker 都必须显式开启。这样不会因为模型便宜、耗时长或额度独立，就把一个耦合任务拆成多个相互覆盖的上下文。
 
 ## 可量化的 Skill Routing
 
