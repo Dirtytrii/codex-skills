@@ -138,7 +138,7 @@ Generate with `--profile auto`; override only with evidence:
 - `standard`: large, L2, architecture planning, or new-code setup;
 - `full`: critical, L3, security/DB/ops risk, or irreversible work; add independent review, failure/rollback, unresolved-risk, and go/no-go fields.
 
-`compact` must contain the closure contract but omit unrelated CTO, CodeGraph, content, and platform placeholders. Do not paste full chat history, large logs, or large source blocks into role prompts.
+Display length never weakens risk gates: every effective L3 prompt retains independent review, rollback, unresolved-risk and go/no-go fields, including explicit `compact`/`standard`. Applicable CodeGraph checks also survive compression. One-shot executors use a separate short card with `actor-kind=executor`; they return evidence only, never inherit ledger/commit/fanout duties. Do not paste full chat history or large logs into role prompts.
 
 ## Technical And Quality Rules
 
@@ -176,7 +176,7 @@ Load `references/content-routing.md` only for public writing, platform research,
 
 The source window is the role/thread that assigned this task, not always `架构` or `总控`. If B delegates to C, B is C's source while B still reports its own state to A.
 
-Completion is fail-closed. On completed, blocked, or decision-needed state, do both:
+For durable role windows, completion is fail-closed. On completed, blocked, or decision-needed state, do both (one-shot executors return results to their owner instead and never write the ledger or commit):
 
 1. update `.codex/role-windows.md` and commit when project policy permits;
 2. actively send a compressed callback to the source thread.
