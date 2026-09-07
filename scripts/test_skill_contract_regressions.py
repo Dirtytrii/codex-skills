@@ -17,6 +17,8 @@ sys.path.insert(0, str(ROOT / "skills" / "agent-role-orchestrator" / "scripts"))
 import check_codegraph as graph
 import render_role_prompt as renderer
 import validate_role_loop as validator
+from skill_catalog import discover_skills
+from audit_plugin_context import build_report, configured_plugins, PRESETS
 
 
 class PromptContractTests(unittest.TestCase):
@@ -74,6 +76,36 @@ class PromptContractTests(unittest.TestCase):
                     self.assertIn(field + "：", text)
                     self.assertTrue(self.errors(text.replace(field + "：", "omitted：")))
                 self.assertEqual(self.errors(text), [])
+
+
+class DiscoveryPolicyTests(unittest.TestCase):
+    def test_config_diagnosis_does_not_invent_enabled_dependencies(self):
+        with tempfile.TemporaryDirectory() as temp:
+            config = Path(temp) / "config.toml"
+            config.write_text('[plugins."codex-skills-engineering@dirtytrii-codex-skills"]\nenabled=true\n', encoding="utf-8")
+            before = config.read_bytes()
+            report = build_report(configured_plugins(config), False, Path(temp), actual_config=True)
+            self.assertEqual(report["selected_plugins"], ["codex-skills-engineering"])
+            self.assertEqual(report["missing_dependencies"], ["codex-skills-core"])
+            self.assertEqual(report["runtime_visibility"], "not_evaluable")
+            self.assertEqual(config.read_bytes(), before)
+            config.write_text("", encoding="utf-8")
+            empty = build_report(configured_plugins(config), False, Path(temp), actual_config=True)
+            self.assertEqual(empty["selected_plugins"], [])
+            self.assertEqual(empty["catalog_chars"], 0)
+        proposal = build_report(PRESETS["development"], False, Path("."))
+        self.assertEqual(proposal["implicit_catalog_records"], 11)
+
+    def test_compatibility_and_method_entries_are_explicit(self):
+        records = {record.name: record for record in discover_skills(ROOT / "skills")}
+        implicit_methods = {"gstack", "gstack-investigate", "gstack-review", "gstack-qa-only", "gstack-careful"}
+        self.assertEqual({name for name, item in records.items()
+                          if name.startswith("gstack") and item.allow_implicit_invocation is not False},
+                         implicit_methods)
+        for name, reference in (("hatch-pet", "legacy-v1-workflow.md"), ("pdf", "legacy-pdf-workflow.md")):
+            self.assertIs(records[name].allow_implicit_invocation, False)
+            self.assertTrue((records[name].skill_md.parent / "references" / reference).is_file())
+        self.assertEqual(len(records), 83)  # Explicit methods remain available, not deleted.
 
 
 class CodeGraphSchemaTests(unittest.TestCase):

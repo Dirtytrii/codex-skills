@@ -176,7 +176,7 @@ Load `references/content-routing.md` only for public writing, platform research,
 
 The source window is the role/thread that assigned this task, not always `架构` or `总控`. If B delegates to C, B is C's source while B still reports its own state to A.
 
-For durable role windows, completion is fail-closed. On completed, blocked, or decision-needed state, do both (one-shot executors return results to their owner instead and never write the ledger or commit):
+Completion is fail-closed for durable role windows. On completed, blocked, or decision-needed state, do both (one-shot executors return results to their owner instead and never write the ledger or commit):
 
 1. update `.codex/role-windows.md` and commit when project policy permits;
 2. actively send a compressed callback to the source thread.
