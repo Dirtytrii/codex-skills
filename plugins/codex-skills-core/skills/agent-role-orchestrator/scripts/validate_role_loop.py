@@ -263,14 +263,20 @@ def validate_prompt(path: Path) -> CheckResult:
     for marker in missing_markers(text, markers):
         errors.append(f"missing prompt marker: {marker}")
 
-    if re.search(r"有效控制：[^\n]*(?:risk=(?:critical|extreme)|loop=L3)", text):
+    if (re.search(r"有效控制：[^\n]*(?:risk=(?:critical|extreme)|loop=L3)", text)
+            or re.search(r"本次深度[:：]\s*L3", text) or extract_field(text, "profile") == "full"):
         for field in GATE_FIELDS:
             if not extract_field(text, field):
                 errors.append(f"L3/high-risk prompt is missing required gate: {field}")
 
     if is_executor:
+        if re.search(r"父任务风险：(critical|extreme)", text):
+            if ("owner-gates：retained" not in text or not extract_field(text, "叶子隔离证据")
+                    or "有效控制：risk=mechanical" not in text):
+                errors.append("high-risk parent leaf lacks isolation or retained owner gates")
         for field in ("fanout-policy", "ledger-write", "commit-policy"):
-            if extract_field(text, field) != "forbidden":
+            values = re.findall(rf"(?m)^[ \t-]*{re.escape(field)}[:：][ \t]*(.*)$", text)
+            if len(values) != 1 or values[0].strip() != "forbidden":
                 errors.append(f"executor {field} must be forbidden")
         for conflict in ("更新 .codex/role-windows.md 并提交", "串行使用一个一次性 worker",
                          "必须派发至少一个", "技能路由台账", "execution-profile：parallel"):

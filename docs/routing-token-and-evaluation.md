@@ -1,5 +1,7 @@
 # 路由、Token 与 Skill 评估指南
 
+可靠性回归与成本对照入口：`python scripts/test_skill_contract_regressions.py`；`python scripts/evaluate_task_economy.py --observed /path/to/observations.jsonl`。没有真实记录时后者报告 not_evaluable，不自动修改模型默认值。
+
 这份文档回答三个容易混在一起的问题：任务应该走多深的角色 Loop、应该使用哪一档模型和 Prompt，以及 Skill 是否真的选对。角色边界仍以 `agent-role-orchestrator` 为准；这里解释脚本输入、有效值和指标口径。
 
 在角色路由之前，先做插件层路由：默认仅保留 core，当前任务需要哪个领域再启用哪个 domain。`prepare_role_window.py` 根据角色和必选 Skill 查询包注册表，插件未启用时阻断 Prompt 生成；`audit_plugin_context.py` 用于估算所选插件目录并发现旧平铺安装重复项。包边界见 [plugin-packaging.md](plugin-packaging.md)。
@@ -174,6 +176,27 @@ python scripts/evaluate_skill_routing.py \
 - `unevaluated_case_count`：是否有 case 没有真实观测。
 
 ## 推荐验收顺序
+
+### 风险与压缩是两条轴
+
+显式 compact/standard 不能删除有效 L3 的四项门禁；适用的 CodeGraph 检查也必须保留。一次性 executor 使用独立短卡，不写角色台账、不提交、不再派发；负责人继续负责集成、最终复验和闭环。
+
+高风险父任务下只试点机械文档/非可执行 fixture 叶子，使用 `--parent-risk` 保留父任务事实，而非把高风险实现改标为低风险。参数、证据与路径限制见 [model-routing.md](../skills/agent-role-orchestrator/references/model-routing.md#isolated-assets-under-a-high-risk-parent)。生成器校验输入和范围形状，不替代负责人确认隔离性，也不执行文件系统权限隔离。
+
+### 真实质量与消耗对照
+
+JSONL 每条记录代表相同 case/contract 下的一种完整工作流，不是一名 worker：
+
+- `case_id`、`contract_id`：相同目标、基线、验收和边界；重复试验使用不同 case_id。
+- `variant`：direct 或 delegated；后者总量必须覆盖负责人拆卡、全部 worker、复验和返工。
+- `quality_pass`、`safety_pass`：明确布尔值；`retries`：非负整数。
+- `actual_models`：所有实际参与者的 model/thinking 对象列表；不要填推荐值冒充实际值。
+- `total_tokens`：同一宿主计量口径的完整非负整数总量；不可取得时填 null，不能用字符估计补齐。
+- `evidence`：可审查的测试/运行证据句柄，不放密钥、账号详情或完整聊天。
+
+至少 3 个完整配对才给人工复核候选；缺数据返回 not_evaluable，安全/质量失败或返工上升拒绝通过。仅比较 Token，不推断价格或会员额度；脚本不证明输入证据真实，不自动修改模型默认值。不得把测试 fixture 当 observed。
+
+### 验收步骤
 
 1. 用代表性任务生成 Prompt，检查 effective controls 与模型/Profile 是否一致。
 2. 用 `validate_role_loop.py` 检查 prompt、台账和 callback 契约。

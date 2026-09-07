@@ -19,6 +19,7 @@ import render_role_prompt as renderer
 import validate_role_loop as validator
 from skill_catalog import discover_skills
 from audit_plugin_context import build_report, configured_plugins, PRESETS
+from evaluate_task_economy import evaluate
 
 
 class PromptContractTests(unittest.TestCase):
@@ -50,6 +51,7 @@ class PromptContractTests(unittest.TestCase):
                 bad = text + "\n闭环完成条件：更新 .codex/role-windows.md 并提交\n"
                 self.assertTrue(self.errors(bad))
                 self.assertTrue(self.errors(text.replace("fanout-policy：forbidden", "fanout-policy：required")))
+                self.assertTrue(self.errors(text + "\ncommit-policy：required\n"))
 
     def test_executor_cannot_fan_out(self):
         with self.assertRaisesRegex(ValueError, "one-shot executor.*serial"):
@@ -63,6 +65,26 @@ class PromptContractTests(unittest.TestCase):
             self.assertIn("CodeGraph policy：check", text)
             self.assertIn("门禁结果：只读检查未就绪", text)
             self.assertEqual(self.errors(text), [])
+
+    def test_high_risk_parent_has_narrow_asset_leaf_lane(self):
+        base = ["--role", "开发", "--objective", "校正文档错字", "--source-role", "开发", "--project", str(ROOT),
+                "--source-thread", "fixture-owner", "--executor-tier", "mechanical",
+                "--task-size", "small", "--risk", "mechanical", "--parent-risk", "critical",
+                "--leaf-kind", "documentation", "--leaf-safety", "approved-card.md#isolation",
+                "--context", "baseline-commit", "--allow", "docs/example.md",
+                "--read-first", "approved-card.md", "--validation", "check docs",
+                "--exit-condition", "范围或验证不符立即 STOP"]
+        text = renderer.build_prompt(renderer.parse_args(base))
+        self.assertIn("model：gpt-5.6-luna", text)
+        self.assertIn("owner-gates：retained", text)
+        self.assertEqual(self.errors(text), [])
+        for extra in (["--risk", "critical"], ["--loop-depth", "L3"],
+                      ["--executor-tier", "bounded"], ["--leaf-safety", ""], ["--leaf-safety", "待确认"],
+                      ["--work-requirements", "不派 subagent"], ["--allow", "src/app.py"],
+                      ["--objective", "fix docs, no subagent"],
+                      ["--allow", "docs/../app.md"], ["--allow", "docs/*.md"]):
+            with self.subTest(extra=extra), self.assertRaises(ValueError):
+                renderer.build_prompt(renderer.parse_args(base + extra))
 
     def test_l3_gates_survive_every_display_profile(self):
         for risk, depth, profile in itertools.product(("normal", "critical", "extreme"),
@@ -106,6 +128,45 @@ class DiscoveryPolicyTests(unittest.TestCase):
             self.assertIs(records[name].allow_implicit_invocation, False)
             self.assertTrue((records[name].skill_md.parent / "references" / reference).is_file())
         self.assertEqual(len(records), 83)  # Explicit methods remain available, not deleted.
+
+
+class EconomyEvalTests(unittest.TestCase):
+    def observations(self):
+        return [dict(case_id=str(case), contract_id="fixture-contract", variant=variant,
+                     evidence="fixture-only", quality_pass=True, safety_pass=True, retries=0,
+                     actual_models=[{"model": "fixture-model", "thinking": "fixture"}],
+                     total_tokens=100 if variant == "direct" else 60)
+                for case in range(3) for variant in ("direct", "delegated")]
+
+    def test_missing_evidence_never_claims_savings(self):
+        self.assertEqual(evaluate([])["verdict"], "not_evaluable")
+        rows = self.observations()
+        rows[0]["total_tokens"] = None
+        self.assertEqual(evaluate(rows)["verdict"], "not_evaluable")
+        self.assertEqual(evaluate(rows)["membership_savings"], "not_evaluable")
+        self.assertEqual(evaluate(self.observations()[:-1])["verdict"], "not_evaluable")
+
+    def test_quality_and_rework_override_lower_tokens(self):
+        rows = self.observations()
+        self.assertEqual(evaluate(rows)["verdict"], "token_reduction_candidate_for_manual_review")
+        for field, value in (("quality_pass", False), ("safety_pass", False), ("retries", 1)):
+            rows = self.observations()
+            rows[1][field] = value
+            self.assertEqual(evaluate(rows)["verdict"], "quality_or_safety_regression")
+        rows = self.observations()
+        rows.append(dict(rows[-1], case_id="unpaired-unsafe", safety_pass=False))
+        self.assertEqual(evaluate(rows)["verdict"], "quality_or_safety_regression")
+
+    def test_invalid_and_duplicate_observations_fail_closed(self):
+        for field, value in (("quality_pass", "true"), ("total_tokens", True),
+                             ("retries", -1), ("actual_models", [])):
+            rows = self.observations()
+            rows[0][field] = value
+            with self.assertRaises(ValueError):
+                evaluate(rows)
+        rows = self.observations()
+        with self.assertRaises(ValueError):
+            evaluate(rows + [rows[0]])
 
 
 class CodeGraphSchemaTests(unittest.TestCase):

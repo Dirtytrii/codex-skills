@@ -345,7 +345,7 @@ def validate_source_route(role: str, args: argparse.Namespace) -> None:
 
 
 def has_explicit_no_delegation(args: argparse.Namespace) -> bool:
-    values = [args.work_requirements or "", *(args.forbid or [])]
+    values = [args.objective, args.work_requirements or "", args.boundary or "", *(args.forbid or [])]
     normalized = "".join("".join(values).lower().split())
     return any(
         marker in normalized
@@ -356,6 +356,9 @@ def has_explicit_no_delegation(args: argparse.Namespace) -> bool:
             "禁止使用subagent",
             "禁止派发subagent",
             "不得派发subagent",
+            "nosubagent",
+            "donotusesubagent",
+            "donotdelegate",
         )
     )
 
@@ -381,11 +384,55 @@ def effective_delegation_policy(
     return "optional"
 
 
+def validate_parent_leaf(args: argparse.Namespace, controls: TaskControls) -> None:
+    if args.parent_risk == "normal":
+        if args.leaf_kind or args.leaf_safety:
+            raise ValueError("leaf isolation evidence requires an explicit high-risk parent")
+        return
+    if (args.executor_tier != "mechanical" or controls.risk != "mechanical"
+            or args.task_size not in {"tiny", "small"} or controls.loop_depth == "L3"):
+        raise ValueError("high-risk parent permits only a small mechanical asset leaf; implementation risk cannot be downgraded")
+    required = (args.project, args.leaf_kind, args.leaf_safety, args.context, args.source_thread,
+                args.allow, args.read_first, args.validation, args.exit_condition)
+    placeholders = {"待确认", "todo", "tbd", "unknown", "none"}
+    def concrete(value: object) -> bool:
+        if isinstance(value, list):
+            return bool(value) and all(concrete(item) for item in value)
+        return isinstance(value, str) and bool(value.strip()) and value.strip().lower() not in placeholders
+    if not all(concrete(value) for value in required):
+        raise ValueError("high-risk parent leaf requires kind, isolation evidence, baseline, owner, allowlist, reads, validation and STOP")
+    project = Path(args.project).resolve()
+    if not project.is_dir():
+        raise ValueError("high-risk parent leaf requires an existing project")
+    for raw in args.allow:
+        path = Path(raw)
+        if path.is_absolute():
+            if not args.project:
+                raise ValueError("absolute leaf allowlist requires --project")
+            try:
+                path = path.resolve().relative_to(Path(args.project).resolve())
+            except ValueError as exc:
+                raise ValueError("leaf file must stay within project") from exc
+        relative = path.as_posix()
+        if ".." in path.parts or any(char in relative for char in "*?[]"):
+            raise ValueError("leaf allowlist requires exact, non-traversing file paths")
+        try:
+            relative = (project / path).resolve().relative_to(project).as_posix()
+        except ValueError as exc:
+            raise ValueError("leaf file must stay within project, including symlinks") from exc
+        prefixes = ("docs/",) if args.leaf_kind == "documentation" else ("tests/fixtures/", "test/fixtures/")
+        suffixes = {".md", ".rst", ".txt"} if args.leaf_kind == "documentation" else {".json", ".csv", ".txt"}
+        if (not relative.startswith(prefixes) or Path(relative).suffix.lower() not in suffixes
+                or (project / path).is_dir()):
+            raise ValueError("high-risk parent leaf is limited to documentation or non-executable test fixtures")
+
+
 def validate_delegation_contract(
     role: str, args: argparse.Namespace, controls: TaskControls
 ) -> None:
     policy = effective_delegation_policy(role, args, controls)
     args.delegation_effective_policy = policy
+    validate_parent_leaf(args, controls)
 
     if role != "开发":
         if args.executor_tier != "owner":
@@ -862,6 +909,8 @@ def build_executor_prompt(args: argparse.Namespace, route: ModelRoute, controls:
 - ledger-write：forbidden
 - commit-policy：forbidden
 - 本任务发起方：{callback_target}
+{f"父任务风险：{args.parent_risk}；leaf-kind：{args.leaf_kind}; owner-gates：retained" if args.parent_risk != "normal" else ""}
+{f"叶子隔离证据：{args.leaf_safety}；父任务 L3 门禁与最终验收仍由负责人保留，本叶子完成不代表整体通过。" if args.parent_risk != "normal" else ""}
 项目：{args.project or "待确认"}
 模型建议：
 - model：{route.model}
@@ -1079,6 +1128,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--task-size", default="medium", choices=["tiny", "small", "medium", "large", "critical"], help="Task dispatch size. large promotes the effective loop to at least L2; critical promotes effective risk/loop to critical/L3.")
     parser.add_argument("--risk", default="normal", choices=["normal", "mechanical", "critical", "extreme"], help="Use mechanical only for fully scoped rote work. Critical/extreme risk promotes the effective loop to L3 and controls model/profile routing.")
     parser.add_argument("--executor-tier", default="owner", choices=["owner", "mechanical", "bounded", "semantic", "high-risk"], help="Development execution tier. bounded routes a one-shot executor to Luna; owner keeps the durable Dev Lead route.")
+    parser.add_argument("--parent-risk", default="normal", choices=["normal", "critical", "extreme"], help="Parent risk for an isolated asset leaf; does not reduce this task's own --risk.")
+    parser.add_argument("--leaf-kind", choices=["documentation", "test-fixture"], help="Pilot lane for non-implementation assets under a high-risk parent.")
+    parser.add_argument("--leaf-safety", help="Owner-approved evidence of isolation from high-risk implementation and shared evolving state.")
     parser.add_argument(
         "--delegation-policy",
         default="auto",
