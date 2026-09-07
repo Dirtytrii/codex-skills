@@ -40,6 +40,8 @@ python skills/skill-system-governance/scripts/audit_skill_system.py \
 
 Without those artifacts, report routing accuracy and skill-hit rate as `not_evaluable`. Never convert self-reported callbacks into observed router accuracy or claim a percentage from chat memory.
 
+For explicitly authorized local lifecycle observation, read `references/local-observation.md` and use the opt-in installer. It preserves existing hooks and requires native hook trust; metadata snapshots do not prove skill selection, task quality, or membership savings.
+
 ### 3. Produce A Verdict Before Editing
 
 Choose one primary verdict:

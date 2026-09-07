@@ -1,0 +1,50 @@
+# 本地轻量观测
+
+只在用户明确授权采集/启用时使用。产品默认关闭；安装器不修改模型、插件 enable 状态、业务代码、AGENTS、角色台账或全局 `config.toml`。不启用后台轮询，也不调用额外模型。
+
+## 接入与首次信任
+
+采用 [Codex 原生 hooks](https://learn.chatgpt.com/docs/hooks)：`UserPromptSubmit`、`SubagentStart`、`SubagentStop`、`Stop`、`Interrupt`。不是每次工具调用埋点。只追加命令 hook，现有通知与 hook 保留；命令输出始终是 `{}`，不阻塞、批准或续跑任务。
+
+准备私有项目清单，每项包含明确的 `root` 和已核实属于该项目的 `worktrees` 路径列表；不要提交此清单。先查看安装计划：
+
+```bash
+python scripts/install_workflow_observation.py \
+  --projects /private/projects.json --install-dir /private/observation \
+  --hooks-file /private/codex/hooks.json --transcript-root /private/codex/sessions
+```
+
+这里的 `scripts/` 相对本 skill 目录。授权后添加 `--enable --write` 才会安装并打开项目开关。安装器复制带内容哈希目录的独立运行时，保存原 hook 文件备份，向用户 hook 文件追加五组观测 handler；未选中的项目直接跳过。已有安装用相同参数重跑是幂等的。更换代码版本、项目范围或已有未知观测目录时先检查，不静默覆盖。
+
+每个项目的 `.codex/telemetry/config.json` 保存独立开关，目录内 `.gitignore` 使用 `*` 排除全部观测文件。主目录与已登记工作副本共用主目录中的存储；新建工作副本不会自动纳入，需重新核实清单。全局安装清单中的 `enabled=false` 是总开关，项目配置中的 `enabled=false` 是单项目开关；两处都必须严格为 JSON 布尔 `true` 才记录。
+
+**安装成功不等于宿主已信任。** 新增/变更 hook 须通过 Codex `/hooks` 入口审阅并信任，原生 hook 信任不可用时停在待确认；不能写自造 `trusted_hash`，不能使用绕过信任参数或伪装成 managed hook。重开/恢复任务后再核对真实事件。手动 smoke 与真实宿主事件分开标记。
+
+## 数据口径
+
+自动记录：UTC 时间、匿名项目/任务/轮次/子任务标识、hook 类型、采集器代码哈希、宿主模型，以及可验证的 transcript 元数据。仅在已授权 transcript 根目录中读取传入的单个 `.jsonl`，核对会话身份和项目路径，最多解析首行及末尾 2 MB；原始正文不复制、不落盘，不扫描历史会话。
+
+- 会话与轮次 ID 使用本地随机盐 HMAC；公共仓库不保存盐、项目清单、事件或原始路径。
+- `actual_model`：主任务来自宿主 hook 字段；子任务必须有匹配的子任务 transcript，不将父模型冒充子模型。
+- `thinking`：只有匹配轮次的元数据可用才填写，否则 `null`。
+- `usage_snapshot`：会话累计计数，不是每次调用增量。汇总只计算有起止快照的同轮次差值；缺基线、计数回退或未知结构不计入。父子统计可能重叠，不能直接相加后当作完整账单。
+- `quality_pass`、`safety_pass`、`retries`、`skills_observed` 当前保持 `null`。首次接入只捕获客观生命周期；后续质量与技能命中分析必须补独立验收/路由证据，不能把 Stop 当作成功，把模型自报当作实际加载。
+- 不把这些事件直接伪装成 `evaluate_task_economy.py` 所需的成对、质量已验证样本。会员额度节省始终不可直接从 Token 推断。
+
+采集不保存 prompt、源码、工具输入/输出、最后回复、凭据、原始日志、真实项目路径或原始任务 ID。只写固定 schema，未知输入丢弃。使用跨进程文件锁防止并发 JSONL 交错；退出码保持成功，观测错误不改变开发任务行为。
+
+`events-YYYY-MM-DD.jsonl` 自动保留最近 30 天，事件总量上限每项目 10 MB。达到上限先移除最老日期的观测文件；当天单文件已满则停止追加，不能把缺失事件解释为零活动。只清理该观测目录中归属本采集器的日期文件，保留其他文件。
+
+## 自验与后续分析
+
+```bash
+python /private/runtime/workflow_observation.py smoke --manifest /private/observation/installation.json
+python /private/runtime/workflow_observation.py status --manifest /private/observation/installation.json
+python /private/runtime/workflow_observation.py summary --manifest /private/observation/installation.json
+```
+
+`smoke` 验证所有已启用项目能写入，但标记 `synthetic_smoke` 并从真实统计剔除。`status/summary` 只汇总本地已脱敏事件，不再次读取原始会话，也不联网。
+
+安装后至少确认：原有 hook 语义未变；目录被 Git 忽略；项目业务改动未变；精确 hook 命令能正确接收 stdin 并输出 `{}`；原生事件实际发生后有 `host_hook` 记录。没有最后一项时只能报告“安装/开关完成，原生触发尚未验证”。
+
+源仓库回归：`python -B scripts/test_workflow_observation.py`；修改 skill 后同步 bundle 并运行 full 审计。公开材料只记录脚本行为和汇总证据，不发布真实本地事件。
