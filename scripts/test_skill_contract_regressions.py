@@ -1,0 +1,229 @@
+#!/usr/bin/env python3
+"""Adversarial contract tests; fixtures never access real projects or model APIs."""
+
+from __future__ import annotations
+
+import json
+import itertools
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "skills" / "agent-role-orchestrator" / "scripts"))
+import check_codegraph as graph
+import render_role_prompt as renderer
+import validate_role_loop as validator
+from skill_catalog import discover_skills
+from audit_plugin_context import build_report, configured_plugins, PRESETS
+from evaluate_task_economy import evaluate
+
+
+class PromptContractTests(unittest.TestCase):
+    def prompt(self, *args):
+        return renderer.build_prompt(renderer.parse_args([
+            "--role", "开发", "--objective", "修改单个常量", "--source-role", "开发",
+            "--source-thread", "fixture-owner", "--allow", "src/constant.py",
+            "--read-first", "task-card.md@baseline", "--validation", "python -m unittest",
+            "--exit-condition", "单测通过，否则 STOP", *args]))
+
+    def errors(self, text):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "prompt.md"
+            path.write_text(text, encoding="utf-8")
+            return validator.validate_prompt(path).errors
+
+    def test_executor_does_not_inherit_owner_closure(self):
+        for tier, profile in itertools.product(("mechanical", "bounded", "semantic"),
+                                               ("auto", "compact", "standard", "full")):
+            with self.subTest(tier=tier, profile=profile):
+                text = self.prompt("--executor-tier", tier, "--profile", profile)
+                self.assertIn("actor-kind：executor", text)
+                self.assertIn("fanout-policy：forbidden", text)
+                self.assertNotIn("更新 .codex/role-windows.md 并提交", text)
+                self.assertNotIn("串行使用一个一次性 worker", text)
+                self.assertNotIn("技能路由台账", text)
+                self.assertLess(len(text), 1500)
+                self.assertEqual(self.errors(text), [])
+                bad = text + "\n闭环完成条件：更新 .codex/role-windows.md 并提交\n"
+                self.assertTrue(self.errors(bad))
+                self.assertTrue(self.errors(text.replace("fanout-policy：forbidden", "fanout-policy：required")))
+                self.assertTrue(self.errors(text + "\ncommit-policy：required\n"))
+
+    def test_executor_cannot_fan_out(self):
+        with self.assertRaisesRegex(ValueError, "one-shot executor.*serial"):
+            self.prompt("--executor-tier", "bounded", "--execution-profile", "parallel",
+                        "--worker-count", "2", "--disjoint-scope", "two files",
+                        "--independent-validation", "two tests")
+
+    def test_explicit_codegraph_check_survives_short_templates(self):
+        for tier in ("owner", "mechanical"):
+            text = self.prompt("--executor-tier", tier, "--profile", "compact", "--codegraph-policy", "check")
+            self.assertIn("CodeGraph policy：check", text)
+            self.assertIn("门禁结果：只读检查未就绪", text)
+            self.assertEqual(self.errors(text), [])
+
+    def test_high_risk_parent_has_narrow_asset_leaf_lane(self):
+        base = ["--role", "开发", "--objective", "校正文档错字", "--source-role", "开发", "--project", str(ROOT),
+                "--source-thread", "fixture-owner", "--executor-tier", "mechanical",
+                "--task-size", "small", "--risk", "mechanical", "--parent-risk", "critical",
+                "--leaf-kind", "documentation", "--leaf-safety", "approved-card.md#isolation",
+                "--context", "baseline-commit", "--allow", "docs/example.md",
+                "--read-first", "approved-card.md", "--validation", "check docs",
+                "--exit-condition", "范围或验证不符立即 STOP"]
+        text = renderer.build_prompt(renderer.parse_args(base))
+        self.assertIn("model：gpt-5.6-luna", text)
+        self.assertIn("owner-gates：retained", text)
+        self.assertEqual(self.errors(text), [])
+        for extra in (["--risk", "critical"], ["--loop-depth", "L3"],
+                      ["--executor-tier", "bounded"], ["--leaf-safety", ""], ["--leaf-safety", "待确认"],
+                      ["--work-requirements", "不派 subagent"], ["--allow", "src/app.py"],
+                      ["--objective", "fix docs, no subagent"],
+                      ["--allow", "docs/../app.md"], ["--allow", "docs/*.md"]):
+            with self.subTest(extra=extra), self.assertRaises(ValueError):
+                renderer.build_prompt(renderer.parse_args(base + extra))
+
+    def test_l3_gates_survive_every_display_profile(self):
+        for risk, depth, profile in itertools.product(("normal", "critical", "extreme"),
+                ("L0", "L1", "L2", "L3"), ("auto", "compact", "standard", "full")):
+            if risk == "normal" and depth != "L3":
+                continue
+            with self.subTest(risk=risk, depth=depth, profile=profile):
+                text = self.prompt("--risk", risk, "--loop-depth", depth, "--profile", profile)
+                for field in ("独立复核角色与证据", "失败/回滚条件与执行责任人",
+                              "未解决风险、剩余不确定性与影响范围", "最终 go/no-go 决策方"):
+                    self.assertIn(field + "：", text)
+                    self.assertTrue(self.errors(text.replace(field + "：", "omitted：")))
+                self.assertEqual(self.errors(text), [])
+
+
+class DiscoveryPolicyTests(unittest.TestCase):
+    def test_config_diagnosis_does_not_invent_enabled_dependencies(self):
+        with tempfile.TemporaryDirectory() as temp:
+            config = Path(temp) / "config.toml"
+            config.write_text('[plugins."codex-skills-engineering@dirtytrii-codex-skills"]\nenabled=true\n', encoding="utf-8")
+            before = config.read_bytes()
+            report = build_report(configured_plugins(config), False, Path(temp), actual_config=True)
+            self.assertEqual(report["selected_plugins"], ["codex-skills-engineering"])
+            self.assertEqual(report["missing_dependencies"], ["codex-skills-core"])
+            self.assertEqual(report["runtime_visibility"], "not_evaluable")
+            self.assertEqual(config.read_bytes(), before)
+            config.write_text("", encoding="utf-8")
+            empty = build_report(configured_plugins(config), False, Path(temp), actual_config=True)
+            self.assertEqual(empty["selected_plugins"], [])
+            self.assertEqual(empty["catalog_chars"], 0)
+        proposal = build_report(PRESETS["development"], False, Path("."))
+        self.assertEqual(proposal["implicit_catalog_records"], 11)
+
+    def test_compatibility_and_method_entries_are_explicit(self):
+        records = {record.name: record for record in discover_skills(ROOT / "skills")}
+        implicit_methods = {"gstack", "gstack-investigate", "gstack-review", "gstack-qa-only", "gstack-careful"}
+        self.assertEqual({name for name, item in records.items()
+                          if name.startswith("gstack") and item.allow_implicit_invocation is not False},
+                         implicit_methods)
+        for name, reference in (("hatch-pet", "legacy-v1-workflow.md"), ("pdf", "legacy-pdf-workflow.md")):
+            self.assertIs(records[name].allow_implicit_invocation, False)
+            self.assertTrue((records[name].skill_md.parent / "references" / reference).is_file())
+        self.assertEqual(len(records), 83)  # Explicit methods remain available, not deleted.
+
+
+class EconomyEvalTests(unittest.TestCase):
+    def observations(self):
+        return [dict(case_id=str(case), contract_id="fixture-contract", variant=variant,
+                     evidence="fixture-only", quality_pass=True, safety_pass=True, retries=0,
+                     actual_models=[{"model": "fixture-model", "thinking": "fixture"}],
+                     total_tokens=100 if variant == "direct" else 60)
+                for case in range(3) for variant in ("direct", "delegated")]
+
+    def test_missing_evidence_never_claims_savings(self):
+        self.assertEqual(evaluate([])["verdict"], "not_evaluable")
+        rows = self.observations()
+        rows[0]["total_tokens"] = None
+        self.assertEqual(evaluate(rows)["verdict"], "not_evaluable")
+        self.assertEqual(evaluate(rows)["membership_savings"], "not_evaluable")
+        self.assertEqual(evaluate(self.observations()[:-1])["verdict"], "not_evaluable")
+
+    def test_quality_and_rework_override_lower_tokens(self):
+        rows = self.observations()
+        self.assertEqual(evaluate(rows)["verdict"], "token_reduction_candidate_for_manual_review")
+        for field, value in (("quality_pass", False), ("safety_pass", False), ("retries", 1)):
+            rows = self.observations()
+            rows[1][field] = value
+            self.assertEqual(evaluate(rows)["verdict"], "quality_or_safety_regression")
+        rows = self.observations()
+        rows.append(dict(rows[-1], case_id="unpaired-unsafe", safety_pass=False))
+        self.assertEqual(evaluate(rows)["verdict"], "quality_or_safety_regression")
+
+    def test_invalid_and_duplicate_observations_fail_closed(self):
+        for field, value in (("quality_pass", "true"), ("total_tokens", True),
+                             ("retries", -1), ("actual_models", [])):
+            rows = self.observations()
+            rows[0][field] = value
+            with self.assertRaises(ValueError):
+                evaluate(rows)
+        rows = self.observations()
+        with self.assertRaises(ValueError):
+            evaluate(rows + [rows[0]])
+
+
+class CodeGraphSchemaTests(unittest.TestCase):
+    def status(self, payload: object) -> dict:
+        with tempfile.TemporaryDirectory() as temp:
+            project = Path(temp)
+            (project / ".codegraph").mkdir()
+            completed = subprocess.CompletedProcess([], 0, json.dumps(payload), "")
+            with patch.object(graph.subprocess, "run", return_value=completed) as run:
+                status = graph.build_status(project, "fixture-codegraph")
+            self.assertEqual(run.call_count, 1)
+            self.assertEqual(run.call_args.args[0][1:3], ["status", "--json"])
+            return status
+
+    def fresh(self) -> dict:
+        return {"initialized": True,
+                "pendingChanges": {"added": 0, "modified": 0, "removed": 0},
+                "worktreeMismatch": None}
+
+    def test_fresh_stale_and_mismatched_states(self):
+        self.assertTrue(self.status(self.fresh())["ready"])
+        for change in ({"modified": 10}, {"added": 1}, {"removed": 2}):
+            payload = self.fresh()
+            payload["pendingChanges"].update(change)
+            self.assertFalse(self.status(payload)["ready"])
+        for mismatch in (True, {"expected": "one", "actual": "two"}):
+            payload = self.fresh()
+            payload["worktreeMismatch"] = mismatch
+            self.assertFalse(self.status(payload)["ready"])
+
+    def test_unknown_schema_never_becomes_ready(self):
+        invalid = [{"pendingChanges": {}},
+                   {"initialized": True, "pendingChanges": {"modified": "10"}}]
+        for field in ("initialized", "pendingChanges", "worktreeMismatch"):
+            payload = self.fresh()
+            del payload[field]
+            invalid.append(payload)
+        for value in ("0", "10", True, False, -1, 0.0, None):
+            payload = self.fresh()
+            payload["pendingChanges"]["modified"] = value
+            invalid.append(payload)
+        for value in (None, "true", 1):
+            payload = self.fresh()
+            payload["initialized"] = value
+            invalid.append(payload)
+        for value in ({}, [], "", 0):
+            payload = self.fresh()
+            payload["worktreeMismatch"] = value
+            invalid.append(payload)
+        for payload in invalid:
+            with self.subTest(payload=payload):
+                status = self.status(payload)
+                self.assertFalse(status["ready"])
+                self.assertFalse(status["status_checked"])
+                self.assertEqual(status["freshness_status"], "无法确认")
+                self.assertTrue(status["status_parse_error"])
+
+
+if __name__ == "__main__":
+    unittest.main(verbosity=2)

@@ -345,7 +345,7 @@ def validate_source_route(role: str, args: argparse.Namespace) -> None:
 
 
 def has_explicit_no_delegation(args: argparse.Namespace) -> bool:
-    values = [args.work_requirements or "", *(args.forbid or [])]
+    values = [args.objective, args.work_requirements or "", args.boundary or "", *(args.forbid or [])]
     normalized = "".join("".join(values).lower().split())
     return any(
         marker in normalized
@@ -356,6 +356,9 @@ def has_explicit_no_delegation(args: argparse.Namespace) -> bool:
             "禁止使用subagent",
             "禁止派发subagent",
             "不得派发subagent",
+            "nosubagent",
+            "donotusesubagent",
+            "donotdelegate",
         )
     )
 
@@ -381,11 +384,55 @@ def effective_delegation_policy(
     return "optional"
 
 
+def validate_parent_leaf(args: argparse.Namespace, controls: TaskControls) -> None:
+    if args.parent_risk == "normal":
+        if args.leaf_kind or args.leaf_safety:
+            raise ValueError("leaf isolation evidence requires an explicit high-risk parent")
+        return
+    if (args.executor_tier != "mechanical" or controls.risk != "mechanical"
+            or args.task_size not in {"tiny", "small"} or controls.loop_depth == "L3"):
+        raise ValueError("high-risk parent permits only a small mechanical asset leaf; implementation risk cannot be downgraded")
+    required = (args.project, args.leaf_kind, args.leaf_safety, args.context, args.source_thread,
+                args.allow, args.read_first, args.validation, args.exit_condition)
+    placeholders = {"待确认", "todo", "tbd", "unknown", "none"}
+    def concrete(value: object) -> bool:
+        if isinstance(value, list):
+            return bool(value) and all(concrete(item) for item in value)
+        return isinstance(value, str) and bool(value.strip()) and value.strip().lower() not in placeholders
+    if not all(concrete(value) for value in required):
+        raise ValueError("high-risk parent leaf requires kind, isolation evidence, baseline, owner, allowlist, reads, validation and STOP")
+    project = Path(args.project).resolve()
+    if not project.is_dir():
+        raise ValueError("high-risk parent leaf requires an existing project")
+    for raw in args.allow:
+        path = Path(raw)
+        if path.is_absolute():
+            if not args.project:
+                raise ValueError("absolute leaf allowlist requires --project")
+            try:
+                path = path.resolve().relative_to(Path(args.project).resolve())
+            except ValueError as exc:
+                raise ValueError("leaf file must stay within project") from exc
+        relative = path.as_posix()
+        if ".." in path.parts or any(char in relative for char in "*?[]"):
+            raise ValueError("leaf allowlist requires exact, non-traversing file paths")
+        try:
+            relative = (project / path).resolve().relative_to(project).as_posix()
+        except ValueError as exc:
+            raise ValueError("leaf file must stay within project, including symlinks") from exc
+        prefixes = ("docs/",) if args.leaf_kind == "documentation" else ("tests/fixtures/", "test/fixtures/")
+        suffixes = {".md", ".rst", ".txt"} if args.leaf_kind == "documentation" else {".json", ".csv", ".txt"}
+        if (not relative.startswith(prefixes) or Path(relative).suffix.lower() not in suffixes
+                or (project / path).is_dir()):
+            raise ValueError("high-risk parent leaf is limited to documentation or non-executable test fixtures")
+
+
 def validate_delegation_contract(
     role: str, args: argparse.Namespace, controls: TaskControls
 ) -> None:
     policy = effective_delegation_policy(role, args, controls)
     args.delegation_effective_policy = policy
+    validate_parent_leaf(args, controls)
 
     if role != "开发":
         if args.executor_tier != "owner":
@@ -514,6 +561,8 @@ def execution_profile_guidance(role: str, args: argparse.Namespace) -> str:
 
 
 def validate_execution_profile(role: str, args: argparse.Namespace) -> None:
+    if args.executor_tier in ONE_SHOT_EXECUTOR_TIERS and args.execution_profile != "serial":
+        raise ValueError("one-shot executor must use serial execution; only Dev Lead may fan out")
     if args.execution_profile == "serial":
         if args.worker_count != 1:
             raise ValueError("serial execution-profile requires --worker-count 1")
@@ -752,10 +801,11 @@ def architecture_planning_sections(role: str, args: argparse.Namespace) -> str:
     return "\n".join(sections)
 
 
-def full_profile_gate(profile: str, callback_target: str) -> str:
-    if profile != "full":
+def full_profile_gate(profile: str, callback_target: str, controls: TaskControls) -> str:
+    if profile != "full" and controls.loop_depth != "L3":
         return ""
-    return f"""独立门禁与失败回退（full 必填）：
+    label = "full" if profile == "full" else "L3"
+    return f"""独立门禁与失败回退（{label} 必填）：
 - 独立复核角色与证据：待确认；不得由实现者自证通过
 - 失败/回滚条件与执行责任人：待确认
 - 未解决风险、剩余不确定性与影响范围：待确认
@@ -803,6 +853,8 @@ Loop 深度（可折叠路由）：
 - {task_dispatch_decision(role, args).splitlines()[2].removeprefix("- ")}
 - {task_dispatch_decision(role, args).splitlines()[3].removeprefix("- ")}
 {implicit_planning_contract(role, args, profile)}
+{full_profile_gate(profile, callback_target, controls)}
+{codegraph_planning_section(role, args) if prompt_codegraph_policy(role, args) != "skip" else ""}
 负责人交互边界：
 - 总控只对接负责人层；技术执行由 CTO 派发，内容执行由内容主编派发。
 
@@ -848,6 +900,46 @@ Loop 深度（可折叠路由）：
 """
 
 
+def build_executor_prompt(args: argparse.Namespace, route: ModelRoute, controls: TaskControls,
+                          callback_target: str) -> str:
+    """One-shot workers never inherit a durable window's closure or fanout contract."""
+    return f"""【开发一次性执行卡】
+- actor-kind：executor
+- fanout-policy：forbidden
+- ledger-write：forbidden
+- commit-policy：forbidden
+- 本任务发起方：{callback_target}
+{f"父任务风险：{args.parent_risk}；leaf-kind：{args.leaf_kind}; owner-gates：retained" if args.parent_risk != "normal" else ""}
+{f"叶子隔离证据：{args.leaf_safety}；父任务 L3 门禁与最终验收仍由负责人保留，本叶子完成不代表整体通过。" if args.parent_risk != "normal" else ""}
+项目：{args.project or "待确认"}
+模型建议：
+- model：{route.model}
+- thinking：{route.thinking}
+{task_controls_guidance(args, controls)}
+{role_execution_guidance("开发", args, route)}
+{implicit_planning_contract("开发", args, "compact")}
+{spark_opportunity_guidance("开发", args, controls)}
+{codegraph_planning_section("开发", args) if prompt_codegraph_policy("开发", args) != "skip" else ""}
+目标：{args.objective}
+基线：{args.context or "以负责人任务卡的提交/文件证据为准；无法核实时 STOP"}
+请先阅读/检查：
+{lines_or_default(args.read_first, "仅负责人任务卡及白名单目标；缺失时 STOP")}
+允许修改：
+{lines_or_default(args.allow, "待确认；确认前只读并回报")}
+禁止修改：
+- 台账、Git 提交、创建角色窗口或再次派发 worker；架构判断、跨任务集成、最终验收。
+{lines_or_default(args.forbid, default_forbidden("开发"))}
+实现/工作要求：{args.work_requirements or "只完成本张卡；缺少范围或验证时 STOP"}
+验证：
+{lines_or_default(args.validation, "待确认；不得自报验证通过")}
+STOP / 退出条件：{args.exit_condition or "完成指定验证即回报；漂移、范围扩大、验证失败或缺少授权立即停止"}
+结果回传：完成/阻塞；diff；验证命令与结果；实际 model/thinking；重试/返工；未解决问题。
+必选 skill：{csv_or_default(args.required_skill, "无")}
+技能使用回传：已使用、未使用及原因；只报证据，不写共享台账。
+负责人保留集成、最终复验、提交和来源窗口闭环；执行器回报后结束。
+"""
+
+
 def build_prompt(args: argparse.Namespace) -> str:
     role = canonical_role(args.role)
     controls = effective_task_controls(args)
@@ -877,6 +969,9 @@ def build_prompt(args: argparse.Namespace) -> str:
     validation = args.validation or []
     callback_target = f"{source_role} / thread id: {source_thread}"
     profile = effective_token_profile(role, args, controls)
+
+    if args.executor_tier in ONE_SHOT_EXECUTOR_TIERS:
+        return build_executor_prompt(args, route, controls, callback_target)
 
     if profile == "compact":
         return build_compact_prompt(
@@ -938,7 +1033,7 @@ Token Budget Profile：
 - 总控不编写代码、测试或验收脚本；由开发/测试实现，架构/QA 复核，总控只验收结果、风险和决策点。
 
 {architecture_planning_sections(role, args)}
-{full_profile_gate(profile, callback_target)}
+{full_profile_gate(profile, callback_target, controls)}
 
 目标：
 {args.objective}
@@ -1033,6 +1128,9 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--task-size", default="medium", choices=["tiny", "small", "medium", "large", "critical"], help="Task dispatch size. large promotes the effective loop to at least L2; critical promotes effective risk/loop to critical/L3.")
     parser.add_argument("--risk", default="normal", choices=["normal", "mechanical", "critical", "extreme"], help="Use mechanical only for fully scoped rote work. Critical/extreme risk promotes the effective loop to L3 and controls model/profile routing.")
     parser.add_argument("--executor-tier", default="owner", choices=["owner", "mechanical", "bounded", "semantic", "high-risk"], help="Development execution tier. bounded routes a one-shot executor to Luna; owner keeps the durable Dev Lead route.")
+    parser.add_argument("--parent-risk", default="normal", choices=["normal", "critical", "extreme"], help="Parent risk for an isolated asset leaf; does not reduce this task's own --risk.")
+    parser.add_argument("--leaf-kind", choices=["documentation", "test-fixture"], help="Pilot lane for non-implementation assets under a high-risk parent.")
+    parser.add_argument("--leaf-safety", help="Owner-approved evidence of isolation from high-risk implementation and shared evolving state.")
     parser.add_argument(
         "--delegation-policy",
         default="auto",

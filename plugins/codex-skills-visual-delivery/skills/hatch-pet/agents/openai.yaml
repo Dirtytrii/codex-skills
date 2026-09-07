@@ -1,4 +1,6 @@
 interface:
-  display_name: "Hatch Pet"
-  short_description: "Hatch style-flexible Codex pets"
-  default_prompt: "Use $hatch-pet to create a Codex-compatible animated pet in any pet-safe style from a concept, company brand, or reference image."
+  display_name: "Hatch Pet Legacy v1"
+  short_description: "Explicit repair for legacy v1 pets"
+  default_prompt: "Use $hatch-pet to inspect and repair this existing v1 pet without migrating its format."
+policy:
+  allow_implicit_invocation: false

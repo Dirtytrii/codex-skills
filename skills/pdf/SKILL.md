@@ -1,67 +1,13 @@
 ---
-name: "pdf"
-description: "Use when tasks involve reading, creating, or reviewing PDF files where rendering and layout matter; prefer visual checks by rendering pages (Poppler) and use Python tools such as `reportlab`, `pdfplumber`, and `pypdf` for generation and extraction."
+name: pdf
+description: Explicit compatibility adapter for the collection's legacy PDF workflow and delivery conventions. Prefer the installed official PDF skill for generic PDF reading, generation, rendering and forms.
 ---
 
+# PDF Delivery Compatibility
 
-# PDF Skill
+Prefer the installed official PDF skill as the single owner of general PDF work, including forms. Identify it by provider/path; do not recursively invoke this adapter or load both full workflows.
 
-## When to use
-- Read or review PDF content where layout and visuals matter.
-- Create PDFs programmatically with reliable formatting.
-- Validate final rendering before delivery.
-
-## Workflow
-1. Prefer visual review: render PDF pages to PNGs and inspect them.
-   - Use `pdftoppm` if available.
-   - If unavailable, install Poppler or ask the user to review the output locally.
-2. Use `reportlab` to generate PDFs when creating new documents.
-3. Use `pdfplumber` (or `pypdf`) for text extraction and quick checks; do not rely on it for layout fidelity.
-4. After each meaningful update, re-render pages and verify alignment, spacing, and legibility.
-
-## Temp and output conventions
-- Use `tmp/pdfs/` for intermediate files; delete when done.
-- Write final artifacts under `output/pdf/` when working in this repo.
-- Keep filenames stable and descriptive.
-
-## Dependencies (install if missing)
-Prefer `uv` for dependency management.
-
-Python packages:
-```
-uv pip install reportlab pdfplumber pypdf
-```
-If `uv` is unavailable:
-```
-python3 -m pip install reportlab pdfplumber pypdf
-```
-System tools (for rendering):
-```
-# macOS (Homebrew)
-brew install poppler
-
-# Ubuntu/Debian
-sudo apt-get install -y poppler-utils
-```
-
-If installation isn't possible in this environment, tell the user which dependency is missing and how to install it locally.
-
-## Environment
-No required environment variables.
-
-## Rendering command
-```
-pdftoppm -png $INPUT_PDF $OUTPUT_PREFIX
-```
-
-## Quality expectations
-- Maintain polished visual design: consistent typography, spacing, margins, and section hierarchy.
-- Avoid rendering issues: clipped text, overlapping elements, broken tables, black squares, or unreadable glyphs.
-- Charts, tables, and images must be sharp, aligned, and clearly labeled.
-- Use ASCII hyphens only. Avoid U+2011 (non-breaking hyphen) and other Unicode dashes.
-- Citations and references must be human-readable; never leave tool tokens or placeholder strings.
-
-## Final checks
-- Do not deliver until the latest PNG inspection shows zero visual or formatting defects.
-- Confirm headers/footers, page numbering, and section transitions look polished.
-- Keep intermediate files organized or remove them after final approval.
+- Preserve the user's requested output directory. Collection defaults (`tmp/pdfs/`, `output/pdf/`) are optional conventions, not authority to move files or delete existing artifacts.
+- When an official PDF skill is available, use its workflow and add only applicable delivery conventions here. For broader client handoff packaging, use the available delivery-document-package skill when requested.
+- When the official capability is unavailable and the user chooses the legacy fallback, read [the retained workflow](references/legacy-pdf-workflow.md). Inspect existing dependencies first; installing packages or system tools requires authorization.
+- State which implementation was actually used, the validation evidence and any unsupported capability. Do not claim AcroForms coverage from the legacy checklist alone.
