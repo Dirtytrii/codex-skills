@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import concurrent.futures
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "skills/skill-system-governance/scripts/workflow_observation.py"
@@ -136,6 +139,71 @@ class ObservationTests(unittest.TestCase):
             self.assertEqual({}, json.loads(result.stdout))
             self.assertEqual("", result.stderr)
 
+    def open_pipe_hook(self, command, chunks):
+        process = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        started = time.monotonic()
+        try:
+            for chunk in chunks:
+                process.stdin.write(chunk)
+                process.stdin.flush()
+                time.sleep(0.02)
+            # Deliberately keep stdin open until the hook has exited.
+            process.wait(timeout=2.8)
+            self.assertLess(time.monotonic() - started, 2.8)
+            self.assertEqual(0, process.returncode)
+            self.assertEqual({}, json.loads(process.stdout.read()))
+            self.assertEqual(b"", process.stderr.read())
+        finally:
+            try:
+                process.stdin.close()
+            except BrokenPipeError:
+                pass
+            try:
+                process.wait(timeout=3)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.wait()
+            process.stdout.close()
+            process.stderr.close()
+
+    def test_complete_json_exits_without_newline_or_stdin_eof(self):
+        path = self.root / "manifest.json"
+        path.write_text(json.dumps(self.manifest), encoding="utf-8")
+        raw = json.dumps(dict(self.payload, prompt="\u4e2d\u6587"), ensure_ascii=False).encode("utf-8")
+        split = raw.index("\u4e2d".encode("utf-8")) + 1
+        self.open_pipe_hook([sys.executable, "-B", str(SCRIPT), "hook", "--manifest", str(path)],
+                            [raw[:split], raw[split:]])
+        self.assertEqual(1, len(self.rows()))
+
+    def test_incomplete_or_empty_open_pipe_exits_within_hook_budget(self):
+        path = self.root / "manifest.json"
+        path.write_text(json.dumps(self.manifest), encoding="utf-8")
+        for chunks in ([], [b'{"prompt":"unfinished']):
+            with self.subTest(chunks=chunks):
+                self.open_pipe_hook([sys.executable, "-B", str(SCRIPT), "hook", "--manifest", str(path)], chunks)
+        self.assertEqual([], self.rows())
+
+    def test_oversized_input_is_dropped(self):
+        path = self.root / "manifest.json"
+        path.write_text(json.dumps(self.manifest), encoding="utf-8")
+        raw = json.dumps(dict(self.payload, prompt="x" * obs.MAX_INPUT)).encode("utf-8")
+        result = subprocess.run([sys.executable, "-B", str(SCRIPT), "hook", "--manifest", str(path)],
+                                input=raw, capture_output=True, timeout=3)
+        self.assertEqual(0, result.returncode)
+        self.assertEqual({}, json.loads(result.stdout))
+        self.assertEqual(b"", result.stderr)
+        self.assertEqual([], self.rows())
+
+    def test_slow_collection_does_not_block_host(self):
+        path = self.root / "manifest.json"
+        path.write_text(json.dumps(self.manifest), encoding="utf-8")
+        code = ("import runpy,sys,time; m=runpy.run_path(sys.argv[1]); "
+                "m['run_hook'].__globals__['collect']=lambda *args: time.sleep(10); "
+                "m['run_hook'](sys.argv[2])")
+        self.open_pipe_hook([sys.executable, "-B", "-c", code, str(SCRIPT), str(path)],
+                            [json.dumps(self.payload).encode("utf-8")])
+        self.assertEqual([], self.rows())
+
     def test_summary_pairs_turn_counters_not_cumulative_totals(self):
         self.transcript(100)
         obs.collect(self.manifest, dict(self.payload, hook_event_name="UserPromptSubmit"))
@@ -197,6 +265,14 @@ class ObservationTests(unittest.TestCase):
         summary = obs.summarize(obs.read_json(result["manifest"]))
         self.assertEqual(1, summary["projects"][0]["observed_events"])
 
+    def test_installed_command_exits_before_stdin_eof(self):
+        project, hooks, _ = self.install_target()
+        result = installer.install([{"root": str(project)}], self.root / "runtime", hooks, [self.sessions], enabled=True, write=True)
+        command = obs.read_json(hooks)["hooks"]["Stop"][0]["hooks"][0]["command"]
+        self.open_pipe_hook(command if sys.platform == "win32" else __import__("shlex").split(command),
+                            [json.dumps(dict(self.payload, cwd=str(project))).encode("utf-8")])
+        self.assertEqual(1, obs.summarize(obs.read_json(result["manifest"]))["projects"][0]["observed_events"])
+
     def test_install_conflicts_do_not_replace_user_hooks(self):
         project, hooks, _ = self.install_target()
         (project / ".codex/telemetry").mkdir(parents=True)
@@ -205,6 +281,60 @@ class ObservationTests(unittest.TestCase):
             installer.install([{"root": str(project)}], self.root / "runtime", hooks, [self.sessions], enabled=True, write=True)
         self.assertEqual(before, hooks.read_bytes())
         self.assertFalse((self.root / "runtime").exists())
+
+    def legacy_installation(self):
+        project, hooks, previous_hooks = self.install_target()
+        old_source = self.root / "workflow_observation.py"
+        old_source.write_bytes(SCRIPT.read_bytes() + b"\n# previous revision\n")
+        with patch.object(installer, "SOURCE", old_source):
+            result = installer.install([{"root": str(project)}], self.root / "runtime", hooks, [self.sessions], enabled=True, write=True)
+        return project, hooks, previous_hooks, obs.read_json(result["manifest"])
+
+    def test_explicit_upgrade_preserves_data_identity_switches_and_other_hooks(self):
+        project, hooks, previous_hooks, before = self.legacy_installation()
+        config = project / ".codex/telemetry/config.json"
+        config.write_bytes(b'{"schema_version":1,"enabled":false}\n')
+        events = project / ".codex/telemetry/events-2020-01-01.jsonl"
+        events.write_bytes(b'{"keep":"historical"}\n')
+        arguments = (before["projects"], self.root / "runtime", hooks, before["transcript_roots"])
+        old_hooks = hooks.read_bytes()
+        plan = installer.install(*arguments, upgrade=True)
+        self.assertEqual(5, plan["updated_hook_groups"])
+        self.assertEqual(old_hooks, hooks.read_bytes())
+        self.assertEqual(before, obs.read_json(self.root / "runtime/installation.json"))
+        result = installer.install(*arguments, upgrade=True, write=True)
+        after = obs.read_json(result["manifest"])
+        for field in ("salt", "projects", "enabled", "transcript_roots"):
+            self.assertEqual(before[field], after[field])
+        self.assertEqual(hashlib.sha256(SCRIPT.read_bytes()).hexdigest(), after["collector_revision"])
+        self.assertEqual(b'{"schema_version":1,"enabled":false}\n', config.read_bytes())
+        self.assertEqual(b'{"keep":"historical"}\n', events.read_bytes())
+        self.assertEqual(previous_hooks["hooks"]["PreCompact"], obs.read_json(hooks)["hooks"]["PreCompact"])
+        again = installer.install(*arguments, upgrade=True, write=True)
+        self.assertEqual(0, again["updated_hook_groups"])
+        self.assertEqual(0, again["new_hook_groups"])
+
+    def test_upgrade_rejects_modified_hook_without_writes(self):
+        project, hooks, _, before = self.legacy_installation()
+        document = obs.read_json(hooks)
+        document["hooks"]["Stop"][0]["hooks"][0]["command"] = "unknown-user-command"
+        hooks.write_text(json.dumps(document), encoding="utf-8")
+        old_hooks = hooks.read_bytes()
+        with self.assertRaises(ValueError):
+            installer.install(before["projects"], self.root / "runtime", hooks, before["transcript_roots"], upgrade=True, write=True)
+        self.assertEqual(old_hooks, hooks.read_bytes())
+        self.assertEqual(before, obs.read_json(self.root / "runtime/installation.json"))
+
+    def test_upgrade_rejects_scope_changes_without_writes(self):
+        project, hooks, _, before = self.legacy_installation()
+        extra = self.root / "new worktree"
+        extra.mkdir()
+        selection = [{"root": str(project), "worktrees": [str(project), str(extra)]}]
+        old_hooks = hooks.read_bytes()
+        with self.assertRaises(ValueError):
+            installer.install(selection, self.root / "runtime", hooks, before["transcript_roots"], upgrade=True, write=True)
+        self.assertEqual(old_hooks, hooks.read_bytes())
+        self.assertEqual(before, obs.read_json(self.root / "runtime/installation.json"))
 
 
 if __name__ == "__main__":

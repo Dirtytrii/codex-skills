@@ -16,6 +16,8 @@ python scripts/install_workflow_observation.py \
 
 这里的 `scripts/` 相对本 skill 目录。授权后添加 `--enable --write` 才会安装并打开项目开关。安装器复制带内容哈希目录的独立运行时，保存原 hook 文件备份，向用户 hook 文件追加五组观测 handler；未选中的项目直接跳过。已有安装用相同参数重跑是幂等的。更换代码版本、项目范围或已有未知观测目录时先检查，不静默覆盖。
 
+已核实的现有安装更新采集器时，使用相同清单和 transcript 范围添加 `--upgrade` 查看计划，再添加 `--write` 执行。只替换与旧哈希版本精确匹配的五个观测 handler；保留安装总开关、各项目开关、盐、匿名 ID、工作副本范围和所有既有事件，不重写项目配置。旧运行时及 hook 备份保留；遇到未知命令、被修改的旧运行时或范围变化时拒绝升级。更新后仍需由宿主重新审阅变更的 hook，不能复制旧信任哈希。
+
 每个项目的 `.codex/telemetry/config.json` 保存独立开关，目录内 `.gitignore` 使用 `*` 排除全部观测文件。主目录与已登记工作副本共用主目录中的存储；新建工作副本不会自动纳入，需重新核实清单。全局安装清单中的 `enabled=false` 是总开关，项目配置中的 `enabled=false` 是单项目开关；两处都必须严格为 JSON 布尔 `true` 才记录。
 
 **安装成功不等于宿主已信任。** 新增/变更 hook 须通过 Codex `/hooks` 入口审阅并信任，原生 hook 信任不可用时停在待确认；不能写自造 `trusted_hash`，不能使用绕过信任参数或伪装成 managed hook。重开/恢复任务后再核对真实事件。手动 smoke 与真实宿主事件分开标记。
@@ -33,6 +35,8 @@ python scripts/install_workflow_observation.py \
 
 采集不保存 prompt、源码、工具输入/输出、最后回复、凭据、原始日志、真实项目路径或原始任务 ID。只写固定 schema，未知输入丢弃。使用跨进程文件锁防止并发 JSONL 交错；退出码保持成功，观测错误不改变开发任务行为。
 
+输入读取以完整 JSON 为结束条件，不依赖换行或 stdin EOF，仍限制为 1 MB。采集进程内部最多等待 1.5 秒，空输入、残缺输入和慢采集到期均返回 `{}`；可能丢失该次观测，不应解释为零活动。短生命周期 daemon 仅用于当前 hook 的退出预算，不创建常驻服务。外部五个 hook 的 3 秒上限保持不变，Windows 保留已验证的 PowerShell 命令封装。
+
 `events-YYYY-MM-DD.jsonl` 自动保留最近 30 天，事件总量上限每项目 10 MB。达到上限先移除最老日期的观测文件；当天单文件已满则停止追加，不能把缺失事件解释为零活动。只清理该观测目录中归属本采集器的日期文件，保留其他文件。
 
 ## 自验与后续分析
@@ -46,5 +50,7 @@ python /private/runtime/workflow_observation.py summary --manifest /private/obse
 `smoke` 验证所有已启用项目能写入，但标记 `synthetic_smoke` 并从真实统计剔除。`status/summary` 只汇总本地已脱敏事件，不再次读取原始会话，也不联网。
 
 安装后至少确认：原有 hook 语义未变；目录被 Git 忽略；项目业务改动未变；精确 hook 命令能正确接收 stdin 并输出 `{}`；原生事件实际发生后有 `host_hook` 记录。没有最后一项时只能报告“安装/开关完成，原生触发尚未验证”。
+
+输入链路回归还须覆盖：完整 JSON 无换行且 stdin 保持打开、分片 UTF-8、空或残缺输入不关闭、超限输入、采集卡住，以及精确 Windows 命令在 EOF 前完成。`subprocess.run(input=...)` 会关闭 stdin，单独通过该测试不能证明宿主输入流兼容。
 
 源仓库回归：`python -B scripts/test_workflow_observation.py`；修改 skill 后同步 bundle 并运行 full 审计。公开材料只记录脚本行为和汇总证据，不发布真实本地事件。

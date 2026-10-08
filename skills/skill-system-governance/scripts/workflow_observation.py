@@ -13,6 +13,7 @@ import os
 from pathlib import Path
 import re
 import sys
+import threading
 import time
 import uuid
 
@@ -23,6 +24,40 @@ MAX_INPUT = 1024 * 1024
 MAX_TAIL = 2 * 1024 * 1024
 MAX_STORAGE = 10 * 1024 * 1024
 RETENTION_DAYS = 30
+HOOK_BUDGET_SECONDS = 1.5
+
+
+def read_hook_payload(fd):
+    """Read one complete JSON value, without requiring a newline or pipe EOF."""
+    raw = bytearray()
+    while len(raw) <= MAX_INPUT:
+        chunk = os.read(fd, min(65536, MAX_INPUT + 1 - len(raw)))
+        if not chunk:
+            raise ValueError("incomplete hook input")
+        raw.extend(chunk)
+        if len(raw) > MAX_INPUT:
+            raise ValueError("hook input too large")
+        try:
+            return json.loads(raw)
+        except ValueError:
+            continue  # JSON or a UTF-8 character may span multiple pipe writes.
+
+
+def run_hook(manifest_path):
+    def observe():
+        try:
+            payload = read_hook_payload(sys.stdin.fileno())
+            collect(read_json(manifest_path), payload)
+        except Exception:
+            pass  # Observability failure must never steer, block, or expose a task.
+
+    # os.read avoids holding Python's buffered-stdin lock during process shutdown.
+    # The daemon lives only in this short-lived hook process, never a background service.
+    worker = threading.Thread(target=observe, daemon=True)
+    worker.start()
+    worker.join(HOOK_BUDGET_SECONDS)
+    print("{}")
+    return 0
 
 
 def read_json(path):
@@ -286,14 +321,7 @@ def main():
     parser.add_argument("--manifest", required=True, type=Path)
     args = parser.parse_args()
     if args.action == "hook":
-        try:
-            raw = sys.stdin.buffer.read(MAX_INPUT + 1)
-            if len(raw) <= MAX_INPUT:
-                collect(read_json(args.manifest), json.loads(raw))
-        except Exception:
-            pass  # Observability failure must never steer, block, or expose a task.
-        print("{}")
-        return 0
+        return run_hook(args.manifest)
     manifest = read_json(args.manifest)
     if args.action == "smoke":
         results = [{"project_id": project["project_id"], "written": collect(manifest, {
