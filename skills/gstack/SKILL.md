@@ -7,6 +7,8 @@ description: Codex adapter for Garry Tan's full gstack methodology across CEO/pr
 
 Use this as the Codex-facing entrypoint for gstack in this skill collection.
 
+Only this router and investigate/review/qa-only/careful remain implicitly discoverable. Other methods keep their explicit names and can be loaded from the scoped map below after selecting one method. Never load the entire family. Explicit discovery does not authorize implementation, deployment or publication.
+
 This repository does not vendor the full upstream gstack runtime. It adapts the useful methodology into safe Codex role tools and keeps upstream runtime behaviors optional.
 
 ## Source

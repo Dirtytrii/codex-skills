@@ -1,6 +1,6 @@
 ---
 name: cheat-init
-description: cheat-on-content 的首次 onboarding 与脚手架创建器。统一流程——所有用户都走相同 5 阶段闭环，唯一区别是"发过视频的人"会在 init 时多一步：抓取已有视频建立历史 context（用于后续 cheat-seed 给更贴合的选题、更准的 baseline）。触发词："初始化"/"init"/"首次使用"/"我是新用户"/"setup cheat-on-content"。**必须在用户第一次会话执行；其他子 skill 在 .cheat-state.json 不存在时自动路由到此。**
+description: 初始化 cheat-on-content 内容校准工作区。仅在用户明确开始该工作流，或其子 skill 确认缺少 .cheat-state.json 时使用；不响应一般项目初始化、安装诊断或 Codex 首次会话。
 argument-hint: "[— form: opinion-video|long-essay|short-text|podcast]"
 allowed-tools: Bash(*), Read, Write, Edit, Glob, WebFetch, Skill
 ---
@@ -12,7 +12,7 @@ allowed-tools: Bash(*), Read, Write, Edit, Glob, WebFetch, Skill
 ## Overview
 
 ```
-[用户首次说"初始化"]
+[用户明确初始化 cheat-on-content 内容校准工作区]
   ↓
 [Phase 0: 检测当前状态]
   ↓

@@ -57,6 +57,10 @@ PROMPT_REQUIRED_MARKERS = [
 ]
 
 LEDGER_REQUIRED_HEADERS = ["角色", "状态", "thread id", "来源窗口", "当前职责", "下一步", "循环状态"]
+EXECUTOR_REQUIRED_MARKERS = ["actor-kind：executor", "模型建议：", "目标：", "基线：",
+    "请先阅读/检查：", "允许修改：", "禁止修改：", "验证：", "STOP / 退出条件：", "结果回传："]
+GATE_FIELDS = ["独立复核角色与证据", "失败/回滚条件与执行责任人",
+               "未解决风险、剩余不确定性与影响范围", "最终 go/no-go 决策方"]
 TOP_LEVEL_REQUIRED_ROLES = {"总控", "架构", "内容主编"}
 
 CALLBACK_REQUIRED_MARKERS = [
@@ -253,8 +257,32 @@ def validate_prompt(path: Path) -> CheckResult:
     metrics: dict[str, object] = {}
     text = read_text(path)
 
-    for marker in missing_markers(text, PROMPT_REQUIRED_MARKERS):
+    is_executor = (extract_field(text, "actor-kind") == "executor"
+                   or "本窗口是负责人已派发的一次性 executor" in text)
+    markers = EXECUTOR_REQUIRED_MARKERS if is_executor else PROMPT_REQUIRED_MARKERS
+    for marker in missing_markers(text, markers):
         errors.append(f"missing prompt marker: {marker}")
+
+    if (re.search(r"有效控制：[^\n]*(?:risk=(?:critical|extreme)|loop=L3)", text)
+            or re.search(r"本次深度[:：]\s*L3", text) or extract_field(text, "profile") == "full"):
+        for field in GATE_FIELDS:
+            if not extract_field(text, field):
+                errors.append(f"L3/high-risk prompt is missing required gate: {field}")
+
+    if is_executor:
+        if re.search(r"父任务风险：(critical|extreme)", text):
+            if ("owner-gates：retained" not in text or not extract_field(text, "叶子隔离证据")
+                    or "有效控制：risk=mechanical" not in text):
+                errors.append("high-risk parent leaf lacks isolation or retained owner gates")
+        for field in ("fanout-policy", "ledger-write", "commit-policy"):
+            values = re.findall(rf"(?m)^[ \t-]*{re.escape(field)}[:：][ \t]*(.*)$", text)
+            if len(values) != 1 or values[0].strip() != "forbidden":
+                errors.append(f"executor {field} must be forbidden")
+        for conflict in ("更新 .codex/role-windows.md 并提交", "串行使用一个一次性 worker",
+                         "必须派发至少一个", "技能路由台账", "execution-profile：parallel"):
+            if conflict in text:
+                errors.append(f"executor inherits owner-only instruction: {conflict}")
+        metrics["actor_kind"] = "executor"
 
     model = extract_field(text, "model")
     thinking = extract_field(text, "thinking")
@@ -301,7 +329,7 @@ def validate_prompt(path: Path) -> CheckResult:
         re.search(r"你现在担任：[\s\r\n]*开发(?:[\s\r\n]|$)", text)
         or "角色：开发；" in text
     )
-    if is_development_prompt:
+    if is_development_prompt and not is_executor:
         raw_policy = extract_field(text, "delegation-policy")
         delegation_policy = raw_policy.split("（", 1)[0].strip()
         if delegation_policy not in {"forbidden", "optional", "required"}:

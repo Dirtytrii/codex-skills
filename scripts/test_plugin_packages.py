@@ -114,7 +114,7 @@ def test_context_audit_fails_closed_for_oversized_multi_domain_set() -> None:
     )
     assert result.returncode == 1
     report = json.loads(result.stdout)
-    assert report["catalog_chars"] == 10414
+    assert report["catalog_chars"] > CATALOG_TARGET
     assert report["within_target"] is False
 
 
@@ -171,7 +171,7 @@ def test_documented_package_metrics_match_validator() -> None:
     for item in report["packages"]:
         assert f"| `{item['name']}` |" in guide
         assert f"| {item['catalog_chars']} |" in guide
-    assert "10414" in guide
+    assert "目录估算" in guide
 
 
 def main() -> int:

@@ -55,10 +55,12 @@ def compact_message(value: str, limit: int = 500) -> str:
 
 
 def pending_change_count(pending: object) -> int | None:
-    if not isinstance(pending, dict):
+    if not isinstance(pending, dict) or not {"added", "modified", "removed"} <= pending.keys():
         return None
-    values = [value for value in pending.values() if isinstance(value, int)]
-    return sum(values) if values else 0
+    # bool is an int subclass; coercion or silently dropped fields would hide changes.
+    if any(type(value) is not int or value < 0 for value in pending.values()):
+        return None
+    return sum(pending.values())
 
 
 def has_worktree_mismatch(value: object) -> bool:
@@ -86,6 +88,17 @@ def apply_cli_status(
     pending = payload.get("pendingChanges")
     mismatch = payload.get("worktreeMismatch")
     pending_count = pending_change_count(pending)
+    if type(payload.get("initialized")) is not bool:
+        status["status_parse_error"] = "initialized must be an explicit boolean"
+        return
+    if pending_count is None:
+        status["status_parse_error"] = "pendingChanges requires added/modified/removed non-negative integer counts"
+        return
+    if "worktreeMismatch" not in payload or not (
+        mismatch is None or type(mismatch) is bool or (isinstance(mismatch, dict) and bool(mismatch))
+    ):
+        status["status_parse_error"] = "worktreeMismatch must be explicit null, boolean, or non-empty mismatch details"
+        return
     status.update(
         {
             "status_checked": True,
@@ -112,7 +125,7 @@ def finish_status(status: dict[str, object]) -> dict[str, object]:
         and initialized
         and tool_available
         and status_checked
-        and reported_initialized is not False
+        and reported_initialized is True
         and fresh
     )
 

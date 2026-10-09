@@ -825,7 +825,7 @@
       "UI/PPT",
       "视频"
     ],
-    "summary": "Codex pet 精灵图生成、修复、校验和打包"
+    "summary": "显式 v1 宠物兼容修复；新宠物交给已安装的 v2 实现"
   },
   {
     "name": "package-update-check-and-plan",
@@ -852,7 +852,7 @@
       "开发",
       "UI/PPT"
     ],
-    "summary": "PDF 读取、生成、渲染校验工作流"
+    "summary": "显式 PDF 交付兼容入口；通用 PDF 能力优先官方实现"
   },
   {
     "name": "playwright",

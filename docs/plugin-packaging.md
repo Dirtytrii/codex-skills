@@ -9,12 +9,14 @@
 | `codex-skills-core` | 是 | 4 | 1203 | 总控/角色路由、Skill 体系治理、浏览器路由、项目压力测试 |
 | `codex-skills-engineering` | 否 | 34 | 6677 | 架构、开发、测试、QA、工程发布 |
 | `codex-skills-operations` | 否 | 9 | 2204 | 运维诊断、安全、部署门禁、恢复规划 |
-| `codex-skills-content` | 否 | 12 | 6542 | 内容研究、写作、公众号、小红书和发布准备 |
-| `codex-skills-visual-delivery` | 否 | 9 | 2669 | UI、视觉资产、PPT、PDF 和交付文档 |
+| `codex-skills-content` | 否 | 12 | 6323 | 内容研究、写作、公众号、小红书和发布准备 |
+| `codex-skills-visual-delivery` | 否 | 9 | 2542 | UI、视觉资产、PPT、PDF 和交付文档 |
 
 内容插件还包含 `cheat-on-content` 下的 nested skills，因此它的 catalog record 多于顶层目录数。当前 core 与任一单个 domain 的组合都低于仓库的 8000 字符目录目标。这个数字是用于防止目录膨胀的稳定 guardrail，不等同于一次任务的精确 Token 账单。
 
-跨域任务先运行审计。组合仍低于目标时可以同时启用；超过目标时拆成阶段任务，并用压缩交接传递必要事实。例如 core + content + visual-delivery 当前为 10414 字符，公众号文章和社交卡片应分别在内容阶段、视觉阶段处理，而不是让两个大目录长期同时常驻。不要复制同一个 skill，也不要把领域能力塞回 core。
+跨域任务先运行审计。组合仍低于目标时可以同时启用；超过目标时拆成阶段任务，并用压缩交接传递必要事实。例如 core + content + visual-delivery 当前原始目录估算为 10068 字符。不要复制同一个 skill，也不要把领域能力塞回 core。
+
+原始目录估算包含显式入口；`implicit_catalog_chars` 单独估算隐式候选。gstack 保留路由器与 investigate/review/qa-only/careful，其余方法仍可显式使用。旧 hatch-pet 是显式 v1 兼容入口，新宠物应交给已安装的 v2 实现；PDF 也是显式备用适配器，通用功能优先官方 PDF。原工作流保留在各自 references 中，不删除旧资产，不宣称已验证 v2 产物。
 
 ## 安装
 
@@ -70,7 +72,7 @@ python scripts/validate_public_skills.py
 - marketplace、manifest、`agents/openai.yaml` 和生成 bundle 一致且可用于插件。
 - core 与任一单 domain 不超过 8000 字符目录目标。
 
-按实际启用组合审计：
+按拟用组合审计（不会修改安装或启用状态）：
 
 ```bash
 python scripts/audit_plugin_context.py \
@@ -79,7 +81,11 @@ python scripts/audit_plugin_context.py \
   --scan-user-roots --json
 ```
 
-`--plugin` 可重复；依赖的 core 会自动加入。`--scan-user-roots` 只读取两个用户 skill 根目录中的顶层名称，用于提示同名旧平铺安装，不推测 Codex 当前任务真实启用了哪些插件。
+`--plugin` 可重复；拟用方案自动加入依赖的 core。`--preset development|content|operations|visual` 提供四种 core/domain 方案。
+
+用 `--codex-config /path/to/config.toml --json` 只读检查实际显式启用项，缺失依赖单独报告，不把建议补装的 core 冒充已启用。缺失/无效配置返回错误。`--scan-user-roots` 只读取用户根中的安装名称，不证明本轮可见性；`runtime_visibility=not_evaluable` 仍需用新任务真实目录核对。输出基于当前源版本，不冒充已安装缓存的版本。
+
+开发方案保留 38 个可调用入口，其中 11 个隐式候选、隐式目录估算 2866 字符。目录缩短不是会员账单节省承诺。不要为了切换方案静默修改全局配置，影响其他正在运行的任务。
 
 加上 `--strict` 后，组合超过 8000 字符会返回非零状态。此时缩小插件集合或拆分任务，不要把警告解释成插件安装失败。
 

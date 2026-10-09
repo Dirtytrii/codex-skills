@@ -19,3 +19,9 @@
 {"id":"no-skill-arithmetic","prompt":"计算 17 + 25，只返回结果。","required_skills":[],"allowed_skills":[],"forbidden_skills":[]}
 {"id":"no-skill-translation","prompt":"把这句话翻译成英文：今天下雨了。","required_skills":[],"allowed_skills":[],"forbidden_skills":[]}
 {"id":"no-skill-basic-explanation","prompt":"用一句话解释什么是变量。","required_skills":[],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"java-init-not-content-init","prompt":"为一个空目录初始化普通 Java 项目，不涉及内容账号或内容校准。","required_skills":[],"allowed_skills":["agent-role-orchestrator","gstack"],"forbidden_skills":["cheat-init","cheat-status"]}
+{"id":"build-status-not-content-status","prompt":"查看这个 Java 项目的 Maven 构建状态，不修改文件。","required_skills":[],"allowed_skills":["gstack-investigate"],"forbidden_skills":["cheat-status","cheat-init"]}
+{"id":"gstack-explicit-specialist","prompt":"明确使用 $gstack-canary 为已批准发布写灰度观察计划，不执行部署。","required_skills":["gstack-canary"],"allowed_skills":["gstack"],"forbidden_skills":["gstack-land-and-deploy"]}
+{"id":"new-pet-not-v1-adapter","prompt":"生成一个新的 v2 Codex 宠物。已有独立安装的 v2 pet skill，不要使用旧 v1 管线。","required_skills":[],"allowed_skills":[],"forbidden_skills":["hatch-pet"]}
+{"id":"legacy-pet-explicit","prompt":"明确使用自维护插件中的 hatch-pet 兼容入口修复现有 v1 8x9 宠物，保留 v1 格式。","required_skills":["hatch-pet"],"allowed_skills":[],"forbidden_skills":[]}
+{"id":"executor-card-not-owner-window","prompt":"开发负责人需要一张机械叶子执行卡，只允许修改测试 fixture，执行器不得提交、更新角色台账或再派人。","required_skills":["agent-role-orchestrator"],"allowed_skills":[],"forbidden_skills":["gstack-autoplan"]}

@@ -47,6 +47,14 @@ Long-running means the work is likely to cross the current interaction/context b
 
 Generating a card does not create a worker. The Dev Lead must explicitly create the one-shot subagent with the recommended model/thinking when the runtime supports overrides. Every development callback reports whether delegation happened, actual model/thinking, task-card or evidence handle, retries/rework, and Dev Lead revalidation. Model availability is checked at execution time; substitutions are recorded rather than silently assumed.
 
+## Isolated Assets Under A High-Risk Parent
+
+The parent stays critical/L3. A separate leaf may use `--parent-risk critical|extreme --risk mechanical --executor-tier mechanical --task-size small` only for `--leaf-kind documentation|test-fixture`. This pilot is limited to exact `docs/*.md|rst|txt` paths (including subdirectories) or non-executable `tests/fixtures/*` / `test/fixtures/*` JSON/CSV/TXT assets; no implementation files, glob scopes or traversal.
+
+Require an existing `--project`, an owner-approved `--leaf-safety` evidence handle, baseline context, source thread, explicit reads/allowlist/validation/STOP. The owner verifies isolation from high-risk behavior and shared changing state. Arguments attest to that judgment; the generator cannot prove business semantics. Leaf completion never closes the parent's L3 gates. Explicit no-subagent instructions, high-risk leaf code and final integration remain forbidden to cheap workers.
+
+This does not lower model effort automatically. Compare actual end-to-end quality, retries and consumption before changing defaults.
+
 ## Spark Opportunity Lane
 
 `gpt-5.3-codex-spark` is an opportunistic preview lane alongside the stable tiers. OpenAI currently describes it as a text-only, 128K, real-time coding model with a separate preview rate limit that may change with demand; credit rates are not final. Source: [Introducing GPT-5.3-Codex-Spark](https://openai.com/index/introducing-gpt-5-3-codex-spark/).
