@@ -102,6 +102,30 @@ class ObservationTests(unittest.TestCase):
         obs.collect(self.manifest, self.payload)
         self.assertIsNone(self.rows()[-1]["usage_snapshot"])
 
+    @unittest.skipUnless(sys.platform == "win32", "Windows extended-length paths")
+    def test_extended_length_transcript_is_normalized_without_expanding_scope(self):
+        source = self.transcript()
+        extended = "\\\\?\\" + str(source.resolve())
+        self.payload["transcript_path"] = extended
+        obs.collect(self.manifest, self.payload)
+        self.assertEqual("bounded_transcript_metadata", self.rows()[-1]["transcript_evidence"])
+        self.assertEqual(100, self.rows()[-1]["usage_snapshot"]["total_tokens"])
+        self.assertEqual("high", self.rows()[-1]["thinking"])
+        self.assertTrue(obs.contained(source, "\\\\?\\" + str(self.sessions.resolve())))
+        outside = self.root / "outside.jsonl"
+        outside.write_bytes(source.read_bytes())
+        self.payload["transcript_path"] = "\\\\?\\" + str(outside.resolve())
+        obs.collect(self.manifest, self.payload)
+        self.assertEqual("unavailable", self.rows()[-1]["transcript_evidence"])
+
+    def test_oversized_partial_tail_line_does_not_expand_read_budget(self):
+        source = self.transcript()
+        with source.open("ab") as stream:
+            stream.write(b'x' * (obs.MAX_TAIL + 100))
+        snapshot = obs.transcript_snapshot(self.manifest, self.manifest["projects"][0], self.payload)
+        self.assertIsNone(snapshot["usage"])
+        self.assertEqual("bounded_transcript_metadata", snapshot["evidence"])
+
     def test_subagent_does_not_inherit_parent_model(self):
         self.payload.update(hook_event_name="SubagentStart", agent_id="worker-1")
         obs.collect(self.manifest, self.payload)

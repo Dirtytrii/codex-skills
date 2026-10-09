@@ -64,8 +64,19 @@ def read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8-sig"))
 
 
+def resolved_path(path):
+    resolved = str(Path(path).resolve())
+    if os.name == "nt" and resolved.startswith("\\\\?\\"):
+        if resolved[4:8].upper() == "UNC\\":
+            resolved = "\\\\" + resolved[8:]
+        elif re.match(r"^[A-Za-z]:\\", resolved[4:]):
+            resolved = resolved[4:]
+    return Path(resolved)
+
+
 def contained(path, root):
-    return Path(path).resolve().is_relative_to(Path(root).resolve())
+    # Normalize only after resolving links; do not weaken the project/root boundary.
+    return resolved_path(path).is_relative_to(resolved_path(root))
 
 
 def linked(path):
@@ -141,9 +152,10 @@ def transcript_snapshot(manifest, project, payload):
             size = stream.seek(0, os.SEEK_END)
             offset = max(0, size - MAX_TAIL)
             stream.seek(offset)
-            if offset:
-                stream.readline()  # The tail may start inside a JSON line.
             tail = stream.read(MAX_TAIL)
+            if offset:
+                # Discard a partial first line without reading beyond the tail budget.
+                tail = tail.partition(b"\n")[2]
         snapshot = dict(empty, evidence="bounded_transcript_metadata", bytes=size)
         for line in tail.splitlines():
             try:
