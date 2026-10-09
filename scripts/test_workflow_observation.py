@@ -21,6 +21,7 @@ obs = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(obs)
 sys.path.insert(0, str(SCRIPT.parent))
 import install_workflow_observation as installer
+import record_workflow_evidence as evidence
 
 
 class ObservationTests(unittest.TestCase):
@@ -359,6 +360,93 @@ class ObservationTests(unittest.TestCase):
             installer.install(selection, self.root / "runtime", hooks, before["transcript_roots"], upgrade=True, write=True)
         self.assertEqual(old_hooks, hooks.read_bytes())
         self.assertEqual(before, obs.read_json(self.root / "runtime/installation.json"))
+
+    def evidence_fixture(self):
+        ledger = self.project / ".codex/role-windows.md"
+        ledger.write_text(
+            "|角色|状态|thread id|来源窗口|当前职责|下一步|循环状态|\n"
+            "|---|---|---|---|---|---|---|\n"
+            "|开发|已建立|private-session|架构|实现|回报|完成|\n"
+            "|QA|已建立|review-session|架构|复核|回报|完成|\n", encoding="utf-8")
+        report = self.project / ".codex/tasks/review.md"
+        report.parent.mkdir(parents=True)
+        report.write_text("SECRET-REPORT-BODY", encoding="utf-8")
+        obs.collect(self.manifest, self.payload)
+        return {"schema_version": 1, "cwd": str(self.project), "session_id": "private-session",
+                "turn_id": "private-turn", "reporter_session_id": "review-session", "kind": "review",
+                "quality_pass": True, "safety_pass": True, "evidence_files": [".codex/tasks/review.md"],
+                "prompt": "SECRET-INPUT"}
+
+    def evidence_rows(self):
+        return [json.loads(line) for path in obs.event_files(self.data, "evidence")
+                for line in path.read_text(encoding="utf-8").splitlines()]
+
+    def test_role_reports_preserve_provenance_and_do_not_score_quality(self):
+        report = self.evidence_fixture()
+        evidence.record(self.manifest, report)
+        evidence.record(self.manifest, dict(report, kind="rework", reporter_session_id="private-session", retries=2))
+        evidence.record(self.manifest, dict(report, kind="skill_usage", reporter_session_id="private-session",
+                        skills_loaded=["agent-role-orchestrator"], skills_used=["agent-role-orchestrator"],
+                        skills_missed=[], skills_misfired=[]))
+        rows = self.evidence_rows()
+        self.assertEqual(["registered_review_report", "role_self_report", "role_self_report"],
+                         [row["evidence_source"] for row in rows])
+        self.assertEqual(2, rows[1]["retries"])
+        self.assertEqual(["agent-role-orchestrator"], rows[2]["skills_used"])
+        encoded = json.dumps(rows)
+        for private in ("SECRET", "private-session", "review-session", str(self.project)):
+            self.assertNotIn(private, encoded)
+        summary = obs.summarize(self.manifest)["projects"][0]
+        self.assertEqual({"review": 1, "rework": 1, "skill_usage": 1}, summary["evidence_report_counts"])
+        self.assertEqual("not_evaluable", summary["quality"])
+        self.assertEqual("not_evaluable", summary["skill_hit_rate"])
+        self.assertIsNone(self.rows()[0]["quality_pass"])
+
+    def test_evidence_command_records_existing_review_without_extra_workflow(self):
+        report = self.evidence_fixture()
+        manifest_path = self.root / "manifest.json"
+        manifest_path.write_text(json.dumps(self.manifest), encoding="utf-8")
+        result = subprocess.run([sys.executable, "-B", str(Path(evidence.__file__)), "--manifest", str(manifest_path)],
+                                input=json.dumps(report).encode("utf-8"), capture_output=True, timeout=5)
+        self.assertEqual(0, result.returncode, result.stderr)
+        self.assertTrue(json.loads(result.stdout)["recorded"])
+        self.assertEqual(1, len(self.evidence_rows()))
+
+    def test_self_review_unknown_turn_and_unregistered_reporter_are_rejected(self):
+        report = self.evidence_fixture()
+        for change in ({"reporter_session_id": "private-session"}, {"turn_id": "unknown-turn"},
+                       {"reporter_session_id": "unknown-reporter"}, {"quality_pass": "true"}):
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                evidence.record(self.manifest, dict(report, **change))
+        self.assertEqual([], self.evidence_rows())
+
+    def test_disabled_or_outside_evidence_cannot_write(self):
+        report = self.evidence_fixture()
+        for paths in (["../outside.md"], ["auth.json"], [".codex/tasks/missing.md"]):
+            with self.subTest(paths=paths), self.assertRaises((ValueError, OSError)):
+                evidence.record(self.manifest, dict(report, evidence_files=paths))
+        self.config.write_text('{"schema_version":1,"enabled":false}', encoding="utf-8")
+        with self.assertRaises(ValueError):
+            evidence.record(self.manifest, report)
+        self.assertEqual([], self.evidence_rows())
+
+    def test_invalid_skill_claims_and_rework_counts_are_rejected(self):
+        report = self.evidence_fixture()
+        for retries in (-1, True, "0"):
+            with self.subTest(retries=retries), self.assertRaises(ValueError):
+                evidence.record(self.manifest, dict(report, kind="rework", reporter_session_id="private-session", retries=retries))
+        with self.assertRaises(ValueError):
+            evidence.record(self.manifest, dict(report, kind="skill_usage", reporter_session_id="private-session",
+                skills_loaded=[], skills_used=["not-loaded"], skills_missed=[], skills_misfired=[]))
+        self.assertEqual([], self.evidence_rows())
+
+    def test_evidence_and_lifecycle_share_storage_limit(self):
+        report = self.evidence_fixture()
+        with patch.dict(evidence.append_event.__globals__, {"MAX_STORAGE": 1}):
+            with self.assertRaises(ValueError):
+                evidence.record(self.manifest, report)
+        self.assertEqual(1, len(self.rows()))
+        self.assertEqual([], self.evidence_rows())
 
 
 if __name__ == "__main__":

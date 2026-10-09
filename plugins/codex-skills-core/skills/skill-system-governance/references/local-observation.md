@@ -54,3 +54,25 @@ python /private/runtime/workflow_observation.py summary --manifest /private/obse
 输入链路回归还须覆盖：完整 JSON 无换行且 stdin 保持打开、分片 UTF-8、空或残缺输入不关闭、超限输入、采集卡住，以及精确 Windows 命令在 EOF 前完成。`subprocess.run(input=...)` 会关闭 stdin，单独通过该测试不能证明宿主输入流兼容。
 
 源仓库回归：`python -B scripts/test_workflow_observation.py`；修改 skill 后同步 bundle 并运行 full 审计。公开材料只记录脚本行为和汇总证据，不发布真实本地事件。
+
+## 自然闭环的结果证据
+
+只记录已经发生的验收、返工和技能使用，不为填数据发起额外测评、模型调用或角色窗口。已启用项目的负责人/复核者在自然闭环时执行同包 `scripts/record_workflow_evidence.py --manifest <既有安装清单>`，通过 stdin 传一个 JSON。清单路径取既有 `Local workflow observation` handler 的 `--manifest` 参数；不要猜测位置、修改 hook 信任或重新启用未授权项目。
+
+通用字段：`schema_version=1`、`cwd`、`session_id`、`turn_id`、`reporter_session_id`、`kind`、`evidence_files`。目标 session/turn 必须已有真实生命周期记录；目标和报告者必须登记在项目 `.codex/role-windows.md`。仅负责人或既有复核角色写入，一次性 executor 回传文件证据后由负责人处理。
+
+- `kind=review`：填写明确布尔值 `quality_pass`、`safety_pass`；报告者必须是与目标不同的已登记架构/QA/测试/安全/DBA/运维/总控/内容主编线程。它证明“不同登记线程提交了带文件句柄的复核报告”，不自动证明复核内容真实或质量通过。
+- `kind=rework`：报告者须是目标线程本人，填写非负整数 `retries`，表示该工作流实际重试/返工次数；没有事实依据时不填零，不提交虚构记录。
+- `kind=skill_usage`：报告者须是目标线程本人，填写 `skills_loaded`、`skills_used`、`skills_missed`、`skills_misfired` 四个列表；used/misfired 必须属于 loaded，missed 与 loaded 互斥。这是角色自报，不是独立路由器观测。
+
+`evidence_files` 为 1–8 个现有项目相对报告文件，允许 `.codex/tasks/`、`.codex/reports/`、`docs/`、`target/surefire-reports/`、`test-results/` 下的 md/json/txt/xml，每个最多 2 MB。保存相对路径与内容 SHA256，不复制报告正文、输入或原始身份；绝对路径、越界/链接文件和未知轮次被拒绝。先落实报告文件再记录，后续审查可用哈希检查文件是否改变。若缺台账、已有验收或文件证据，保持缺失并回传原因，不用自证补齐。
+
+记录独立追加到 `evidence-YYYY-MM-DD.jsonl`，与生命周期事件共用锁、30 天保留期和每项目 10 MB 总上限；不改写旧事件的空字段。`status/summary` 只显示各类证据数量，quality、实际路由命中和会员节省仍不自动评分。
+
+示例结构（占位身份须换成当前真实登记身份，不要把示例当真实数据）：
+
+```json
+{"schema_version":1,"cwd":"<已授权项目>","session_id":"<目标线程>","turn_id":"<已观测轮次>","reporter_session_id":"<既有复核线程>","kind":"review","quality_pass":true,"safety_pass":true,"evidence_files":[".codex/tasks/acceptance.md"]}
+```
+
+Windows `\\?\` 驱动器/UNC 路径只在解析真实路径之后统一比较，不扩大 transcript 授权根。无法匹配的会话仍保持 `unavailable`；不扫描或回填历史聊天，不用当前累计 Token 伪造过去的起点。

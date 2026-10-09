@@ -209,29 +209,32 @@ def file_lock(directory):
                 fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
-def event_files(directory):
-    return sorted(path for path in directory.glob("events-*.jsonl")
-                  if re.fullmatch(r"events-\d{4}-\d{2}-\d{2}\.jsonl", path.name)
-                  and not linked(path) and contained(path, directory))
+def event_files(directory, prefix="events"):
+    prefixes = ("events", "evidence") if prefix is None else (prefix,)
+    return sorted((path for name in prefixes for path in directory.glob(f"{name}-*.jsonl")
+                   if re.fullmatch(rf"{name}-\d{{4}}-\d{{2}}-\d{{2}}\.jsonl", path.name)
+                   and not linked(path) and contained(path, directory)), key=lambda path: (path.stem[-10:], path.name))
 
 
-def append_event(directory, row):
+def append_event(directory, row, *, prefix="events"):
+    if prefix not in {"events", "evidence"}:
+        raise ValueError("invalid observation file prefix")
     encoded = (json.dumps(row, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
     now = datetime.now(timezone.utc)
-    path = directory / f"events-{now:%Y-%m-%d}.jsonl"
+    path = directory / f"{prefix}-{now:%Y-%m-%d}.jsonl"
     if linked(path):
         raise ValueError("unsafe event file")
     with file_lock(directory):
-        cutoff = f"events-{(now - timedelta(days=RETENTION_DAYS)):%Y-%m-%d}.jsonl"
-        for candidate in event_files(directory):
-            if candidate.name < cutoff:
+        cutoff = f"{(now - timedelta(days=RETENTION_DAYS)):%Y-%m-%d}"
+        for candidate in event_files(directory, None):
+            if candidate.stem[-10:] < cutoff:
                 candidate.unlink()
-        files = event_files(directory)
+        files = event_files(directory, None)
         total = sum(candidate.stat().st_size for candidate in files)
         for candidate in files:
             if total + len(encoded) <= MAX_STORAGE:
                 break
-            if candidate == path:
+            if candidate.stem[-10:] == f"{now:%Y-%m-%d}":
                 return False  # Never rewrite today's observations to hide overflow.
             total -= candidate.stat().st_size
             candidate.unlink()
@@ -284,6 +287,7 @@ def summarize(manifest):
         directory = data_directory(project)
         rows = []
         invalid = 0
+        reports = []
         for path in event_files(directory):
             with path.open(encoding="utf-8") as stream:
                 for line in stream:
@@ -293,6 +297,15 @@ def summarize(manifest):
                             rows.append(row)
                     except (ValueError, AttributeError):
                         invalid += 1
+        for path in event_files(directory, "evidence"):
+            for line in path.read_text(encoding="utf-8").splitlines():
+                try:
+                    row = json.loads(line)
+                    if row.get("project_id") == project["project_id"] and row.get("evidence_source") in {
+                            "registered_review_report", "role_self_report"}:
+                        reports.append(row)
+                except (ValueError, AttributeError):
+                    invalid += 1
         turns = {}
         for row in rows:
             if not row.get("session_id") or not row.get("turn_id") or row.get("agent_id"):
@@ -317,11 +330,14 @@ def summarize(manifest):
                        "model_event_counts": dict(Counter(row["actual_model"] for row in rows if row.get("actual_model"))),
                        "native_hook_seen": bool(rows),
                        "last_host_hook_at": rows[-1]["recorded_at"] if rows else None,
-                       "storage_bytes": sum(path.stat().st_size for path in event_files(directory)),
+                       "storage_bytes": sum(path.stat().st_size for path in event_files(directory, None)),
                        "subagents_observed": len({row["agent_id"] for row in rows if row.get("agent_id")}),
                        "complete_usage_turns": len(deltas), "per_session_token_delta": sum(deltas) if deltas else None,
                        "complete_timed_turns": len(durations), "elapsed_seconds": round(sum(durations), 3) if durations else None,
                        "quality": "not_evaluable", "skill_hit_rate": "not_evaluable", "membership_savings": "not_evaluable",
+                       "evidence_report_counts": dict(Counter(row["kind"] for row in reports)),
+                       "registered_review_reports": sum(row["kind"] == "review" for row in reports),
+                       "evidence_report_note": "Role reports and file hashes, not independently verified quality or actual router decisions.",
                        "invalid_lines": invalid})
     return {"schema_version": 1, "projects": output,
             "note": "No quality inference. Token deltas need complete start/end pairs; parent/child usage may overlap. Do not treat as billing."}
