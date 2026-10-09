@@ -142,6 +142,11 @@ def build_check_plans(
         plans.extend(
             [
                 CheckPlan(
+                    "observation_tests",
+                    command_for(repo, "scripts/test_workflow_observation.py"),
+                    True,
+                ),
+                CheckPlan(
                     "contract_tests",
                     command_for(repo, "scripts/test_skill_contract_regressions.py"),
                     True,

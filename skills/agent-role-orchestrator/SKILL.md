@@ -233,6 +233,8 @@ Read `references/role-cards.md`, then only the thematic reference required by th
 7. Validate before dispatch.
 8. On terminal state, update ledger, send callback, aggregate skill hits when useful, and route reusable improvements.
 
+For projects already opted into local observation, record existing closure evidence via [local observation](../skill-system-governance/references/local-observation.md): a different registered reviewer reports acceptance; the participating owner reports rework and skill use. Keep reports separate from actual routing observations. Do not launch extra reviews, trials or agents just to populate telemetry; one-shot executors return evidence to the owner and do not write these records.
+
 Generated prompts must include:
 
 ```text
