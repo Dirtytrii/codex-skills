@@ -6,20 +6,17 @@
 
 ## 它是什么
 
-[aihot.virxact.com](https://aihot.virxact.com) 的 Claude skill 适配。直接 curl 公开 REST API 拿中文 AI 行业每日精选 + 历史归档。
+通过 AIHOT Skill 获取中文 AI 行业的每日精选和历史归档。[AIHOT 官网](https://aihot.news/)
 
 - **5 类内容**：模型 / 产品 / 行业 / 论文 / 技巧
 - **数据新鲜度**：每天人工精选 + 实时增量；items 端点最近 7 天
-- **无 auth**、无 API key、无 MCP server——就是装上 skill 直接用
+- **安装后直接使用**，此适配无需 API Key 或 MCP 连接
 
 ## 装
 
-```bash
-UA='Mozilla/5.0 ... Chrome/124'
-curl -fsSL -A "$UA" https://aihot.virxact.com/aihot-skill/install.sh | bash
-```
+按所用客户端和运行环境选择安装方式。官方说明包含 Codex、Claude Code 和 Windows 原生环境的安装与验证步骤。[AIHOT Skill 安装说明](https://aihot.news/aihot-skill/README.md)
 
-装完后 Claude 会在 `~/.claude/skills/aihot/SKILL.md` 看到这个 skill，自动在用户问 AI 资讯时触发。
+官方也提供安装脚本源文件供审阅。[install.sh](https://aihot.news/aihot-skill/install.sh)
 
 ## cheat-seed / cheat-trends 怎么调
 
@@ -44,7 +41,7 @@ aihot skill 默认返回 markdown，按 5 类（模型/产品/行业/论文/技�
 
 | 症状 | 处理 |
 |---|---|
-| 403 Forbidden | UA 没设浏览器格式——aihot skill 自己的 SKILL.md 第一段就警告了，正确装的话不会出问题 |
+| 403 Forbidden | 核对 AIHOT 官方安装说明和当前 skill 版本。若仍无法访问，降级到 trendradar-mcp 或 manual-paste |
 | 端点超时 / 5xx | 优雅降级到 trendradar-mcp 或 manual-paste；不抛异常 |
 | 用户的 content_form 跟 AI 完全无关（如美食/妆教） | cheat-seed 应该**不调 aihot**——按 [data-source-routing.md](../../shared-references/data-source-routing.md) 的路由表 |
 
