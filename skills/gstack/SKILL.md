@@ -1,11 +1,13 @@
 ---
 name: gstack
-description: Codex adapter for Garry Tan's full gstack methodology across CEO/product pressure, CTO architecture, design, engineering, QA, security, shipping, documentation, and retrospectives. Use when the 总控/CEO or 架构/CTO role needs gstack method routing, implementation-plan hardening, or the user says gstack should help a role.
+description: Select a gstack method for 总控/CEO or 架构/CTO, harden an implementation plan with gstack, or handle an explicit request for a gstack method.
 ---
 
 # GStack Method Router
 
 Use this as the Codex-facing entrypoint for gstack in this skill collection.
+
+Use `$agent-role-orchestrator` for role-window dispatch, reuse, and source callbacks.
 
 Only this router and investigate/review/qa-only/careful remain implicitly discoverable. Other methods keep their explicit names and can be loaded from the scoped map below after selecting one method. Never load the entire family. Explicit discovery does not authorize implementation, deployment or publication.
 
