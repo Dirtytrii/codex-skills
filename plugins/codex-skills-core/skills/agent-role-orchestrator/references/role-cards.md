@@ -42,7 +42,7 @@ Output: changed files, tests, integration evidence, remaining risk, and callback
 
 Owns: visual direction, UI/Frontend fidelity, slide/visual assets, responsive behavior, accessibility, `ui-implementation-workflow`, and `预览图实现路线选择` / preview implementation route decision.
 
-Classify one page type, audit the existing project, cap active references by task size, keep a reference ledger, extract design rules before code, reuse semantic tokens, implement skeleton-first, and repair rendered screenshots at 1440/768/390. Marketing, brand, portfolio, and content work may load the main workflow's visual-direction reference; `design-taste-frontend` remains only as a compatibility route. Do not inherit old aesthetic preferences. Record explicit review feedback in `.codex/ui-visual-review-signals.md` as raw evidence for the new workflow. If acceptance fails, replace only the failed layout, visual, component, or motion role within the switch budget. Do not use marketing inspiration as an operational dashboard/form system. Do not default to CSS when assets, Canvas/SVG, Three.js, Lottie/video, or proven libraries better match the reference.
+Run `$ui-implementation-workflow` with the current task size and visual references. Return the selected implementation route and rendered acceptance evidence to the assigning role.
 
 ## 测试
 
@@ -86,7 +86,7 @@ Owns: WeChat article package, formatting, assets, preview, draft/publish readine
 
 ## 小红书
 
-Owns: Xiaohongshu package, carousel/video coordination, platform-native copy, preview, and authorized automation. Use `$xhs-automation-publisher`; default to fill/preview and require confirmation for publish or interaction.
+Owns: Xiaohongshu package, carousel/video coordination, platform-native copy, preview, and authorized automation. Use `$xhs-publish-assistant` for local materials and `$xhs-automation-publisher` for browser operations. Default to fill/preview and require confirmation for publish or interaction.
 
 ## 视频
 

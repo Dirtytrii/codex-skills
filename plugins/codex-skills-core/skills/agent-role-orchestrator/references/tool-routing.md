@@ -17,11 +17,10 @@ Read only the section relevant to the selected role. Script output provides stru
 ## Technical Routing
 
 - Architecture/product/engineering/design/release method selection: `$gstack` and its focused methods.
-- UI/Frontend implementation: load `$ui-implementation-workflow`; classify, bound active references, keep the complete source inventory and switch ledger, extract design rules, build skeleton-first, then repair 1440/768/390 screenshots and replace only the failed reference role when needed. Load its visual-direction reference only for expressive marketing/brand/portfolio/content work; do not run `$design-taste-frontend` as a second workflow. Ignore inherited aesthetic preferences and record fresh explicit screenshot feedback in `.codex/ui-visual-review-signals.md` as raw evidence.
-- Browser interaction: load `$browser-automation-router`; use the in-app Browser for public/local visual work, Chrome for an approved existing login/profile, and `$playwright` only for deterministic CLI/CI runs or an explicit fallback.
+- UI/Frontend implementation: load `$ui-implementation-workflow` for any substantial change and its rendered acceptance.
+- Browser interaction: load `$browser-automation-router` when the surface or login state needs a decision. Use `$playwright` for deterministic CLI/CI work.
 - Bug or incident diagnosis: systematic debugging or the installed diagnosis workflow before fixing.
 - Implementation: TDD where applicable, then verification before completion.
-- UI with a visual reference: UI route selection before code; use rendered visual QA.
 - Security: route by intent to the installed security scan, review, threat model, finding validation, or fix skill. Keep authorization explicit.
 - Test assets/reports: `$test-case-report-builder`.
 - Deployment: pre-deployment read-only evidence, then separately authorized execution and post-deployment verification.

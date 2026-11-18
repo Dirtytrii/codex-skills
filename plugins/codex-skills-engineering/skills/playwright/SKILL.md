@@ -1,6 +1,6 @@
 ---
 name: "playwright"
-description: "Use for deterministic terminal or CI browser automation, repeatable regressions, traces, snapshots, screenshots, and unattended playwright-cli batches. Route interactive or signed-in Chrome work through browser-automation-router first."
+description: Use for deterministic terminal or CI browser automation with playwright-cli, including repeatable regressions, traces, and unattended batches.
 ---
 
 

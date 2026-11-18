@@ -1,11 +1,11 @@
 ---
 name: browser-automation-router
-description: Choose the narrowest reliable browser surface across Codex Browser, signed-in Chrome, Playwright CLI, and platform scripts. Use for browser automation, logged-in workflows, UI inspection, screenshots, form filling, publish previews, or frontend QA.
+description: Choose a browser surface when the right tool or login state is unclear. Route between the in-app Browser, signed-in Chrome, and supported fallbacks.
 ---
 
 # Browser Automation Router
 
-Choose the narrowest reliable browser surface before acting.
+Choose the narrowest reliable browser surface before acting. If the task already specifies a supported surface and its account and capability boundaries are clear, use that surface's workflow directly.
 
 ## Route Order
 

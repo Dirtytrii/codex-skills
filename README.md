@@ -152,11 +152,11 @@ Token Budget Profile 控制 prompt 体积：`compact` 用于 tiny/small 和普�
 
 | 任务 | 推荐入口 |
 | --- | --- |
-| 技术规划、实现、评审、发布 | `架构 / CTO` + `gstack-*`，执行角色按任务加载调查、Review、QA、Ship 方法 |
-| 浏览器交互与登录态复用 | `browser-automation-router`：应用内 Browser 处理公开页/localhost，Chrome 插件复用现有登录态；Playwright 留给 CI/回归 |
+| 技术规划、实现、评审、发布 | `agent-role-orchestrator` 负责角色派发和回调。总控或架构用 `gstack` 选择方法、加固方案，执行角色按需加载对应方法 |
+| 浏览器交互与登录态复用 | 浏览器或登录态的选择不明确时用 `browser-automation-router`；确定性 CI 与回归用 `playwright`，实现与截图验收用 `ui-implementation-workflow` |
 | UI、网页 PPT、社交卡 | `UI/PPT` + [`ui-implementation-workflow`](skills/ui-implementation-workflow/SKILL.md)：统一页面分类、按需视觉方向、预览图实现路线选择、参考台账与失败维度动态换源、设计规则/Token、骨架优先和 1440/768/390 截图闭环；旧审美偏好停用，实际截图反馈从新基线记录为原始审核信号；`design-taste-frontend` 仅保留为旧名称兼容入口 |
 | 公众号 | `wechat-ai-app-ops`、`wechat-tech-writer`、`wechat-article-formatter` |
-| 小红书 | `xhs-visual-director`、`xhs-publish-assistant`、`xhs-automation-publisher`、`xhs-comment-research`、`cheat-on-content` |
+| 小红书 | `xhs-publish-assistant` 整理本地发布材料，`xhs-automation-publisher` 操作创作者中心，`cheat-on-content` 用于内容校准。视觉用 `xhs-visual-director`，评论研究用 `xhs-comment-research` |
 | 中文正式对外文案 | `social-text-websense-gate` + `反老登味 / 反 AI 味内容闸门` + `humanizer-zh`；叙事按需用 `story-deslop` |
 | 测试与安全 | `test-case-report-builder`、`playwright`、`authorized-blackbox-web-security` 或 Codex Security 系列 |
 | 运维与数据库 | 只读诊断 skills + 运维/DBA 角色；写操作和危险动作单独授权 |
