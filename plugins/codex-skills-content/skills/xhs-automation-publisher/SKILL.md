@@ -1,6 +1,6 @@
 ---
 name: xhs-automation-publisher
-description: Run authorized Xiaohongshu browser workflows for login checks, creator preview fill, publish blockers, final posting, search, export, or approved engagement. Prefer native signed-in Chrome; keep Python/CDP for deterministic batch fallback.
+description: 操作小红书浏览器页面，包括登录检查、创作者中心预览填充、发布卡点排查、作品检索和数据导出。实际发布与互动需明确授权。
 ---
 
 # XHS Automation Publisher

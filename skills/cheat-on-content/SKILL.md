@@ -1,6 +1,6 @@
 ---
 name: cheat-on-content
-description: 用打分、盲预测、发布后复盘和 rubric 进化校准内容判断。适用于视频、文章、播客等可量化内容；触发词包括初始化、打分、预测、发布、复盘、推荐选题、抓热点、状态、找对标。首次使用先运行 cheat-init。
+description: 建立或调整 cheat-on-content 内容校准工作流，把视频、文章或播客的稿件盲预测与发布后的实绩连起来，用于长期校准内容判断。
 argument-hint: "[draft-path] [— mode: cold-start|calibration]"
 allowed-tools: Bash(*), Read, Write, Edit, Grep, Glob, Skill, mcp__llm-chat__chat
 ---
@@ -23,14 +23,7 @@ allowed-tools: Bash(*), Read, Write, Edit, Grep, Glob, Skill, mcp__llm-chat__cha
 
 ## Codex compatibility
 
-Codex 没有 Claude Code 的 slash-command harness。安装到 Codex 后，按自然语言触发同一套路由即可：
-
-- `初始化 cheat-on-content` → 读取并执行 `skills/cheat-init/SKILL.md`
-- `打分这篇 scripts/foo.md` → 读取并执行 `skills/cheat-score/SKILL.md`
-- `启动预测 scripts/foo.md` → 读取并执行 `skills/cheat-predict/SKILL.md`
-- `拍了 ...` / `已发布 ...` / `复盘 ...` / `升级 rubric` / `状态` → 分别读取对应 `skills/cheat-*/SKILL.md`
-
-执行时遵循本文件的三条原则和路由表；不要依赖 `/cheat-*` 命令是否存在。Claude Code 专用 hook（`.claude/settings.json`）仍只在 Claude Code 里自动触发；Codex 中需要用户主动说 `状态` 查看 buffer、待复盘和候选池。
+在 Codex 中，先确认用户在使用本内容校准工作流，再按下方路由表读取对应的 `skills/cheat-*/SKILL.md`。用户也可以用 `$cheat-*` 直接调用子 skill。Claude Code 的 `/cheat-*` 命令和 `.claude/settings.json` hook 只在该宿主生效。Codex 中可显式请求“查看内容校准状态”，查看待发布缓冲、待复盘记录和候选池。
 
 ---
 
@@ -46,7 +39,9 @@ Codex 没有 Claude Code 的 slash-command harness。安装到 Codex 后，按�
 
 ---
 
-## 路由表（触发词 → 子 skill）
+## 内容校准工作区路由
+
+下表中的简写适用于已确认的内容校准工作区，首次使用需明确初始化该工作流。需要整理本地小红书发布材料时用 `$xhs-publish-assistant`，操作创作者中心时用 `$xhs-automation-publisher`。
 
 | 用户说 | 调用 | 前置条件 |
 |---|---|---|
@@ -56,18 +51,18 @@ Codex 没有 Claude Code 的 slash-command harness。安装到 Codex 后，按�
 | "打分这篇 [path]" / "score this [path]" | `/cheat-score` | rubric_notes.md 存在 |
 | "启动预测" / "start prediction" / "给这稿子打分并预测" | `/cheat-predict` | 已 init + 有最终稿 |
 | "拍了 X" / "shot it" / "录完了" | `/cheat-shoot` | 对应预测已写（buffer +1） |
-| "已发布" / "I shipped it" / "发布链接是 X" | `/cheat-publish` | 对应预测文件存在（buffer -1） |
+| 登记已有预测的作品已发布 | `/cheat-publish` | 对应预测文件存在（buffer -1）；仅写入发布元数据 |
 | "复盘" / "retro this" / "T+3d 数据来了" | `/cheat-retro` | 对应预测文件存在 + 已过 RETRO_WINDOW_DAYS |
 | "构造受众画像" / "更新 persona" / "我的观众是谁" / "build persona" | `/cheat-persona` | 已 init；有复盘评论数据（或 benchmark seed） |
 | "升级 rubric" / "bump rubric" / "更新公式" | `/cheat-bump` | 校准池 ≥ MIN_SAMPLES_FOR_BUMP |
 | "推荐选题" / "next topic" | `/cheat-recommend` | candidates.md 存在且非空 |
 | "抓热点" / "fetch trends" / "今天有什么可做的" | `/cheat-trends` | trend-sources adapter 已配置（日常补充候选池） |
 | "状态" / "status" / "看板" | `/cheat-status` | 任意时刻可调 |
-| "迁移" / "升级 state" / "schema 版本不对" / "migrate" | `/cheat-migrate` | 已 init；用户 git pull 拉了新版后；SessionStart hook 提示 schema mismatch 后 |
+| 显式调用 `$cheat-migrate`（Claude Code 用 `/cheat-migrate`） | `skills/cheat-migrate/SKILL.md` | 已初始化的旧工作区；检测到版本不符时提示入口 |
 
 > 拍 vs 发分两个动作：buffer 警戒系统需要明确知道"拍了但没发"vs"已发"两种状态。详见 [shared-references/cadence-protocol.md](shared-references/cadence-protocol.md)。
 
-**Mode detection**（首次接到非 init 触发词时执行）：
+**Mode detection**（已确认是本工作流时执行）：
 1. 检查用户当前目录是否有 `.cheat-state.json` → 没有 → 强制路由到 `/cheat-init`
 2. 检查 `predictions/` 下有几个文件含完整 `## 复盘` 段填了真实数据 → 决定 `mode: cold-start | calibration`
 3. 把判定结果写回 `.cheat-state.json` 后再路由到目标 skill
