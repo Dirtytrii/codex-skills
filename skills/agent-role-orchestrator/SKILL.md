@@ -1,6 +1,6 @@
 ---
 name: agent-role-orchestrator
-description: Route CEO-first multi-window work into owner-led role loops. Use for 总控/CEO、架构/CTO、内容主编、角色派发与复用、模型路由、来源窗口回调、role-windows 台账、skill 命中统计或 multi-window loop engineering。
+description: 管理 Codex 多窗口角色协作，适用于总控/CEO、架构/CTO、内容主编的角色派发与复用、模型路由、role-windows 台账和来源窗口回调。
 ---
 
 # Agent Role Orchestrator
@@ -156,21 +156,15 @@ QA uses adversarial review: try to falsify readiness, inspect negative paths, bo
 
 ### UI Preview Implementation Route Rule
 
-`UI/PPT` loads `$ui-implementation-workflow`. Classify one page type, audit the existing system, use at most three active role-specific references, extract an implementation plan before code, reuse semantic tokens, build skeleton-first, and close with repaired screenshots at 1440/768/390. Marketing, brand, portfolio, and content pages may load its built-in `references/visual-direction.md`; `$design-taste-frontend` is only a compatibility adapter and must not start a second UI workflow. Start with no inherited aesthetic preference. Record explicit feedback on rendered work in `.codex/ui-visual-review-signals.md` as raw evidence, not an automatically active long-term preference. Keep the complete source inventory and a reference ledger, but do not load every site. When visual acceptance fails, replace only the failed layout, visual, component, or motion role within the switch-round budget. Operational dashboards/forms do not inherit marketing-page heroes or decorative motion.
-
-When a preview image exists, `UI/PPT` must not `不要默认拿 CSS 硬干`. First compare CSS/components, image assets, Canvas/SVG, Three.js/WebGL, Lottie/video, proven libraries, or generated/manual assets. Record the selected route and visual verification evidence before development.
+`UI/PPT` loads `$ui-implementation-workflow` for implementation and visual acceptance. Pass the task size, available references, and required evidence in the role card.
 
 ### Native Browser Routing Rule
 
-For browser interaction, load `$browser-automation-router`. Prefer the in-app Browser for public/local visual work and the Chrome extension for an approved existing login/profile. Keep `$playwright` for deterministic CLI/CI evidence and platform scripts for explicit batch/export fallback. If the required native plugin is unavailable, fail closed to a named fallback instead of maintaining ad hoc JavaScript or profile-path logic.
+Load `$browser-automation-router` when the browser surface or login state needs a routing decision. Pass the requested action, account boundary, and evidence requirement to the executing role.
 
 ## Content Routing Gates
 
-Load `references/content-routing.md` only for public writing, platform research, or publishing work.
-
-- `X MCP Content Research Source`: use [official X MCP docs](https://docs.x.com/tools/mcp) for authorized read-only trend, topic, benchmark-account, and public-discussion research. Writes need separate authorization.
-- `Content Tone Gate`: 正式对外内容先过 `反老登味 / 反 AI 味内容闸门`, then use `$humanizer-zh` without changing facts.
-- `Xiaohongshu Automation Publisher Gate`: load `$browser-automation-router`; use native Chrome for interactive logged-in work and `$xhs-automation-publisher` for deterministic Python/CDP fallback; preview/fill first, and require explicit confirmation for publish or interaction actions.
+Load [content routing](references/content-routing.md) for public writing, platform research, or publishing. Record the selected skill and any publication authorization in the handoff.
 
 ## Source-Window Callback Rule
 

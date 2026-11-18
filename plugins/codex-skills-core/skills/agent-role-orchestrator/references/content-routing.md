@@ -25,7 +25,7 @@ All formal public Chinese copy must pass the `反老登味 / 反 AI 味内容闸
 
 ## Xiaohongshu Automation Publisher Gate
 
-Load `$browser-automation-router` first. Use the native Chrome surface for authorized interactive login state, creator-center filling, and visible publishing-blocker diagnosis. Use `$xhs-automation-publisher` for deterministic Python/CDP batch filling, search/detail reads, data export, or an explicit fallback when the native plugin is unavailable.
+Use `$xhs-publish-assistant` for copy-ready local materials and `$xhs-automation-publisher` for browser operations. If the browser surface or login state needs a decision, load `$browser-automation-router`.
 
 Default to preview/fill. Clicking publish, posting/responding to comments, likes, bookmarks, account switching, or profile cleanup requires a fresh explicit confirmation. Never store cookies, QR codes, real account state, or local Chrome profile paths in the repository.
 

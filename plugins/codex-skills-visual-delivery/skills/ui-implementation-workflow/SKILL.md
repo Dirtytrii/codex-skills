@@ -1,6 +1,6 @@
 ---
 name: ui-implementation-workflow
-description: Implement project-consistent UI through page classification, bounded references, semantic tokens, skeleton-first delivery, and responsive screenshot QA. Use for frontend redesigns, dashboards, forms, settings, mobile pages, screenshot recreation, visual polish, or generic-looking generated UI.
+description: Implement or redesign project UI and verify it with responsive screenshots. Use for substantial frontend changes, visual fidelity work, or screenshot recreation.
 ---
 
 # UI Implementation Workflow
@@ -39,6 +39,8 @@ When the user or a designated reviewer comments on rendered UI, read [references
 Keep a reference ledger for every candidate inspected. Record `candidate`, `active`, `rejected`, or `replaced`; its role; the exact borrowed rule; screenshot result; rejection reason; and successor. The catalog is complete inventory, not permission to load every site into context.
 
 ## 3. Produce The UI Implementation Plan
+
+For a preview or visual reference, compare credible implementation routes before coding. Choose among CSS/components, manual or generated assets, Canvas/SVG, Three.js/WebGL, Lottie/video, or a proven library based on fidelity, interaction, and maintenance. Record the chosen route and visual verification evidence in the plan.
 
 Do not modify code until the plan is explicit. Include:
 

@@ -294,24 +294,14 @@ def validate_orchestrator(errors: list[str]) -> None:
             "开发负责人",
             "开发执行 subagent",
             "in-window one-shot",
-            "X MCP Content Research Source",
-            "https://docs.x.com/tools/mcp",
-            "Xiaohongshu Automation Publisher Gate",
-            "$xhs-automation-publisher",
-            "Content Tone Gate",
-            "反老登味 / 反 AI 味内容闸门",
+            "references/content-routing.md",
             "UI Preview Implementation Route Rule",
-            "不要默认拿 CSS 硬干",
             "Completion is fail-closed",
             "仅完成第 1 项不算闭环",
             "<codex_delegation>",
             "Native Browser Routing Rule",
             "$browser-automation-router",
             "$ui-implementation-workflow",
-            "1440/768/390",
-            "reference ledger",
-            "no inherited aesthetic preference",
-            ".codex/ui-visual-review-signals.md",
         ],
         errors,
     )
@@ -337,8 +327,7 @@ def validate_orchestrator(errors: list[str]) -> None:
             "$xhs-automation-publisher",
             "fail-closed callback status",
             "ui-implementation-workflow",
-            "1440/768/390",
-            ".codex/ui-visual-review-signals.md",
+            "rendered acceptance evidence",
         ],
         errors,
     )
@@ -496,8 +485,22 @@ def validate_scripts(errors: list[str]) -> None:
         ["gpt-5.6-luna", "gpt-5.3-codex-spark", "gpt-5.6-terra", "gpt-5.6-sol", "Spark Opportunity Lane", "--prefer-spark --spark-available", "--delegation-policy auto|forbidden|optional|required", "--execution-profile parallel", "--disjoint-scope", "--independent-validation", "Reasoning Effort Eval Gate"],
         errors,
     )
-    require_contains(TOOL_ROUTING, ["Fail-Closed Scripts", "prepare_role_window.py", "aggregate_skill_hits.py", "Skill Ledger", "$browser-automation-router", "$playwright", "$ui-implementation-workflow", "visual-direction", ".codex/ui-visual-review-signals.md"], errors)
-    require_contains(CONTENT_ROUTING, ["X MCP Content Research Source", "反老登味 / 反 AI 味内容闸门", "$browser-automation-router", "$xhs-automation-publisher"], errors)
+    require_contains(TOOL_ROUTING, ["Fail-Closed Scripts", "prepare_role_window.py", "aggregate_skill_hits.py", "Skill Ledger", "$browser-automation-router", "$playwright", "$ui-implementation-workflow"], errors)
+    require_contains(
+        CONTENT_ROUTING,
+        [
+            "X MCP Content Research Source",
+            "https://docs.x.com/tools/mcp",
+            "Content Tone Gate",
+            "反老登味 / 反 AI 味内容闸门",
+            "Xiaohongshu Automation Publisher Gate",
+            "$xhs-publish-assistant",
+            "$xhs-automation-publisher",
+            "$browser-automation-router",
+            "requires a fresh explicit confirmation",
+        ],
+        errors,
+    )
     require_contains(BROWSER_ROUTER, ["Route Order", "2026-06-11", "existing Chrome profile", "Fail-Closed Capability Gate", "Write Gates"], errors)
     require_contains(PLAYWRIGHT_SKILL, ["deterministic CLI/CI lane", "$browser-automation-router", "Do not import cookies"], errors)
     require_contains(XHS_COMMENT_RESEARCH, ["$browser-automation-router", "Do not load repository-maintained JavaScript snippets", "Chrome plugin"], errors)
@@ -511,6 +514,7 @@ def validate_scripts(errors: list[str]) -> None:
             "Semantic Tokens",
             "$browser-automation-router",
             "1440px",
+            "compare credible implementation routes before coding",
             "768px",
             "390px",
             "first-pass screenshot",

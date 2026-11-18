@@ -1,6 +1,6 @@
 ---
 name: xhs-publish-assistant
-description: Prepare copy-ready Xiaohongshu/Rednote publish materials from a local XHS article package. Use when the user asks for "输出发布格式", "小红书发布格式", "准备发布", "二次编辑发布格式", or needs title/body/tags/output image directory/checks without browser automation or clicking publish.
+description: 从本地稿件整理可复制的小红书发布材料，包括标题、正文、标签和图片目录。适用于输出发布格式或准备发布材料，全程在本地处理。
 ---
 
 # XHS Publish Assistant

@@ -1,0 +1,4 @@
+interface:
+  display_name: "内容校准配置迁移"
+policy:
+  allow_implicit_invocation: false
